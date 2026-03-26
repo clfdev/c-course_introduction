@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 39b — Arquivos em C: Arquivos Binários</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Aula 39b — Arquivos em C <span style="font-size:0.7em; opacity:0.85;">Parte 2 de 2</span></h1>
+    <p>Arquivos binários — <code style="color:#aad4ff">fread</code>, <code style="color:#aad4ff">fwrite</code>, <code style="color:#aad4ff">fseek</code> e acesso direto a registros</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo39a.html">← Parte 1</a>
+    <a href="capitulo40.html">Aula 40 →</a>
+</nav>
+
+<!-- ═══════════════════════════════════════ 1. BINÁRIO VS TEXTO -->
+<div class="content-section">
+    <h2>1. Por que Arquivos Binários?</h2>
+
+    <p>Na Aula 39a usamos <code>fprintf</code> para gravar dados como texto legível. Funciona, mas tem limitações:</p>
+
+    <table>
+        <tr>
+            <th>Aspecto</th>
+            <th>Arquivo Texto</th>
+            <th>Arquivo Binário</th>
+        </tr>
+        <tr>
+            <td>Leitura humana</td>
+            <td>✅ Abre no Bloco de Notas</td>
+            <td>❌ Bytes brutos — ilegível</td>
+        </tr>
+        <tr>
+            <td>Gravar/ler struct completa</td>
+            <td>❌ Campo por campo — trabalhoso</td>
+            <td>✅ A struct inteira de uma vez</td>
+        </tr>
+        <tr>
+            <td>Nomes com espaços</td>
+            <td>⚠️ Precisa de tratamento extra</td>
+            <td>✅ Funciona — grava os bytes como estão</td>
+        </tr>
+        <tr>
+            <td>Acesso direto ao registro N</td>
+            <td>❌ Precisa varrer o arquivo</td>
+            <td>✅ Cálculo de offset imediato</td>
+        </tr>
+        <tr>
+            <td>Velocidade para dados grandes</td>
+            <td>Mais lento — conversão para string</td>
+            <td>✅ Mais rápido — cópia direta de memória</td>
+        </tr>
+    </table>
+
+    <div class="definicao">
+        Em arquivos binários, os dados são gravados exatamente como estão na memória — sem conversão para texto. Uma <code>struct Aluno</code> de 60 bytes no programa ocupa exatamente 60 bytes no arquivo. Isso torna a leitura e escrita triviais e eficientes.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 2. FWRITE -->
+<div class="content-section">
+    <h2>2. Escrevendo Dados Binários: <code>fwrite</code></h2>
+
+    <div class="definicao">
+        <code>fwrite(ptr, tamanho, quantidade, arquivo)</code> — grava <em>quantidade</em> blocos de <em>tamanho</em> bytes a partir do endereço <em>ptr</em> no arquivo. Retorna o número de blocos gravados com sucesso.
+    </div>
+
+<pre>
+#include &lt;stdio.h&gt;
+
+typedef struct {
+    int   matricula;
+    char  nome[50];
+    float nota;
+} Aluno;                                   <span class="code-comment">// sizeof(Aluno) ≈ 58 bytes</span>
+
+int main() {
+    FILE *f = fopen("alunos.bin", "wb");   <span class="code-comment">// "wb" = write binary</span>
+    if (f == NULL) { printf("Erro!\n"); return 1; }
+
+    Aluno a1 = {1001, "Ana Silva",  8.5f};
+    Aluno a2 = {1002, "Bruno Lima", 6.0f};
+    Aluno a3 = {1003, "Carla Mota", 9.5f};
+
+    <span class="code-comment">/* grava 1 struct por vez */</span>
+    fwrite(&a1, sizeof(Aluno), 1, f);
+    fwrite(&a2, sizeof(Aluno), 1, f);
+    fwrite(&a3, sizeof(Aluno), 1, f);
+
+    fclose(f);
+    printf("3 alunos gravados em alunos.bin\n");
+    return 0;
+}
+</pre>
+
+    <p>O arquivo <code>alunos.bin</code> terá exatamente <code>3 × sizeof(Aluno)</code> bytes. Não há separadores, quebras de linha nem conversão — são os bytes puros de cada struct.</p>
+
+    <h3>Gravando um array inteiro de uma vez</h3>
+<pre>
+Aluno turma[3] = {
+    {1001, "Ana Silva",  8.5f},
+    {1002, "Bruno Lima", 6.0f},
+    {1003, "Carla Mota", 9.5f}
+};
+
+<span class="code-comment">/* grava os 3 de uma vez — equivalente a 3 chamadas separadas */</span>
+fwrite(turma, sizeof(Aluno), 3, f);
+</pre>
+</div>
+
+<!-- ═══════════════════════════════════════ 3. FREAD -->
+<div class="content-section">
+    <h2>3. Lendo Dados Binários: <code>fread</code></h2>
+
+    <div class="definicao">
+        <code>fread(ptr, tamanho, quantidade, arquivo)</code> — lê <em>quantidade</em> blocos de <em>tamanho</em> bytes do arquivo e os armazena a partir do endereço <em>ptr</em>. Retorna o número de blocos lidos com sucesso.
+    </div>
+
+<pre>
+#include &lt;stdio.h&gt;
+
+typedef struct {
+    int   matricula;
+    char  nome[50];
+    float nota;
+} Aluno;
+
+int main() {
+    FILE *f = fopen("alunos.bin", "rb");   <span class="code-comment">// "rb" = read binary</span>
+    if (f == NULL) { printf("Arquivo não encontrado.\n"); return 1; }
+
+    Aluno a;
+
+    printf("%-6s | %-20s | %s\n", "Matr.", "Nome", "Nota");
+    printf("------------------------------------\n");
+
+    <span class="code-comment">/* lê uma struct por vez até acabar o arquivo */</span>
+    while (fread(&a, sizeof(Aluno), 1, f) == 1) {
+        printf("%-6d | %-20s | %.1f\n",
+               a.matricula, a.nome, a.nota);
+    }
+
+    fclose(f);
+    return 0;
+}
+</pre>
+
+    <div class="terminal-output">
+Matr. | Nome                 | Nota<br>
+------------------------------------<br>
+1001  | Ana Silva            | 8.5<br>
+1002  | Bruno Lima           | 6.0<br>
+1003  | Carla Mota           | 9.5
+    </div>
+
+    <div class="info-box">
+        <strong>Simetria total entre fwrite e fread:</strong> O que <code>fwrite</code> grava, <code>fread</code> lê exatamente da mesma forma. Não há parsing, não há conversão, não há preocupação com espaços em nomes — os bytes saem da struct e entram de volta na struct sem nenhuma transformação.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 4. FSEEK / FTELL -->
+<div class="content-section">
+    <h2>4. Acesso Direto: <code>fseek</code>, <code>ftell</code> e <code>rewind</code></h2>
+
+    <p>Uma das grandes vantagens do arquivo binário com structs de tamanho fixo é o <strong>acesso direto</strong>: você pode ir diretamente ao registro N sem ler todos os anteriores.</p>
+
+    <div class="definicao">
+        <code>fseek(arquivo, offset, origem)</code> move o cursor do arquivo para uma posição específica.<br>
+        <code>ftell(arquivo)</code> retorna a posição atual do cursor (em bytes desde o início).<br>
+        <code>rewind(arquivo)</code> volta o cursor ao início — equivalente a <code>fseek(f, 0, SEEK_SET)</code>.
+    </div>
+
+    <table>
+        <tr>
+            <th>Origem (3º parâmetro)</th>
+            <th>Significado</th>
+            <th>Exemplo</th>
+        </tr>
+        <tr>
+            <td><code>SEEK_SET</code></td>
+            <td>Desde o início do arquivo</td>
+            <td><code>fseek(f, 0, SEEK_SET)</code> — vai ao início</td>
+        </tr>
+        <tr>
+            <td><code>SEEK_CUR</code></td>
+            <td>Relativo à posição atual</td>
+            <td><code>fseek(f, 10, SEEK_CUR)</code> — avança 10 bytes</td>
+        </tr>
+        <tr>
+            <td><code>SEEK_END</code></td>
+            <td>Relativo ao fim do arquivo</td>
+            <td><code>fseek(f, 0, SEEK_END)</code> — vai ao final</td>
+        </tr>
+    </table>
+
+    <h3>Exemplo — ler o registro de índice N diretamente</h3>
+<pre>
+#include &lt;stdio.h&gt;
+
+typedef struct {
+    int   matricula;
+    char  nome[50];
+    float nota;
+} Aluno;
+
+<span class="code-comment">/* Lê o aluno na posição 'indice' (0-based) sem ler os outros */</span>
+int lerAlunoPorIndice(const char *caminho, int indice, Aluno *dest) {
+    FILE *f = fopen(caminho, "rb");
+    if (f == NULL) return 0;
+
+    long offset = (long)indice * sizeof(Aluno);  <span class="code-comment">// calcula o byte exato</span>
+    fseek(f, offset, SEEK_SET);                  <span class="code-comment">// pula direto para lá</span>
+    int ok = (fread(dest, sizeof(Aluno), 1, f) == 1);
+
+    fclose(f);
+    return ok;
+}
+
+<span class="code-comment">/* Conta quantos alunos existem no arquivo */</span>
+int contarAlunos(const char *caminho) {
+    FILE *f = fopen(caminho, "rb");
+    if (f == NULL) return 0;
+
+    fseek(f, 0, SEEK_END);            <span class="code-comment">// vai ao final</span>
+    long bytes = ftell(f);            <span class="code-comment">// quantos bytes tem o arquivo</span>
+    fclose(f);
+
+    return (int)(bytes / sizeof(Aluno));
+}
+
+int main() {
+    int total = contarAlunos("alunos.bin");
+    printf("Total de alunos no arquivo: %d\n\n", total);
+
+    <span class="code-comment">/* Lê diretamente o último aluno */</span>
+    Aluno a;
+    if (lerAlunoPorIndice("alunos.bin", total - 1, &a))
+        printf("Último: %d | %s | %.1f\n",
+               a.matricula, a.nome, a.nota);
+
+    <span class="code-comment">/* Lê diretamente o primeiro */</span>
+    if (lerAlunoPorIndice("alunos.bin", 0, &a))
+        printf("Primeiro: %d | %s | %.1f\n",
+               a.matricula, a.nome, a.nota);
+
+    return 0;
+}
+</pre>
+
+    <div class="terminal-output">
+Total de alunos no arquivo: 3<br><br>
+Último: 1003 | Carla Mota | 9.5<br>
+Primeiro: 1001 | Ana Silva | 8.5
+    </div>
+
+    <div class="tip-box">
+        <strong>Por que isso é poderoso:</strong> Se o arquivo tiver 10.000 alunos e você precisar do de índice 9.999, <code>fseek</code> pula direto para lá em uma instrução — sem varrer os 9.998 anteriores. Isso é o equivalente ao acesso direto de um array, mas em disco.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 5. ATUALIZAR REGISTRO -->
+<div class="content-section">
+    <h2>5. Atualizando um Registro no Arquivo</h2>
+
+    <p>Com <code>fseek</code>, é possível também <strong>sobrescrever</strong> um registro específico — sem recriar o arquivo inteiro:</p>
+
+<pre>
+#include &lt;stdio.h&gt;
+
+typedef struct {
+    int   matricula;
+    char  nome[50];
+    float nota;
+} Aluno;
+
+<span class="code-comment">/* Atualiza o aluno na posição 'indice' sem tocar nos outros */</span>
+int atualizarAluno(const char *caminho, int indice, Aluno *novo) {
+    FILE *f = fopen(caminho, "rb+");        <span class="code-comment">// "rb+" = leitura + escrita binária</span>
+    if (f == NULL) return 0;
+
+    long offset = (long)indice * sizeof(Aluno);
+    fseek(f, offset, SEEK_SET);
+    int ok = (fwrite(novo, sizeof(Aluno), 1, f) == 1);
+
+    fclose(f);
+    return ok;
+}
+
+int main() {
+    <span class="code-comment">/* Supondo que alunos.bin já existe com Ana, Bruno, Carla */</span>
+    Aluno corrigido = {1002, "Bruno Lima", 7.5f};    <span class="code-comment">// nota de 6.0 para 7.5</span>
+
+    if (atualizarAluno("alunos.bin", 1, &corrigido))
+        printf("Nota de Bruno atualizada.\n");
+
+    return 0;
+}
+</pre>
+
+    <div class="info-box">
+        <strong>O modo <code>"rb+"</code></strong> abre o arquivo binário existente para leitura e escrita simultâneas, sem apagar o conteúdo. É o modo correto para atualizar registros no lugar (<em>in-place update</em>).
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 6. COMPARAÇÃO COMPLETA -->
+<div class="content-section">
+    <h2>6. Texto vs. Binário — Resumo de Escolha</h2>
+
+    <div class="grid-container">
+        <div class="grid-item">
+            <strong>Use arquivo TEXTO quando…</strong>
+<pre>
+// Dados simples, configurações
+// Logs legíveis por humanos
+// Troca de dados com outros sistemas
+// Nomes sem espaços ou com parse manual
+fprintf(f, "%d %.1f\n", mat, nota);
+</pre>
+        </div>
+        <div class="grid-item">
+            <strong>Use arquivo BINÁRIO quando…</strong>
+<pre>
+// Structs completas com todos os campos
+// Nomes com espaços (funciona direto)
+// Acesso direto a registros por índice
+// Performance com grandes volumes
+fwrite(&aluno, sizeof(Aluno), 1, f);
+</pre>
+        </div>
+    </div>
+
+    <table>
+        <tr><th>Função</th><th>Direção</th><th>Para quê</th></tr>
+        <tr><td><code>fprintf</code></td><td>Escrita texto</td><td>Gravar dados formatados como string</td></tr>
+        <tr><td><code>fscanf</code></td><td>Leitura texto</td><td>Ler dados formatados — para no espaço</td></tr>
+        <tr><td><code>fgets</code></td><td>Leitura texto</td><td>Ler linha inteira com espaços</td></tr>
+        <tr><td><code>fwrite</code></td><td>Escrita binária</td><td>Gravar struct ou array de bytes</td></tr>
+        <tr><td><code>fread</code></td><td>Leitura binária</td><td>Ler struct ou array de bytes</td></tr>
+        <tr><td><code>fseek</code></td><td>Posicionamento</td><td>Mover cursor para offset específico</td></tr>
+        <tr><td><code>ftell</code></td><td>Posição atual</td><td>Saber quantos bytes desde o início</td></tr>
+        <tr><td><code>rewind</code></td><td>Volta ao início</td><td>Atalho para <code>fseek(f,0,SEEK_SET)</code></td></tr>
+    </table>
+</div>
+
+<!-- ═══════════════════════════════════════ QUIZ -->
+<div class="content-section exercise-section">
+    <h2>Quiz — Aula 39b</h2>
+    <form class="quiz-form" onsubmit="return false;">
+
+        <div class="content-section quiz-question">
+            <p><strong>1.</strong> Qual é a principal vantagem de usar <code>fwrite</code> com structs em vez de <code>fprintf</code> campo a campo?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q1" value="a"> O arquivo binário é comprimido automaticamente</label></li>
+                <li><label><input type="radio" name="q1" value="b"> A struct inteira é gravada de uma vez, sem parsing, sem preocupação com espaços em strings e com acesso direto por índice</label></li>
+                <li><label><input type="radio" name="q1" value="c"> fwrite é mais seguro contra erros de tipo do que fprintf</label></li>
+                <li><label><input type="radio" name="q1" value="d"> O arquivo binário pode ser aberto no Bloco de Notas para conferência</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>2.</strong> Um arquivo binário contém 100 structs <code>Aluno</code>, cada uma com <code>sizeof(Aluno) = 60</code> bytes. Qual chamada a <code>fseek</code> posiciona o cursor exatamente no início do aluno de índice 7 (0-based)?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q2" value="a"> <code>fseek(f, 7, SEEK_SET)</code></label></li>
+                <li><label><input type="radio" name="q2" value="b"> <code>fseek(f, 60, SEEK_SET)</code></label></li>
+                <li><label><input type="radio" name="q2" value="c"> <code>fseek(f, 7 * 60, SEEK_SET)</code> — offset = 420 bytes</label></li>
+                <li><label><input type="radio" name="q2" value="d"> <code>fseek(f, 7 * 60, SEEK_END)</code></label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>3.</strong> Para abrir um arquivo binário já existente e modificar um registro específico sem apagar os outros, qual modo de abertura deve ser usado?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q3" value="a"> <code>"wb"</code></label></li>
+                <li><label><input type="radio" name="q3" value="b"> <code>"ab"</code></label></li>
+                <li><label><input type="radio" name="q3" value="c"> <code>"rb+"</code></label></li>
+                <li><label><input type="radio" name="q3" value="d"> <code>"w+"</code></label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>4.</strong> Como calcular o número de structs armazenadas em um arquivo binário usando <code>fseek</code> e <code>ftell</code>?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q4" value="a"> Ler struct por struct até fread retornar 0, contando as leituras</label></li>
+                <li><label><input type="radio" name="q4" value="b"> Usar <code>fseek(f, 0, SEEK_END)</code> para ir ao final, <code>ftell(f)</code> para obter o tamanho em bytes, e dividir por <code>sizeof(struct)</code></label></li>
+                <li><label><input type="radio" name="q4" value="c"> Chamar <code>ftell(f)</code> logo após abrir o arquivo — ele retorna o número de registros</label></li>
+                <li><label><input type="radio" name="q4" value="d"> Não é possível calcular sem ler o arquivo inteiro</label></li>
+            </ul>
+        </div>
+
+        <button type="button" class="submit-btn" onclick="verificarRespostas()">Verificar Respostas</button>
+    </form>
+    <div id="quiz-results" style="display:none; margin-top:20px; padding:15px; background:#dff0d8; border-radius:5px;"></div>
+</div>
+
+<div class="navigation-buttons">
+    <a href="capitulo39a.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">← Parte 1</a>
+    <a href="index.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">Índice</a>
+    <a href="capitulo40.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">Aula 40 →</a>
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align:center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education" style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+<script>
+function verificarRespostas() {
+    const gabarito = { q1:"b", q2:"c", q3:"c", q4:"b" };
+    const explicacoes = {
+        q1: "fwrite com sizeof(struct) grava todos os campos de uma vez, incluindo strings com espaços, sem necessidade de parser. O resultado é um arquivo de tamanho fixo por registro, que permite acesso direto por índice com fseek.",
+        q2: "O offset em bytes do registro de índice N é N × sizeof(struct). Para índice 7 com structs de 60 bytes: 7 × 60 = 420. fseek(f, 420, SEEK_SET) posiciona o cursor exatamente no início desse registro.",
+        q3: "\"rb+\" abre o arquivo binário existente para leitura e escrita simultâneas sem truncar o conteúdo. \"wb\" apagaria tudo. \"ab\" só permite escrita no final. \"w+\" é para arquivos texto.",
+        q4: "O padrão é: fseek para o final (SEEK_END), ftell para obter o tamanho em bytes, dividir pelo sizeof da struct. Isso funciona porque structs de tamanho fixo ocupam exatamente N × sizeof bytes no arquivo binário."
+    };
+
+    let acertos = 0, html = "";
+    const total = Object.keys(gabarito).length;
+    for (const q in gabarito) {
+        const sel = document.querySelector(`input[name="${q}"]:checked`);
+        const num = q.replace("q","");
+        if (sel) {
+            if (sel.value === gabarito[q]) {
+                acertos++;
+                html += `<p>Questão ${num}: <span style="color:green;font-weight:bold;">✅ Correto!</span> — ${explicacoes[q]}</p>`;
+            } else {
+                html += `<p>Questão ${num}: <span style="color:red;font-weight:bold;">❌ Incorreto.</span> Gabarito: <strong>${gabarito[q].toUpperCase()}</strong> — ${explicacoes[q]}</p>`;
+            }
+        } else {
+            html += `<p>Questão ${num}: <span style="color:orange;font-weight:bold;">⚠ Não respondida.</span></p>`;
+        }
+    }
+    const r = document.getElementById("quiz-results");
+    r.innerHTML = `<h3>Sua pontuação: ${acertos} de ${total}</h3>${html}`;
+    r.style.display = "block";
+    r.scrollIntoView({ behavior: "smooth" });
+}
+</script>
+</body>
+</html>

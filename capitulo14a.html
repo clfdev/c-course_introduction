@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 14a – Categorias de Funções em C</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Aula 14a — Categorias de Funções em C</h1>
+    <p>void, com retorno, com parâmetros e com ponteiros — quando usar cada uma</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo13.html">← Aula 13</a>
+    <a href="capitulo14b.html">Aula 14b →</a>
+</nav>
+
+<!-- ═══════════════════════════════════════ INTRODUÇÃO -->
+<div class="content-section">
+    <h2>As Quatro Categorias de Função</h2>
+
+    <p>Na Aula 13 você aprendeu a estrutura básica de uma função: como declará-la, defini-la e chamá-la. Agora vamos entender as <strong>quatro categorias</strong> que existem em C, cada uma adequada para um tipo diferente de situação.</p>
+
+    <table>
+        <tr>
+            <th>#</th>
+            <th>Categoria</th>
+            <th>Retorna algo?</th>
+            <th>Recebe dados?</th>
+            <th>Quando usar</th>
+        </tr>
+        <tr>
+            <td><strong>I</strong></td>
+            <td>Função <code>void</code></td>
+            <td>❌ Não</td>
+            <td>❌ Não</td>
+            <td>Ação pura: imprimir, separador, menu</td>
+        </tr>
+        <tr>
+            <td><strong>II</strong></td>
+            <td>Com valor de retorno</td>
+            <td>✅ Sim</td>
+            <td>❌ Não (ou usa globais)</td>
+            <td>Cálculo que produz um resultado único</td>
+        </tr>
+        <tr>
+            <td><strong>III</strong></td>
+            <td>Com parâmetros</td>
+            <td>✅ Sim (ou void)</td>
+            <td>✅ Sim — cópias dos valores</td>
+            <td>Cálculo com dados fornecidos pelo chamador</td>
+        </tr>
+        <tr>
+            <td><strong>IV</strong></td>
+            <td>Com ponteiros</td>
+            <td>void (resultado via ponteiro)</td>
+            <td>✅ Sim — endereços de memória</td>
+            <td>Modificar variáveis originais ou retornar múltiplos resultados</td>
+        </tr>
+    </table>
+
+    <div class="info-box">
+        As categorias não são excludentes — uma função real pode combinar parâmetros por valor <em>e</em> por ponteiro ao mesmo tempo, como veremos na Categoria IV. A divisão aqui é didática, para construir o entendimento passo a passo.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ CATEGORIA I: VOID -->
+<div class="content-section">
+    <h2>Categoria I — Funções <code>void</code></h2>
+
+    <p>Uma função <code>void</code> <strong>realiza uma ação mas não devolve nenhum resultado</strong>. Ela é chamada por seus efeitos — imprimir algo na tela, modificar uma estrutura, tocar um alarme — e não pelo valor que produz (porque não produz nenhum).</p>
+
+    <div class="definicao">
+        Funções <code>void</code> têm <code>void</code> como tipo de retorno. Não possuem instrução <code>return valor</code> — apenas <code>return;</code> vazio (opcional) para sair antecipadamente, ou simplesmente fecham com <code>}</code>.
+    </div>
+
+    <h3>Exemplo 1 — sem parâmetros: separador visual</h3>
+<pre>
+#include &lt;stdio.h&gt;
+
+void imprimirSeparador() {
+    printf("================================\n");
+}
+
+void imprimirCabecalho() {
+    imprimirSeparador();
+    printf("   SISTEMA DE NOTAS\n");
+    imprimirSeparador();
+}
+
+int main() {
+    imprimirCabecalho();
+    printf("   Aluno: Ana Souza\n");
+    imprimirSeparador();
+    return 0;
+}
+</pre>
+    <div class="terminal-output">================================<br>
+&nbsp;&nbsp;&nbsp;SISTEMA DE NOTAS<br>
+================================<br>
+&nbsp;&nbsp;&nbsp;Aluno: Ana Souza<br>
+================================</div>
+
+    <h3>Exemplo 2 — com parâmetro: exibição formatada</h3>
+    <p>Uma função <code>void</code> pode receber parâmetros — ela só não <em>retorna</em> nada.</p>
+<pre>
+#include &lt;stdio.h&gt;
+
+void exibirSituacao(char *nome, float media) {
+    printf("%-20s | Media: %.1f | %s\n",
+           nome,
+           media,
+           media &gt;= 7.0f ? "Aprovado" : "Reprovado");
+}
+
+int main() {
+    exibirSituacao("Carlos Mota",   8.5f);
+    exibirSituacao("Beatriz Lima",  5.0f);
+    exibirSituacao("Diego Farias",  7.0f);
+    return 0;
+}
+</pre>
+    <div class="terminal-output">Carlos Mota          | Media: 8.5 | Aprovado<br>
+Beatriz Lima         | Media: 5.0 | Reprovado<br>
+Diego Farias         | Media: 7.0 | Aprovado</div>
+
+    <div class="tip-box">
+        <strong>Quando usar <code>void</code>:</strong> Sempre que o propósito da função for um <em>efeito</em> (imprimir, gravar, atualizar tela) e não um <em>cálculo</em> com resultado. Separar a apresentação dos dados da lógica de cálculo é uma das bases da modularização.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ CATEGORIA II: COM RETORNO -->
+<div class="content-section">
+    <h2>Categoria II — Funções com Valor de Retorno</h2>
+
+    <p>Funções com valor de retorno <strong>calculam um resultado e o devolvem ao chamador</strong> com a instrução <code>return</code>. O chamador pode usar esse valor em expressões, atribuições ou diretamente em outros <code>printf</code>.</p>
+
+    <div class="definicao">
+        O tipo de retorno é declarado antes do nome da função. A instrução <code>return expressão;</code> termina a execução da função e entrega o valor ao ponto da chamada. Uma função pode ter múltiplos <code>return</code> em caminhos diferentes — mas sempre retorna <strong>um único valor</strong>.
+    </div>
+
+    <h3>Exemplo 1 — sucessor e predecessor</h3>
+<pre>
+#include &lt;stdio.h&gt;
+
+int sucessor(int n) {
+    return n + 1;
+}
+
+int predecessor(int n) {
+    return n - 1;
+}
+
+int main() {
+    int a = 10;
+    printf("Número:      %d\n", a);
+    printf("Sucessor:    %d\n", sucessor(a));
+    printf("Predecessor: %d\n", predecessor(a));
+    return 0;
+}
+</pre>
+    <div class="terminal-output">Número:      10<br>Sucessor:    11<br>Predecessor: 9</div>
+
+    <h3>Exemplo 2 — múltiplos <code>return</code> e lógica de decisão</h3>
+<pre>
+#include &lt;stdio.h&gt;
+
+char classificarNota(float nota) {
+    if (nota &gt;= 9.0f) return 'A';
+    if (nota &gt;= 7.0f) return 'B';
+    if (nota &gt;= 5.0f) return 'C';
+    return 'D';                    <span class="code-comment">// abaixo de 5</span>
+}
+
+int ehPrimo(int n) {
+    if (n &lt; 2) return 0;
+    for (int i = 2; i * i &lt;= n; i++)
+        if (n % i == 0) return 0;
+    return 1;                      <span class="code-comment">// 1 = verdadeiro em C</span>
+}
+
+int main() {
+    printf("Nota 8.5 -> conceito %c\n", classificarNota(8.5f));
+    printf("Nota 5.0 -> conceito %c\n", classificarNota(5.0f));
+    printf("Nota 3.0 -> conceito %c\n", classificarNota(3.0f));
+
+    for (int i = 1; i &lt;= 15; i++)
+        if (ehPrimo(i))
+            printf("%d ", i);
+    printf("\n");
+    return 0;
+}
+</pre>
+    <div class="terminal-output">Nota 8.5 -> conceito B<br>Nota 5.0 -> conceito C<br>Nota 3.0 -> conceito D<br>2 3 5 7 11 13</div>
+
+    <h3>Exemplo 3 — soma e exibição: dois estilos</h3>
+<pre>
+#include &lt;stdio.h&gt;
+
+<span class="code-comment">/* Exibe o resultado — void, efeito colateral */</span>
+void mostrarSoma(int a, int b) {
+    printf("A soma de %d e %d é %d\n", a, b, a + b);
+}
+
+<span class="code-comment">/* Retorna o resultado — reutilizável em expressões */</span>
+int calcularSoma(int a, int b) {
+    return a + b;
+}
+
+int main() {
+    mostrarSoma(4, 7);
+
+    int resultado = calcularSoma(4, 7);
+    printf("Resultado guardado: %d\n", resultado);
+
+    <span class="code-comment">/* A versão com retorno pode ser usada diretamente em expressões: */</span>
+    printf("Dobro da soma: %d\n", calcularSoma(4, 7) * 2);
+    return 0;
+}
+</pre>
+    <div class="terminal-output">A soma de 4 e 7 é 11<br>Resultado guardado: 11<br>Dobro da soma: 22</div>
+
+    <div class="info-box">
+        <strong>void vs. retorno — qual escolher?</strong> Se o chamador precisa usar o resultado em cálculos, condições ou guardá-lo numa variável, use retorno. Se o único propósito é um efeito visível (imprimir, tocar som, salvar arquivo), use <code>void</code>. Prefira retorno: funções com retorno são mais fáceis de testar e reutilizar.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ CATEGORIA III: COM PARÂMETROS -->
+<div class="content-section">
+    <h2>Categoria III — Funções com Parâmetros</h2>
+
+    <p>Parâmetros são a forma de <strong>alimentar a função com dados externos</strong>. Sem parâmetros, uma função só pode trabalhar com constantes ou variáveis globais — o que a torna pouco reutilizável. Com parâmetros, a mesma função serve para qualquer conjunto de dados.</p>
+
+    <div class="definicao">
+        Cada parâmetro é declarado com tipo e nome na assinatura da função: <code>float calcularArea(float base, float altura)</code>. Ao chamar a função, o chamador fornece os <strong>argumentos</strong> — os valores concretos. A função recebe cópias desses valores e trabalha com elas internamente.
+    </div>
+
+    <h3>Exemplo 1 — área de figuras geométricas</h3>
+<pre>
+#include &lt;stdio.h&gt;
+#define PI 3.14159f
+
+float areaRetangulo(float base, float altura) {
+    return base * altura;
+}
+
+float areaTriangulo(float base, float altura) {
+    return (base * altura) / 2.0f;
+}
+
+float areaCirculo(float raio) {
+    return PI * raio * raio;
+}
+
+int main() {
+    printf("Retangulo 5x3:    %.2f\n", areaRetangulo(5.0f, 3.0f));
+    printf("Triangulo 6x4:    %.2f\n", areaTriangulo(6.0f, 4.0f));
+    printf("Circulo r=7:      %.2f\n", areaCirculo(7.0f));
+    return 0;
+}
+</pre>
+    <div class="terminal-output">Retangulo 5x3:    15.00<br>Triangulo 6x4:    12.00<br>Circulo r=7:      153.94</div>
+
+    <h3>Exemplo 2 — parâmetros de tipos diferentes</h3>
+<pre>
+#include &lt;stdio.h&gt;
+
+float calcularSalario(float horasTrabalhadas, float valorHora, float bonus) {
+    float bruto = horasTrabalhadas * valorHora + bonus;
+    return bruto;
+}
+
+void imprimirHolerite(char *nome, float horas, float valorHora, float bonus) {
+    float salario = calcularSalario(horas, valorHora, bonus);
+    printf("Funcionario: %-15s | Horas: %.0f | Salario: R$%.2f\n",
+           nome, horas, salario);
+}
+
+int main() {
+    imprimirHolerite("Ana Oliveira",  160.0f, 25.50f, 300.0f);
+    imprimirHolerite("Bruno Santos",  120.0f, 30.00f, 0.0f);
+    imprimirHolerite("Carla Mendes",  176.0f, 22.00f, 500.0f);
+    return 0;
+}
+</pre>
+    <div class="terminal-output">Funcionario: Ana Oliveira    | Horas: 160 | Salario: R$4380.00<br>
+Funcionario: Bruno Santos    | Horas: 120 | Salario: R$3600.00<br>
+Funcionario: Carla Mendes    | Horas: 176 | Salario: R$4372.00</div>
+
+    <h3>Exemplo 3 — parâmetros e composição de funções</h3>
+    <p>Uma função pode chamar outras funções, passando seus parâmetros adiante ou usando seus retornos como argumentos:</p>
+<pre>
+#include &lt;stdio.h&gt;
+#include &lt;math.h&gt;
+
+float calcularHipotenusa(float cateto1, float cateto2) {
+    return sqrt(cateto1 * cateto1 + cateto2 * cateto2);
+}
+
+int classificarTriangulo(float a, float b, float c) {
+    <span class="code-comment">/* retorna: 1=acutângulo  2=retângulo  3=obtusângulo  0=inválido */</span>
+    if (a &lt;= 0 || b &lt;= 0 || c &lt;= 0)          return 0;
+    if (a+b &lt;= c || a+c &lt;= b || b+c &lt;= a)    return 0;
+    float maior2 = (a&gt;b &amp;&amp; a&gt;c) ? a*a : (b&gt;c ? b*b : c*c);
+    float soma   = a*a + b*b + c*c - maior2;
+    if (maior2 &lt; soma)  return 1;
+    if (maior2 == soma) return 2;
+    return 3;
+}
+
+int main() {
+    float hip = calcularHipotenusa(3.0f, 4.0f);
+    printf("Hipotenusa de (3, 4): %.2f\n", hip);
+
+    const char *tipos[] = {"Invalido","Acutangulo","Retangulo","Obtusangulo"};
+    printf("Triangulo 3-4-5: %s\n",  tipos[classificarTriangulo(3,4,5)]);
+    printf("Triangulo 5-5-5: %s\n",  tipos[classificarTriangulo(5,5,5)]);
+    printf("Triangulo 2-2-9: %s\n",  tipos[classificarTriangulo(2,2,9)]);
+    return 0;
+}
+</pre>
+    <div class="terminal-output">Hipotenusa de (3, 4): 5.00<br>Triangulo 3-4-5: Retangulo<br>Triangulo 5-5-5: Acutangulo<br>Triangulo 2-2-9: Invalido</div>
+
+    <div class="tip-box">
+        <strong>Parâmetros são cópias.</strong> Modificar um parâmetro dentro da função não altera a variável original no chamador. Isso é previsível e seguro — a função não tem como "estragar" os dados de fora por acidente. Na Aula 14b veremos quando isso é insuficiente e como os ponteiros resolvem.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ CATEGORIA IV: COM PONTEIROS -->
+<div class="content-section">
+    <h2>Categoria IV — Funções com Ponteiros</h2>
+
+    <p>Parâmetros normais são cópias — a função não pode alterar a variável original. Às vezes isso é exatamente o que precisamos. Outras vezes, precisamos que a função <strong>modifique a variável original</strong> ou <strong>devolva mais de um resultado</strong>. Para isso, usamos ponteiros como parâmetros.</p>
+
+    <div class="definicao">
+        Um ponteiro é uma variável que armazena o <strong>endereço de memória</strong> de outra variável. Ao passar o endereço de uma variável para uma função (<code>&amp;x</code>), a função pode ler e modificar diretamente o valor original, sem precisar de <code>return</code> para isso.
+    </div>
+
+    <h3>Exemplo 1 — incrementar o original (impossível sem ponteiro)</h3>
+<pre>
+#include &lt;stdio.h&gt;
+
+<span class="code-comment">/* Sem ponteiro: modifica apenas a cópia — original intocado */</span>
+void tentarIncrementar(int n) {
+    n++;                          <span class="code-comment">// afeta só a cópia local</span>
+}
+
+<span class="code-comment">/* Com ponteiro: acessa e modifica o original */</span>
+void incrementar(int *n) {
+    (*n)++;                       <span class="code-comment">// modifica no endereço apontado</span>
+}
+
+int main() {
+    int pontos = 10;
+
+    tentarIncrementar(pontos);
+    printf("Após tentativa: %d\n", pontos);   <span class="code-comment">// ainda 10</span>
+
+    incrementar(&amp;pontos);
+    printf("Após ponteiro:  %d\n", pontos);   <span class="code-comment">// agora 11</span>
+    return 0;
+}
+</pre>
+    <div class="terminal-output">Após tentativa: 10<br>Após ponteiro:  11</div>
+
+    <h3>Exemplo 2 — retornar dois resultados ao mesmo tempo</h3>
+    <p>Uma função só pode ter um <code>return</code>. Com ponteiros, podemos "retornar" vários resultados escrevendo diretamente nos endereços fornecidos pelo chamador:</p>
+<pre>
+#include &lt;stdio.h&gt;
+
+<span class="code-comment">/* Calcula mínimo e máximo de um vetor — dois resultados via ponteiro */</span>
+void minMax(int v[], int tam, int *minimo, int *maximo) {
+    *minimo = *maximo = v[0];
+    for (int i = 1; i &lt; tam; i++) {
+        if (v[i] &lt; *minimo) *minimo = v[i];
+        if (v[i] &gt; *maximo) *maximo = v[i];
+    }
+}
+
+<span class="code-comment">/* Calcula média e desvio (simplificado) — dois resultados via ponteiro */</span>
+void estatisticas(float v[], int tam, float *media, float *amplitude) {
+    float soma = 0, mn = v[0], mx = v[0];
+    for (int i = 0; i &lt; tam; i++) {
+        soma += v[i];
+        if (v[i] &lt; mn) mn = v[i];
+        if (v[i] &gt; mx) mx = v[i];
+    }
+    *media     = soma / tam;
+    *amplitude = mx - mn;
+}
+
+int main() {
+    int notas[] = {7, 3, 9, 5, 8, 2, 10};
+    int mn, mx;
+    minMax(notas, 7, &amp;mn, &amp;mx);
+    printf("Notas — min: %d | max: %d\n", mn, mx);
+
+    float precos[] = {12.5f, 8.0f, 25.0f, 5.5f, 18.0f};
+    float med, amp;
+    estatisticas(precos, 5, &amp;med, &amp;amp);
+    printf("Precos — media: %.1f | amplitude: %.1f\n", med, amp);
+    return 0;
+}
+</pre>
+    <div class="terminal-output">Notas — min: 2 | max: 10<br>Precos — media: 13.8 | amplitude: 19.5</div>
+
+    <h3>Exemplo 3 — imprimir e modificar um array via funções</h3>
+<pre>
+#include &lt;stdio.h&gt;
+
+void exibir(const int *v, int tam) {          <span class="code-comment">// const: só leitura</span>
+    for (int i = 0; i &lt; tam; i++)
+        printf("%d ", v[i]);
+    printf("\n");
+}
+
+void aplicarDesconto(int *precos, int tam, int percentual) {
+    for (int i = 0; i &lt; tam; i++)
+        precos[i] -= precos[i] * percentual / 100;
+}
+
+int main() {
+    int tabela[] = {100, 250, 80, 320, 150};
+
+    printf("Antes:  "); exibir(tabela, 5);
+    aplicarDesconto(tabela, 5, 10);           <span class="code-comment">// desconto de 10%</span>
+    printf("Depois: "); exibir(tabela, 5);
+    return 0;
+}
+</pre>
+    <div class="terminal-output">Antes:  100 250 80 320 150<br>Depois: 90 225 72 288 135</div>
+
+    <div class="info-box">
+        <strong>Arrays sempre são ponteiros.</strong> Ao passar <code>tabela</code> para uma função, C passa automaticamente o endereço do primeiro elemento — por isso <code>aplicarDesconto</code> modifica o array original sem precisar de <code>&amp;</code> na chamada. Use <code>const</code> quando a função só lê o array, para deixar a intenção clara e o compilador vigilante.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ EXEMPLO REUNINDO TUDO -->
+<div class="content-section">
+    <h2>Exemplo Final — As Quatro Categorias Juntas</h2>
+
+    <p>Um programa de boletim escolar que usa as quatro categorias em conjunto:</p>
+
+<pre>
+#include &lt;stdio.h&gt;
+
+<span class="code-comment">/* CATEGORIA I — void sem retorno */</span>
+void imprimirLinha() {
+    printf("------------------------------------------\n");
+}
+
+<span class="code-comment">/* CATEGORIA II — com retorno */</span>
+char conceito(float media) {
+    if (media &gt;= 9.0f) return 'A';
+    if (media &gt;= 7.0f) return 'B';
+    if (media &gt;= 5.0f) return 'C';
+    return 'D';
+}
+
+<span class="code-comment">/* CATEGORIA III — com parâmetros por valor */</span>
+float calcularMedia(float n1, float n2, float n3) {
+    return (n1 + n2 + n3) / 3.0f;
+}
+
+<span class="code-comment">/* CATEGORIA IV — com ponteiros: calcula melhor e pior média */</span>
+void extremosTurma(float medias[], int tam,
+                   float *melhor, float *pior) {
+    *melhor = *pior = medias[0];
+    for (int i = 1; i &lt; tam; i++) {
+        if (medias[i] &gt; *melhor) *melhor = medias[i];
+        if (medias[i] &lt; *pior)   *pior   = medias[i];
+    }
+}
+
+int main() {
+    const char *nomes[]  = {"Ana", "Bruno", "Carla", "Diego"};
+    float notas[][3] = {
+        {8.0f, 9.0f, 7.5f},
+        {5.0f, 6.0f, 4.5f},
+        {10.0f, 9.5f, 9.0f},
+        {6.5f, 7.0f, 6.0f}
+    };
+    float medias[4];
+    int n = 4;
+
+    imprimirLinha();
+    printf("%-10s  %5s  %5s  %5s  %6s  %s\n",
+           "Nome","N1","N2","N3","Media","Conceito");
+    imprimirLinha();
+
+    for (int i = 0; i &lt; n; i++) {
+        medias[i] = calcularMedia(notas[i][0], notas[i][1], notas[i][2]);
+        printf("%-10s  %5.1f  %5.1f  %5.1f  %6.1f  %c\n",
+               nomes[i],
+               notas[i][0], notas[i][1], notas[i][2],
+               medias[i], conceito(medias[i]));
+    }
+
+    imprimirLinha();
+    float melhor, pior;
+    extremosTurma(medias, n, &amp;melhor, &amp;pior);
+    printf("Melhor media: %.1f | Pior media: %.1f\n", melhor, pior);
+    imprimirLinha();
+
+    return 0;
+}
+</pre>
+    <div class="terminal-output">
+------------------------------------------<br>
+Nome        &nbsp;&nbsp;&nbsp;N1 &nbsp;&nbsp;&nbsp;&nbsp;N2 &nbsp;&nbsp;&nbsp;&nbsp;N3 &nbsp;&nbsp;Media  Conceito<br>
+------------------------------------------<br>
+Ana        &nbsp;&nbsp;&nbsp;8.0 &nbsp;&nbsp;&nbsp;9.0 &nbsp;&nbsp;&nbsp;7.5 &nbsp;&nbsp;&nbsp;&nbsp;8.2  B<br>
+Bruno      &nbsp;&nbsp;&nbsp;5.0 &nbsp;&nbsp;&nbsp;6.0 &nbsp;&nbsp;&nbsp;4.5 &nbsp;&nbsp;&nbsp;&nbsp;5.2  C<br>
+Carla      &nbsp;&nbsp;10.0 &nbsp;&nbsp;&nbsp;9.5 &nbsp;&nbsp;&nbsp;9.0 &nbsp;&nbsp;&nbsp;&nbsp;9.5  A<br>
+Diego      &nbsp;&nbsp;&nbsp;6.5 &nbsp;&nbsp;&nbsp;7.0 &nbsp;&nbsp;&nbsp;6.0 &nbsp;&nbsp;&nbsp;&nbsp;6.5  C<br>
+------------------------------------------<br>
+Melhor media: 9.5 | Pior media: 5.2<br>
+------------------------------------------
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ QUIZ -->
+<div class="content-section exercise-section">
+    <h2>Quiz — Aula 14a</h2>
+    <form class="quiz-form" onsubmit="return false;">
+
+        <div class="content-section quiz-question">
+            <p><strong>1.</strong> Uma função que imprime um relatório na tela e não devolve nenhum resultado deve ser declarada com qual tipo de retorno?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q1" value="a"> <code>int</code></label></li>
+                <li><label><input type="radio" name="q1" value="b"> <code>float</code></label></li>
+                <li><label><input type="radio" name="q1" value="c"> <code>void</code></label></li>
+                <li><label><input type="radio" name="q1" value="d"> <code>char</code></label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>2.</strong> Qual é a saída do código abaixo?</p>
+<pre>
+int dobrar(int n) { return n * 2; }
+int main() {
+    int x = 5;
+    dobrar(x);
+    printf("%d", x);
+}
+</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q2" value="a"> 10</label></li>
+                <li><label><input type="radio" name="q2" value="b"> 5</label></li>
+                <li><label><input type="radio" name="q2" value="c"> 0</label></li>
+                <li><label><input type="radio" name="q2" value="d"> Erro de compilação</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>3.</strong> Para que a função abaixo consiga alterar a variável original, o parâmetro deve ser declarado como:</p>
+<pre>
+void zerar(??? n) { *n = 0; }
+</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q3" value="a"> <code>int n</code></label></li>
+                <li><label><input type="radio" name="q3" value="b"> <code>int *n</code></label></li>
+                <li><label><input type="radio" name="q3" value="c"> <code>void n</code></label></li>
+                <li><label><input type="radio" name="q3" value="d"> <code>const int n</code></label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>4.</strong> Por que a função <code>minMax</code> usa ponteiros em vez de retornar os valores?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q4" value="a"> Porque <code>return</code> não funciona com <code>int</code></label></li>
+                <li><label><input type="radio" name="q4" value="b"> Porque uma função só pode retornar um único valor, e aqui precisamos de dois (mínimo e máximo)</label></li>
+                <li><label><input type="radio" name="q4" value="c"> Porque ponteiros são obrigatórios ao trabalhar com arrays</label></li>
+                <li><label><input type="radio" name="q4" value="d"> Para evitar que o compilador otimize a função</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>5.</strong> Qual é a saída?</p>
+<pre>
+void f(int n) { n = 99; }
+int main() {
+    int x = 1;
+    f(x);
+    printf("%d", x);
+}
+</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q5" value="a"> 99</label></li>
+                <li><label><input type="radio" name="q5" value="b"> 1</label></li>
+                <li><label><input type="radio" name="q5" value="c"> 0</label></li>
+                <li><label><input type="radio" name="q5" value="d"> Comportamento indefinido</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>6.</strong> O que o parâmetro <code>const int *v</code> garante em uma função?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q6" value="a"> O array é copiado antes de entrar na função</label></li>
+                <li><label><input type="radio" name="q6" value="b"> O ponteiro não pode ser reatribuído</label></li>
+                <li><label><input type="radio" name="q6" value="c"> Os valores apontados não podem ser modificados dentro da função</label></li>
+                <li><label><input type="radio" name="q6" value="d"> A função retorna <code>const</code> automaticamente</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>7.</strong> Uma função <code>void calcularMedia(float n1, float n2)</code> que calcula internamente a média mas não retorna e não usa ponteiros:</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q7" value="a"> É a forma mais correta — void sempre é preferido</label></li>
+                <li><label><input type="radio" name="q7" value="b"> É limitada: o resultado fica preso dentro da função e o chamador não pode usá-lo</label></li>
+                <li><label><input type="radio" name="q7" value="c"> Funcionaria normalmente se a média for guardada numa variável global</label></li>
+                <li><label><input type="radio" name="q7" value="d"> Gera erro de compilação — funções que calculam devem ter retorno</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>8.</strong> Ao passar um array <code>int tabela[]</code> para uma função sem usar <code>&amp;</code>, o que é passado?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q8" value="a"> Uma cópia completa de todos os elementos</label></li>
+                <li><label><input type="radio" name="q8" value="b"> O endereço do primeiro elemento — a função acessa o array original</label></li>
+                <li><label><input type="radio" name="q8" value="c"> O tamanho do array em bytes</label></li>
+                <li><label><input type="radio" name="q8" value="d"> <code>NULL</code>, pois arrays não podem ser parâmetros</label></li>
+            </ul>
+        </div>
+
+        <button type="button" class="submit-btn" onclick="verificarRespostas()">Verificar Respostas</button>
+    </form>
+    <div id="quiz-results" style="display:none; margin-top:20px; padding:15px; background:#dff0d8; border-radius:5px;"></div>
+</div>
+
+<div class="navigation-buttons">
+    <a href="capitulo13.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">← Aula 13</a>
+    <a href="index.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">Índice</a>
+    <a href="capitulo14b.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">Aula 14b →</a>
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align:center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education" style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+<script>
+function verificarRespostas() {
+    const gabarito = { q1:"c", q2:"b", q3:"b", q4:"b", q5:"b", q6:"c", q7:"b", q8:"b" };
+    const explicacoes = {
+        q1: "Funções que realizam uma ação sem precisar devolver resultado ao chamador usam void como tipo de retorno. O chamador sabe que o efeito aconteceu (ex: algo foi impresso) mas não recebe nenhum valor de volta.",
+        q2: "A função dobrar(x) calcula 10 e retorna, mas o retorno é descartado — ninguém faz 'x = dobrar(x)'. A variável x em main permanece 5. Funções com retorno precisam que o chamador capture o resultado.",
+        q3: "Para que a função possa escrever no endereço de 'n' original, o parâmetro deve ser declarado como ponteiro: 'int *n'. Na chamada, o chamador passa '&variavel'.",
+        q4: "Uma função em C só pode retornar um único valor com return. Para devolver dois resultados (mínimo e máximo) simultaneamente, a solução é receber dois ponteiros e escrever os resultados diretamente nos endereços fornecidos.",
+        q5: "A função f recebe uma cópia de x. A atribuição n = 99 modifica apenas essa cópia local. A variável x em main permanece 1 — completamente isolada da função.",
+        q6: "const int *v significa que os valores apontados por v são somente leitura dentro da função. O compilador emite erro se a função tentar modificar qualquer elemento. O ponteiro v em si ainda pode ser reatribuído.",
+        q7: "Sem return e sem ponteiro, o resultado calculado existe apenas como variável local dentro da função e é destruído ao retornar. O chamador não tem como acessar o valor. Para ser útil, a função deveria ou retornar o resultado ou receber um ponteiro para escrevê-lo.",
+        q8: "Arrays em C decaem automaticamente para o ponteiro do primeiro elemento ao serem passados para funções. Isso significa que a função recebe o endereço do array original — não uma cópia — e pode modificar todos os seus elementos."
+    };
+
+    let acertos = 0, html = "";
+    const total = Object.keys(gabarito).length;
+    for (const q in gabarito) {
+        const sel = document.querySelector(`input[name="${q}"]:checked`);
+        const num = q.replace("q","");
+        if (sel) {
+            if (sel.value === gabarito[q]) {
+                acertos++;
+                html += `<p>Questão ${num}: <span style="color:green;font-weight:bold;">✅ Correto!</span> — ${explicacoes[q]}</p>`;
+            } else {
+                html += `<p>Questão ${num}: <span style="color:red;font-weight:bold;">❌ Incorreto.</span> Gabarito: <strong>${gabarito[q].toUpperCase()}</strong> — ${explicacoes[q]}</p>`;
+            }
+        } else {
+            html += `<p>Questão ${num}: <span style="color:orange;font-weight:bold;">⚠ Não respondida.</span></p>`;
+        }
+    }
+    const r = document.getElementById("quiz-results");
+    r.innerHTML = `<h3>Sua pontuação: ${acertos} de ${total}</h3>${html}`;
+    r.style.display = "block";
+    r.scrollIntoView({ behavior: "smooth" });
+}
+</script>
+
+</body>
+</html>

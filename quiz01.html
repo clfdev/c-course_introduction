@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz 1 – Revisão: Aulas 00 a 07</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <style>
+        .quiz-header-info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 20px 0 30px 0;
+        }
+        .quiz-badge {
+            background-color: #f1f1f1;
+            border-left: 4px solid rgb(7,7,115);
+            padding: 10px 16px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #333;
+        }
+        .quiz-badge strong {
+            color: rgb(7,7,115);
+        }
+        .topic-tag {
+            display: inline-block;
+            font-size: 0.70em;
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 6px;
+            vertical-align: middle;
+            background-color: #eaf4fb;
+            color: #2471a3;
+            border: 1px solid #aed6f1;
+        }
+        .score-display {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: rgb(7,7,115);
+            text-align: center;
+            margin: 10px 0;
+        }
+        .score-bar-container {
+            background-color: #e0e0e0;
+            border-radius: 8px;
+            height: 20px;
+            margin: 10px 0 20px 0;
+            overflow: hidden;
+        }
+        .score-bar {
+            height: 100%;
+            border-radius: 8px;
+            transition: width 0.8s ease;
+        }
+        .result-item {
+            padding: 10px 14px;
+            border-radius: 5px;
+            margin-bottom: 8px;
+            border-left: 4px solid #ccc;
+            font-size: 0.93em;
+        }
+        .result-correct   { background-color: #eafaf1; border-color: #28a745; }
+        .result-incorrect { background-color: #fdf2f2; border-color: #dc3545; }
+        .result-skipped   { background-color: #fffbea; border-color: #ffc107; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Quiz 1 – Revisão: Aulas 00 a 07</h1>
+    <p>Introdução ao C, tipos de dados, operadores, constantes e comentários</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo07.html">← Aula 07</a>
+    <a href="capitulo08.html">Aula 08 →</a>
+</nav>
+
+<!-- Informações do quiz -->
+<div class="content-section">
+    <h2>Sobre este Quiz</h2>
+    <p>Este questionário cobre o conteúdo introdutório do curso — das Aulas 00 a 07. São <strong>24 questões</strong> de múltipla escolha distribuídas por todos os tópicos estudados até aqui.</p>
+    <div class="quiz-header-info">
+        <div class="quiz-badge"><strong>Questões:</strong> 24</div>
+        <div class="quiz-badge"><strong>Aulas cobertas:</strong> 00 a 07</div>
+        <div class="quiz-badge"><strong>Tópicos:</strong> História do C · Tipos · printf/scanf · Operadores · Constantes · Comentários</div>
+        <div class="quiz-badge"><strong>Aprovação:</strong> 17 de 24 (≥ 70%)</div>
+    </div>
+    <div class="tip-box">
+        <strong>DICA:</strong> Responda todas as questões antes de clicar em "Verificar Respostas". Você pode revisar suas escolhas a qualquer momento antes de enviar.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ QUIZ FORM -->
+<div class="exercise-section">
+    <form class="quiz-form" id="quiz-form">
+
+        <!-- ───── AULA 00 ───── -->
+        <h2 style="margin-top:10px;">Aula 00 — Apresentação ao C e Ambiente</h2>
+
+        <div class="quiz-question">
+            <p><strong>1. Quem criou a linguagem C e em que local/período?</strong> <span class="topic-tag">Aula 00</span></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q1" value="a"> Bjarne Stroustrup, nos laboratórios da Microsoft na década de 1980</label></li>
+                <li><label><input type="radio" name="q1" value="b"> Dennis Ritchie, nos laboratórios Bell da AT&T na década de 1970</label></li>
+                <li><label><input type="radio" name="q1" value="c"> Linus Torvalds, na Universidade de Helsinki em 1991</label></li>
+                <li><label><input type="radio" name="q1" value="d"> James Gosling, nos laboratórios Sun Microsystems na década de 1990</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>2. Qual IDE e compilador são recomendados pelo material de referência deste curso para programar em C?</strong> <span class="topic-tag">Aula 00</span></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q2" value="a"> Visual Studio Code com GCC</label></li>
+                <li><label><input type="radio" name="q2" value="b"> Eclipse com JDK</label></li>
+                <li><label><input type="radio" name="q2" value="c"> Code::Blocks com MinGW</label></li>
+                <li><label><input type="radio" name="q2" value="d"> IntelliJ IDEA com Clang</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>3. Qual é a principal diferença de paradigma entre C e Java?</strong> <span class="topic-tag">Aula 00</span></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q3" value="a"> C é interpretado; Java é compilado</label></li>
+                <li><label><input type="radio" name="q3" value="b"> C é orientado a objetos; Java é procedural</label></li>
+                <li><label><input type="radio" name="q3" value="c"> C é procedural; Java é orientado a objetos</label></li>
+                <li><label><input type="radio" name="q3" value="d"> C usa coleta de lixo automática; Java gerencia memória manualmente</label></li>
+            </ul>
+        </div>
+
+        <!-- ───── AULA 01 ───── -->
+        <h2>Aula 01 — Estrutura Geral de um Programa C</h2>
+
+        <div class="quiz-question">
+            <p><strong>4. O que a diretiva <code>#include &lt;stdio.h&gt;</code> faz em um programa C?</strong> <span class="topic-tag">Aula 01</span></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q4" value="a"> Define a função <code>main()</code> automaticamente</label></li>
+                <li><label><input type="radio" name="q4" value="b"> Importa a biblioteca padrão de entrada e saída, disponibilizando funções como <code>printf</code> e <code>scanf</code></label></li>
+                <li><label><input type="radio" name="q4" value="c"> Declara que o programa será compilado no padrão C99</label></li>
+                <li><label><input type="radio" name="q4" value="d"> Reserva espaço em memória para as variáveis do programa</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>5. Qual será a saída do seguinte trecho de código?</strong> <span class="topic-tag">Aula 01</span></p>
+            <pre>printf("A\nB\tC\n");</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q5" value="a"> A\nB\tC\n (os símbolos são impressos literalmente)</label></li>
+                <li><label><input type="radio" name="q5" value="b"> A na primeira linha; B seguido de uma tabulação e C na segunda linha</label></li>
+                <li><label><input type="radio" name="q5" value="c"> ABC em uma única linha</label></li>
+                <li><label><input type="radio" name="q5" value="d"> Erro de compilação: sequências de escape inválidas</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>6. Por que o <code>scanf</code> exige o operador <code>&amp;</code> antes das variáveis (ex: <code>scanf("%d", &amp;x)</code>)?</strong> <span class="topic-tag">Aula 01</span></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q6" value="a"> Para realizar a operação lógica AND entre a variável e o valor digitado</label></li>
+                <li><label><input type="radio" name="q6" value="b"> É apenas uma convenção estética sem significado funcional</label></li>
+                <li><label><input type="radio" name="q6" value="c"> Para fornecer ao <code>scanf</code> o endereço de memória da variável, permitindo que ele grave o valor lido diretamente naquele local</label></li>
+                <li><label><input type="radio" name="q6" value="d"> Para criar uma cópia temporária da variável durante a leitura</label></li>
+            </ul>
+        </div>
+
+        <!-- ───── AULA 02 ───── -->
+        <h2>Aula 02 — Variáveis e Tipos de Dados</h2>
+
+        <div class="quiz-question">
+            <p><strong>7. O que acontece ao executar <code>int x = 9.8;</code> em C?</strong> <span class="topic-tag">Aula 02</span></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q7" value="a"> O compilador gera um erro e interrompe a compilação</label></li>
+                <li><label><input type="radio" name="q7" value="b"> O valor é arredondado para 10</label></li>
+                <li><label><input type="radio" name="q7" value="c"> A parte decimal é descartada silenciosamente e <code>x</code> recebe o valor 9</label></li>
+                <li><label><input type="radio" name="q7" value="d"> O tipo de <code>x</code> é automaticamente convertido para <code>double</code></label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>8. Qual é o código ASCII do caractere <code>'a'</code> (letra minúscula)?</strong> <span class="topic-tag">Aula 02</span></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q8" value="a"> 65</label></li>
+                <li><label><input type="radio" name="q8" value="b"> 97</label></li>
+                <li><label><input type="radio" name="q8" value="c"> 48</label></li>
+                <li><label><input type="radio" name="q8" value="d"> 32</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>9. Qual a saída do código abaixo?</strong> <span class="topic-tag">Aula 02</span></p>
+            <pre>char c = 'A';
+printf("%c  %d\n", c, c + 1);</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q9" value="a"> A  65</label></li>
+                <li><label><input type="radio" name="q9" value="b"> A  66</label></li>
+                <li><label><input type="radio" name="q9" value="c"> B  66</label></li>
+                <li><label><input type="radio" name="q9" value="d"> Erro: não se pode somar 1 a um <code>char</code></label></li>
+            </ul>
+        </div>
+
+        <!-- ───── AULA 03 ───── -->
+        <h2>Aula 03 — Entrada e Saída: printf e scanf</h2>
+
+        <div class="quiz-question">
+            <p><strong>10. Qual será a saída de <code>printf("%08.2f\n", 3.5);</code>?</strong> <span class="topic-tag">Aula 03</span></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q10" value="a"> <code>3.50</code></label></li>
+                <li><label><input type="radio" name="q10" value="b"> <code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3.50</code></label></li>
+                <li><label><input type="radio" name="q10" value="c"> <code>00003.50</code></label></li>
+                <li><label><input type="radio" name="q10" value="d"> Erro de compilação</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>11. Para ler uma variável do tipo <code>double</code> com <code>scanf</code>, qual especificador deve ser usado?</strong> <span class="topic-tag">Aula 03</span></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q11" value="a"> <code>%f</code></label></li>
+                <li><label><input type="radio" name="q11" value="b"> <code>%d</code></label></li>
+                <li><label><input type="radio" name="q11" value="c"> <code>%lf</code></label></li>
+                <li><label><input type="radio" name="q11" value="d"> <code>%g</code></label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>12. Por que é necessário adicionar um espaço antes de <code>%c</code> no <code>scanf</code>, como em <code>scanf(" %c", &amp;c)</code>?</strong> <span class="topic-tag">Aula 03</span></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q12" value="a"> O espaço é obrigatório por sintaxe da linguagem</label></li>
+                <li><label><input type="radio" name="q12" value="b"> Para descartar o <code>'\n'</code> residual que ficou no buffer após leituras anteriores</label></li>
+                <li><label><input type="radio" name="q12" value="c"> Para que o <code>scanf</code> aceite letras maiúsculas e minúsculas</label></li>
+                <li><label><input type="radio" name="q12" value="d"> Para que a leitura ignore espaços no início do que o usuário digitar</label></li>
+            </ul>
+        </div>
+
+        <!-- ───── AULA 04 ───── -->
+        <h2>Aula 04 — Operadores Aritméticos e Relacionais</h2>
+
+        <div class="quiz-question">
+            <p><strong>13. Qual será o resultado de <code>2 + 3 * 4 - 1</code> em C?</strong> <span class="topic-tag">Aula 04</span></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q13" value="a"> 19</label></li>
+                <li><label><input type="radio" name="q13" value="b"> 13</label></li>
+                <li><label><input type="radio" name="q13" value="c"> 20</label></li>
+                <li><label><input type="radio" name="q13" value="d"> 11</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>14. Analise o código. Qual será a saída?</strong> <span class="topic-tag">Aula 04</span></p>
+            <pre>int a = 5;
+printf("%d\n", a++);
+printf("%d\n", ++a);</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q14" value="a"> 5 e 6</label></li>
+                <li><label><input type="radio" name="q14" value="b"> 6 e 7</label></li>
+                <li><label><input type="radio" name="q14" value="c"> 5 e 7</label></li>
+                <li><label><input type="radio" name="q14" value="d"> 6 e 6</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>15. O código abaixo tem uma armadilha clássica. O que ele imprime?</strong> <span class="topic-tag">Aula 04</span></p>
+            <pre>int x = 5;
+if (x = 0)
+    printf("zero\n");
+else
+    printf("nao zero\n");</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q15" value="a"> <code>zero</code> — pois x é comparado com 0</label></li>
+                <li><label><input type="radio" name="q15" value="b"> <code>nao zero</code> — pois <code>x = 0</code> atribui 0 a x, e 0 é falso</label></li>
+                <li><label><input type="radio" name="q15" value="c"> Erro de compilação: atribuição dentro de <code>if</code> é inválida em C</label></li>
+                <li><label><input type="radio" name="q15" value="d"> Comportamento indefinido — o compilador rejeita o código</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>16. Qual header deve ser incluído para usar a função <code>sqrt()</code>?</strong> <span class="topic-tag">Aula 04</span></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q16" value="a"> <code>&lt;stdio.h&gt;</code></label></li>
+                <li><label><input type="radio" name="q16" value="b"> <code>&lt;stdlib.h&gt;</code></label></li>
+                <li><label><input type="radio" name="q16" value="c"> <code>&lt;string.h&gt;</code></label></li>
+                <li><label><input type="radio" name="q16" value="d"> <code>&lt;math.h&gt;</code></label></li>
+            </ul>
+        </div>
+
+        <!-- ───── AULA 05 ───── -->
+        <h2>Aula 05 — Operadores Lógicos</h2>
+
+        <div class="quiz-question">
+            <p><strong>17. Dado <code>int a = 0, b = 5;</code>, qual é o valor de <code>a != 0 && b > 3</code>?</strong> <span class="topic-tag">Aula 05</span></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q17" value="a"> 1 — pois <code>b > 3</code> é verdadeiro</label></li>
+                <li><label><input type="radio" name="q17" value="b"> 0 — pois <code>a != 0</code> é falso e o curto-circuito encerra a avaliação</label></li>
+                <li><label><input type="radio" name="q17" value="c"> Erro de compilação: não se pode combinar <code>!=</code> com <code>&&</code></label></li>
+                <li><label><input type="radio" name="q17" value="d"> 5 — o valor de <code>b</code> é retornado</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>18. Qual das expressões representa corretamente "x está entre 10 e 20, inclusive" em C?</strong> <span class="topic-tag">Aula 05</span></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q18" value="a"> <code>10 &lt;= x &lt;= 20</code></label></li>
+                <li><label><input type="radio" name="q18" value="b"> <code>x >= 10 && x &lt;= 20</code></label></li>
+                <li><label><input type="radio" name="q18" value="c"> <code>x >= 10 || x &lt;= 20</code></label></li>
+                <li><label><input type="radio" name="q18" value="d"> <code>x > 9 && x &lt; 21 || x == 10</code></label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>19. Qual a saída do código abaixo?</strong> <span class="topic-tag">Aula 05</span></p>
+            <pre>int x = 7;
+printf("%d %d\n", !x, !!x);</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q19" value="a"> 7 e 7</label></li>
+                <li><label><input type="radio" name="q19" value="b"> 1 e 0</label></li>
+                <li><label><input type="radio" name="q19" value="c"> 0 e 1</label></li>
+                <li><label><input type="radio" name="q19" value="d"> 0 e 0</label></li>
+            </ul>
+        </div>
+
+        <!-- ───── AULA 06 ───── -->
+        <h2>Aula 06 — Constantes: #define e const</h2>
+
+        <div class="quiz-question">
+            <p><strong>20. Qual das declarações abaixo está <u>sintaticamente incorreta</u>?</strong> <span class="topic-tag">Aula 06</span></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q20" value="a"> <code>#define MAXIMO 100</code></label></li>
+                <li><label><input type="radio" name="q20" value="b"> <code>const int maximo = 100;</code></label></li>
+                <li><label><input type="radio" name="q20" value="c"> <code>#define MAXIMO = 100;</code></label></li>
+                <li><label><input type="radio" name="q20" value="d"> <code>const float taxa = 0.05f;</code></label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>21. Por que a macro abaixo pode causar resultado errado?</strong> <span class="topic-tag">Aula 06</span></p>
+            <pre>#define QUADRADO(x) x * x
+printf("%d\n", QUADRADO(2 + 3));</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q21" value="a"> <code>#define</code> não aceita parâmetros — apenas valores simples</label></li>
+                <li><label><input type="radio" name="q21" value="b"> A substituição textual expande para <code>2 + 3 * 2 + 3 = 11</code> em vez de <code>25</code></label></li>
+                <li><label><input type="radio" name="q21" value="c"> O especificador <code>%d</code> é incompatível com o resultado de uma macro</label></li>
+                <li><label><input type="radio" name="q21" value="d"> O pré-processador arredonda o resultado automaticamente</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>22. Qual vantagem o <code>const</code> tem sobre o <code>#define</code>?</strong> <span class="topic-tag">Aula 06</span></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q22" value="a"> <code>const</code> não ocupa memória, tornando o programa mais rápido</label></li>
+                <li><label><input type="radio" name="q22" value="b"> <code>const</code> tem tipo definido, é verificado pelo compilador e é visível no depurador</label></li>
+                <li><label><input type="radio" name="q22" value="c"> <code>const</code> permite alterar o valor em tempo de execução se necessário</label></li>
+                <li><label><input type="radio" name="q22" value="d"> <code>const</code> é processado antes do <code>#define</code>, tendo maior prioridade</label></li>
+            </ul>
+        </div>
+
+        <!-- ───── AULA 07 ───── -->
+        <h2>Aula 07 — Comentários no Código</h2>
+
+        <div class="quiz-question">
+            <p><strong>23. O trecho abaixo compila corretamente?</strong> <span class="topic-tag">Aula 07</span></p>
+            <pre>/* comentário /* aninhado */ ainda código? */
+printf("ok\n");</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q23" value="a"> Sim — comentários aninhados são permitidos em C</label></li>
+                <li><label><input type="radio" name="q23" value="b"> Não — o primeiro <code>*/</code> encerra o comentário e o restante é interpretado como código inválido</label></li>
+                <li><label><input type="radio" name="q23" value="c"> Sim — o compilador detecta o aninhamento e ignora todo o bloco</label></li>
+                <li><label><input type="radio" name="q23" value="d"> Não — comentários de bloco não podem estar na mesma linha que <code>printf</code></label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>24. Qual método é mais seguro para comentar um bloco grande de código em C que já contém comentários <code>/* */</code> internos?</strong> <span class="topic-tag">Aula 07</span></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q24" value="a"> Envolver tudo com um <code>/* ... */</code> externo maior</label></li>
+                <li><label><input type="radio" name="q24" value="b"> Usar <code>#if 0 ... #endif</code></label></li>
+                <li><label><input type="radio" name="q24" value="c"> Adicionar <code>//</code> manualmente em cada linha</label></li>
+                <li><label><input type="radio" name="q24" value="d"> Usar <code>#define COMENTARIO ... #undef COMENTARIO</code></label></li>
+            </ul>
+        </div>
+
+        <div style="text-align:center; margin-top: 30px;">
+            <button type="button" class="submit-btn" style="font-size:1.1em; padding:14px 40px;" onclick="verificarRespostas()">
+                ✔ Verificar Respostas
+            </button>
+        </div>
+
+    </form>
+</div>
+
+<!-- ═══════════════════════════════════════ RESULTADOS -->
+<div id="quiz-results" style="display:none;" class="content-section">
+    <h2>Resultado</h2>
+    <div class="score-display" id="score-text"></div>
+    <div class="score-bar-container">
+        <div class="score-bar" id="score-bar"></div>
+    </div>
+    <p id="score-feedback" style="text-align:center; font-size:1.05em; margin-bottom:20px;"></p>
+    <h3>Gabarito Comentado</h3>
+    <div id="result-details"></div>
+    <div style="text-align:center; margin-top:24px;">
+        <button type="button" class="submit-btn" onclick="reiniciarQuiz()">↺ Reiniciar Quiz</button>
+    </div>
+</div>
+
+<div class="navigation-buttons">
+    <a href="capitulo07.html">← Aula 07</a>
+    <a href="index.html">Índice</a>
+    <a href="capitulo08.html">Aula 08 →</a>
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align: center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education" style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+<script>
+    const gabarito = {
+        q1:  "b", q2:  "c", q3:  "c", q4:  "b", q5:  "b", q6:  "c",
+        q7:  "c", q8:  "b", q9:  "b", q10: "c", q11: "c", q12: "b",
+        q13: "b", q14: "c", q15: "b", q16: "d", q17: "b", q18: "b",
+        q19: "c", q20: "c", q21: "b", q22: "b", q23: "b", q24: "b"
+    };
+
+    const temas = {
+        q1:  "Aula 00", q2:  "Aula 00", q3:  "Aula 00",
+        q4:  "Aula 01", q5:  "Aula 01", q6:  "Aula 01",
+        q7:  "Aula 02", q8:  "Aula 02", q9:  "Aula 02",
+        q10: "Aula 03", q11: "Aula 03", q12: "Aula 03",
+        q13: "Aula 04", q14: "Aula 04", q15: "Aula 04", q16: "Aula 04",
+        q17: "Aula 05", q18: "Aula 05", q19: "Aula 05",
+        q20: "Aula 06", q21: "Aula 06", q22: "Aula 06",
+        q23: "Aula 07", q24: "Aula 07"
+    };
+
+    const explicacoes = {
+        q1:  "Dennis Ritchie criou o C nos laboratórios Bell da AT&T na década de 1970, originalmente para desenvolver o sistema operacional Unix.",
+        q2:  "O material de referência deste curso recomenda o Code::Blocks com MinGW — um ambiente integrado que facilita a compilação e execução de programas C no Windows.",
+        q3:  "C é uma linguagem procedural — o código é organizado em funções independentes, sem classes. Java é orientado a objetos, onde tudo é organizado em classes.",
+        q4:  "#include <stdio.h> importa a biblioteca padrão de entrada e saída (Standard Input/Output), que contém as definições de printf, scanf e outras funções de E/S.",
+        q5:  "\\n é nova linha e \\t é tabulação. A saída é: 'A' na primeira linha; 'B', uma tabulação e 'C' na segunda linha.",
+        q6:  "O operador & retorna o endereço de memória da variável. O scanf precisa saber exatamente onde na memória gravar o valor digitado. Sem &, o comportamento é indefinido.",
+        q7:  "Em C, atribuir 9.8 a um int trunca silenciosamente a parte decimal. x recebe 9, sem arredondamento e sem erro — um dos comportamentos que exige atenção em C.",
+        q8:  "O código ASCII de 'a' (minúsculo) é 97. 'A' maiúsculo é 65. Os dígitos '0'–'9' começam em 48. Espaço é 32.",
+        q9:  "c = 'A' tem valor ASCII 65. Com %c imprime 'A'; c+1 = 66 é impresso com %d. Resultado: 'A  66'.",
+        q10: "%08.2f reserva 8 posições com 2 casas decimais, preenchendo com zeros. 3.50 ocupa 4 caracteres, então recebe 4 zeros à esquerda: '00003.50'.",
+        q11: "No scanf, double exige %lf obrigatoriamente. Usar %f com double no scanf causa comportamento indefinido. No printf, %f funciona para ambos float e double.",
+        q12: "Após um scanf('%d'), o Enter (\\n) fica no buffer de entrada. O espaço antes de %c instrui o scanf a descartar qualquer espaço em branco residual, incluindo o \\n.",
+        q13: "Por precedência, * é avaliado antes de + e -: 2 + (3*4) - 1 = 2 + 12 - 1 = 13.",
+        q14: "a++ (pós): usa 5, depois incrementa → a vale 6. ++a (pré): incrementa primeiro → a vira 7, imprime 7. Saída: 5 e 7.",
+        q15: "x = 0 é atribuição, não comparação. Atribui 0 a x e retorna 0 (falso). O if vai para o else e imprime 'nao zero'. O correto seria x == 0.",
+        q16: "sqrt() e outras funções matemáticas (pow, ceil, floor, fabs) são declaradas em <math.h>. Ao compilar pela linha de comando, use o flag -lm.",
+        q17: "a = 0, então a != 0 é falso. Por curto-circuito com &&, b > 3 nem é avaliado — o resultado já é 0 (falso).",
+        q18: "A forma correta é x >= 10 && x <= 20. A expressão 10 <= x <= 20 em C é avaliada como (10 <= x) <= 20, que é quase sempre verdadeira — um bug silencioso.",
+        q19: "x = 7 é não-zero (verdadeiro). !x inverte para 0 (falso). !!x inverte novamente para 1 (verdadeiro). Saída: '0 1'.",
+        q20: "#define MAXIMO = 100; está incorreto. O pré-processador substituiria MAXIMO por '= 100' (incluindo = e ;), gerando erros ao usar a macro. O correto é #define MAXIMO 100.",
+        q21: "QUADRADO(2+3) expande para 2+3*2+3. Por precedência, * antes de +: 2 + 6 + 3 = 11. O resultado esperado seria 25. Use sempre parênteses: #define QUADRADO(x) ((x)*(x)).",
+        q22: "const tem tipo explícito verificado pelo compilador, obedece ao escopo de bloco e seu nome é preservado no depurador. Isso torna o código mais seguro e fácil de depurar.",
+        q23: "Comentários /* */ não podem ser aninhados. O compilador fecha o comentário no primeiro */ encontrado. O texto 'ainda código? */' é interpretado como código — causando erro.",
+        q24: "#if 0 ... #endif é o método mais seguro: o pré-processador ignora tudo entre as diretivas, incluindo comentários /* */ já existentes. Mude para #if 1 para reativar."
+    };
+
+    function verificarRespostas() {
+        const total = Object.keys(gabarito).length;
+        let acertos = 0;
+        let html = "";
+
+        for (const q in gabarito) {
+            const selecionada = document.querySelector(`input[name="${q}"]:checked`);
+            const num = q.substring(1);
+            const tema = temas[q];
+
+            if (!selecionada) {
+                html += `<div class="result-item result-skipped">
+                    <strong>Q${num} [${tema}]:</strong> <span style="color:#856404;">⚠ Não respondida.</span>
+                    <br><small>${explicacoes[q]}</small>
+                </div>`;
+            } else if (selecionada.value === gabarito[q]) {
+                acertos++;
+                html += `<div class="result-item result-correct">
+                    <strong>Q${num} [${tema}]:</strong> <span style="color:#28a745;">✓ Correto!</span>
+                    <br><small>${explicacoes[q]}</small>
+                </div>`;
+            } else {
+                html += `<div class="result-item result-incorrect">
+                    <strong>Q${num} [${tema}]:</strong> <span style="color:#dc3545;">✗ Incorreto.</span>
+                    <br><small>${explicacoes[q]}</small>
+                </div>`;
+            }
+        }
+
+        // Placar
+        const pct = Math.round((acertos / total) * 100);
+        let cor, feedback;
+        if (pct >= 90) {
+            cor = "#28a745";
+            feedback = "🏆 Excelente! Domínio completo dos conceitos introdutórios do C.";
+        } else if (pct >= 70) {
+            cor = "#17a2b8";
+            feedback = "✅ Aprovado! Revise as questões erradas antes de continuar para as Aulas 08 em diante.";
+        } else if (pct >= 50) {
+            cor = "#ffc107";
+            feedback = "⚠️ Parcial. Recomenda-se rever as aulas indicadas nas questões incorretas antes de prosseguir.";
+        } else {
+            cor = "#dc3545";
+            feedback = "❌ Abaixo do esperado. Revise as Aulas 00 a 07 com cuidado antes de continuar.";
+        }
+
+        document.getElementById("score-text").textContent = `${acertos} / ${total} — ${pct}%`;
+        document.getElementById("score-text").style.color = cor;
+        document.getElementById("score-bar").style.width = pct + "%";
+        document.getElementById("score-bar").style.backgroundColor = cor;
+        document.getElementById("score-feedback").textContent = feedback;
+        document.getElementById("result-details").innerHTML = html;
+
+        const resultDiv = document.getElementById("quiz-results");
+        resultDiv.style.display = "block";
+        resultDiv.scrollIntoView({ behavior: "smooth" });
+
+        // Desabilita o botão de envio
+        document.querySelector(".submit-btn[onclick='verificarRespostas()']").disabled = true;
+    }
+
+    function reiniciarQuiz() {
+        document.getElementById("quiz-form").reset();
+        document.getElementById("quiz-results").style.display = "none";
+        document.querySelector(".submit-btn[onclick='verificarRespostas()']").disabled = false;
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+</script>
+
+</body>
+</html>

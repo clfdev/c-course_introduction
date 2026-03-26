@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Curso de C para Iniciantes</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <style>
+        .badge {
+            display: inline-block;
+            font-size: 0.70em;
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 6px;
+            vertical-align: middle;
+            letter-spacing: 0.03em;
+        }
+        .badge-suplementar {
+            background-color: #eaf4fb;
+            color: #2471a3;
+            border: 1px solid #aed6f1;
+        }
+        .badge-novo {
+            background-color: #eafaf1;
+            color: #1e8449;
+            border: 1px solid #a9dfbf;
+        }
+        .legend {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 12px 20px;
+            margin: 0 auto 30px auto;
+            max-width: 860px;
+            font-size: 0.9em;
+            color: #444;
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .legend strong {
+            color: #222;
+            margin-right: 6px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Curso de C para Iniciantes</h1>
+        <p>Aprenda a programar em C do zero — da base à memória, alinhado ao Capítulo 1 do livro <em>Quantum Chemistry: Mathematical and Computational Approaches</em></p>
+    </header>
+
+    <div class="legend">
+        <span><strong>Legenda:</strong></span>
+        <span><span class="badge badge-novo">NOVO</span> Aula adicionada com base na análise do material de referência (docx)</span>
+        <span><span class="badge badge-suplementar">SUPLEMENTAR</span> Conteúdo complementar — não presente no material de referência</span>
+    </div>
+
+    <div class="chapter-list">
+
+        <!-- BLOCO 1: Introdução -->
+        <div class="chapter-section">
+            <h2>Introdução à Linguagem C</h2>
+            <ul class="chapter-links">
+                <li>
+                    <a href="capitulo00.html">
+                        <span class="chapter-number">Aula 00</span>
+                        Apresentação ao C, Code::Blocks + MinGW e primeiros conceitos
+                    </a>
+                </li>
+                <li>
+                    <a href="capitulo01.html">
+                        <span class="chapter-number">Aula 01</span>
+                        Estrutura geral de um programa C e o primeiro "Hello, World!"
+                    </a>
+                </li>
+                <li>
+                    <a href="capitulo02.html">
+                        <span class="chapter-number">Aula 02</span>
+                        Variáveis e Tipos de Dados: int, float, double, char e bool
+                    </a>
+                </li>
+                <li>
+                    <a href="capitulo03.html">
+                        <span class="chapter-number">Aula 03</span>
+                        Entrada e Saída: printf, scanf e especificadores de formato
+                    </a>
+                </li>
+                <li>
+                    <a href="capitulo04.html">
+                        <span class="chapter-number">Aula 04</span>
+                        Operadores Aritméticos e Relacionais
+                    </a>
+                </li>
+                <li>
+                    <a href="capitulo05.html">
+                        <span class="chapter-number">Aula 05</span>
+                        Operadores Lógicos: &&, || e !
+                    </a>
+                </li>
+                <li>
+                    <a href="capitulo06.html">
+                        <span class="chapter-number">Aula 06</span>
+                        Constantes: a diretiva #define e a palavra-chave const
+                    </a>
+                </li>
+                <li>
+                    <a href="capitulo07.html">
+                        <span class="chapter-number">Aula 07</span>
+                        Comentários no Código
+                        <span class="badge badge-suplementar">SUPLEMENTAR</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="quiz-section">
+            <h2>Questionários de Avaliação</h2>
+            <ul class="chapter-links">
+                <li><a href="quiz01.html"><span class="chapter-number">Quiz 1</span> Quiz de C — Aulas 00 a 07</a></li>
+            </ul>
+        </div>
+
+        <!-- BLOCO 2: Estruturas de Controle -->
+        <div class="chapter-section">
+            <h2>Estruturas de Controle</h2>
+            <ul class="chapter-links">
+                <li>
+                    <a href="capitulo08.html">
+                        <span class="chapter-number">Aula 08</span>
+                        Estrutura if e if-else
+                    </a>
+                </li>
+                <li>
+                    <a href="capitulo09.html">
+                        <span class="chapter-number">Aula 09</span>
+                        Estrutura if-else-if, switch-case e operador ternário
+                    </a>
+                </li>
+                <li>
+                    <a href="capitulo10.html">
+                        <span class="chapter-number">Aula 10</span>
+                        Loop for
+                    </a>
+                </li>
+                <li>
+                    <a href="capitulo11.html">
+                        <span class="chapter-number">Aula 11</span>
+                        Loop while e do-while
+                    </a>
+                </li>
+                <li>
+                    <a href="capitulo12.html">
+                        <span class="chapter-number">Aula 12</span>
+                        break e continue
+                        <span class="badge badge-suplementar">SUPLEMENTAR</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="quiz-section">
+            <h2>Questionários de Avaliação</h2>
+            <ul class="chapter-links">
+                <li><a href="quiz02.html"><span class="chapter-number">Quiz 2</span> Quiz de C — Aulas 08 a 12</a></li>
+            </ul>
+        </div>
+
+        <!-- BLOCO 3: Funções e Modularização -->
+        <div class="chapter-section">
+            <h2>Funções e Modularização</h2>
+            <ul class="chapter-links">
+                <li>
+                    <a href="capitulo13.html">
+                        <span class="chapter-number">Aula 13</span>
+                        Funções: declaração, definição e chamada
+                    </a>
+                </li>
+                <li>
+                    <a href="capitulo14.html">
+                        <span class="chapter-number">Aula 14</span>
+                        Parâmetros, retorno e tipos de funções (void, com retorno, com ponteiro)
+                    </a>
+                </li>
+                <li>
+                    <a href="capitulo15.html">
+                        <span class="chapter-number">Aula 15</span>
+                        Escopo de Variáveis: local e global
+                        <span class="badge badge-suplementar">SUPLEMENTAR</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="capitulo16.html">
+                        <span class="chapter-number">Aula 16</span>
+                        Recursão
+                        <span class="badge badge-suplementar">SUPLEMENTAR</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="capitulo17.html">
+                        <span class="chapter-number">Aula 17</span>
+                        Protótipos de Funções e Arquivos de Cabeçalho (.h)
+                        <span class="badge badge-novo">NOVO</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="capitulo18.html">
+                        <span class="chapter-number">Aula 18</span>
+                        Programação Multi-arquivo: separando interface (.h) da implementação (.c)
+                        <span class="badge badge-novo">NOVO</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="capitulo19.html">
+                        <span class="chapter-number">Aula 19</span>
+                        Funções static, static inline e encapsulamento em C
+                        <span class="badge badge-novo">NOVO</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="quiz-section">
+            <h2>Questionários de Avaliação</h2>
+            <ul class="chapter-links">
+                <li><a href="quiz03.html"><span class="chapter-number">Quiz 3</span> Quiz de C — Funções e Modularização (Aulas 13 a 19)</a></li>
+            </ul>
+        </div>
+
+        <!-- BLOCO 4: Ponteiros e Memória -->
+        <div class="chapter-section">
+            <h2>Ponteiros e Memória</h2>
+            <ul class="chapter-links">
+                <li>
+                    <a href="capitulo20.html">
+                        <span class="chapter-number">Aula 20</span>
+                        Ponteiros e alocação de memória: operadores &amp; e *
+                    </a>
+                </li>
+                <li>
+                    <a href="capitulo21.html">
+                        <span class="chapter-number">Aula 21</span>
+                        Aritmética de Ponteiros
+                    </a>
+                </li>
+                <li>
+                    <a href="capitulo22.html">
+                        <span class="chapter-number">Aula 22</span>
+                        Alocação dinâmica: malloc, calloc, realloc e free
+                    </a>
+                </li>
+                <li>
+                    <a href="capitulo23.html">
+                        <span class="chapter-number">Aula 23</span>
+                        Ponteiros e Funções: passagem por referência versus por valor
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="quiz-section">
+            <h2>Questionários de Avaliação</h2>
+            <ul class="chapter-links">
+                <li><a href="quiz04.html"><span class="chapter-number">Quiz 4</span> Quiz de C — Ponteiros e Memória (Aulas 20 a 23)</a></li>
+            </ul>
+        </div>
+
+        <!-- BLOCO 5: Arrays, Strings e Structs -->
+        <div class="chapter-section">
+            <h2>Arrays, Strings e Structs</h2>
+            <ul class="chapter-links">
+                <li>
+                    <a href="capitulo24a.html">
+                        <span class="chapter-number">Aula 24</span>
+                        Arrays unidimensionais (vetores): declaração, inicialização e acesso
+                    </a>
+                </li>
+                <li>
+                    <a href="capitulo25.html">
+                        <span class="chapter-number">Aula 25</span>
+                        Arrays bidimensionais (matrizes): operações e manipulação
+                    </a>
+                </li>
+                <li>
+                    <a href="capitulo26.html">
+                        <span class="chapter-number">Aula 26</span>
+                        Strings em C: arrays de char e funções de string.h
+                        <span class="badge badge-suplementar">SUPLEMENTAR</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="capitulo27.html">
+                        <span class="chapter-number">Aula 27</span>
+                        Structs e typedef: agrupando dados em estruturas compostas
+                    </a>
+                </li>
+                <li>
+                    <a href="capitulo28.html">
+                        <span class="chapter-number">Aula 28</span>
+                        Ponteiros para Structs: operador seta (-&gt;) e alocação dinâmica de structs
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="quiz-section">
+            <h2>Questionários de Avaliação</h2>
+            <ul class="chapter-links">
+                <li><a href="quiz05.html"><span class="chapter-number">Quiz 5</span> Quiz de C — Arrays, Strings e Structs (Aulas 24 a 28)</a></li>
+            </ul>
+        </div>
+
+        <!-- BLOCO 6: Estruturas de Dados — Lista Linear Sequencial -->
+        <div class="chapter-section">
+            <h2>Estruturas de Dados — Lista Linear Sequencial</h2>
+            <ul class="chapter-links">
+                <li>
+                    <a href="capitulo29.html">
+                        <span class="chapter-number">Aula 29</span>
+                        <code>struct</code> em C vs <code>class</code> em Java: agrupando dados sem métodos
+                        <span class="badge badge-novo">NOVO</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="capitulo30.html">
+                        <span class="chapter-number">Aula 30</span>
+                        <code>typedef</code>: apelidos de tipo, semântica e manutenção do código
+                        <span class="badge badge-novo">NOVO</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="capitulo31.html">
+                        <span class="chapter-number">Aula 31</span>
+                        Ponteiros e Passagem por Referência: por que usamos <code>LISTA*</code>
+                        <span class="badge badge-novo">NOVO</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="capitulo32.html">
+                        <span class="chapter-number">Aula 32</span>
+                        Lista Linear Sequencial: estrutura completa e operações básicas
+                        <span class="badge badge-novo">NOVO</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="capitulo33.html">
+                        <span class="chapter-number">Aula 33</span>
+                        Inserção na Lista Sequencial: deslocamento e custo O(n)
+                        <span class="badge badge-novo">NOVO</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="capitulo34.html">
+                        <span class="chapter-number">Aula 34</span>
+                        Busca Sequencial: versão simples e versão com sentinela
+                        <span class="badge badge-novo">NOVO</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="capitulo35.html">
+                        <span class="chapter-number">Aula 35</span>
+                        Busca Binária O(log n), Exclusão e código principal
+                        <span class="badge badge-novo">NOVO</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="capitulo36.html">
+                        <span class="chapter-number">Aula 36</span>
+                        Código completo  
+                        <span class="badge badge-novo">NOVO</span>
+                    </a>
+                </li>
+            
+                <li>
+                    <a href="capitulo37.html">
+                        <span class="chapter-number">Aula 37</span>
+                        Lista ligada</code> com implementação estática
+                        <span class="badge badge-novo">NOVO</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="capitulo38.html">
+                        <span class="chapter-number">Aula 38</span>
+                        Lista ligada com implementação dinâmica <code>malloc</code> e <code>free</code>
+                        <span class="badge badge-novo">NOVO</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="quiz-section">
+            <h2>Questionários de Avaliação</h2>
+            <ul class="chapter-links">
+                <li><a href="quiz06.html"><span class="chapter-number">Quiz 6</span> Quiz de C — Lista ligada (Aulas 29 a 38)</a></li>
+            </ul>
+        </div>
+
+        <!-- BLOCO 7: Arquivos em C -->
+        <div class="chapter-section">
+            <h2>Arquivos em C</h2>
+            <ul class="chapter-links">
+                <li>
+                    <a href="capitulo39a.html">
+                        <span class="chapter-number">Aula 39</span>
+                        Manipulação de Arquivos: fopen, fclose, fprintf, fscanf e modos de abertura
+                    </a>
+                </li>
+                <li>
+                    <a href="capitulo40.html">
+                        <span class="chapter-number">Aula 40</span>
+                        Projeto integrador: sistema de cadastro de alunos para console
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+    </div>
+
+    <footer>
+        <p>&copy; 2025 AFF Education — Curso de C para Iniciantes</p>
+    </footer>
+</body>
+</html>

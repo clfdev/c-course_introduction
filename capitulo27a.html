@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 27a – Structs e typedef: fundamentos</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Aula 27a — Structs e <code style="color:#aad4ff">typedef</code> <span style="font-size:0.7em;opacity:0.85;">Parte 1 de 2</span></h1>
+    <p>O que é, como declarar, inicializar, usar typedef e passar para funções</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo26.html">← Aula 26</a>
+    <a href="capitulo27b.html">Parte 2 →</a>
+</nav>
+
+<!-- ═══════════════════════════════════════ 1. O QUE É UMA STRUCT -->
+<div class="content-section">
+    <h2>1. O que é uma <code>struct</code>?</h2>
+
+    <p>Imagine que você quer representar um aluno no programa. Ele tem matrícula (int), nome (char[]) e nota (float). Sem struct, você precisaria de três variáveis soltas — e à medida que o programa crescesse, ficaria impossível de gerenciar. Em Java você criaria uma classe. Em C, você usa uma <strong>struct</strong>.</p>
+
+    <div class="definicao">
+        Uma <strong>struct</strong> (<em>structure</em>) é um tipo composto que agrupa variáveis de tipos diferentes sob um único nome. Cada variável dentro da struct é chamada de <strong>campo</strong> (ou <em>field/membro</em>). A struct define a estrutura dos dados — mas ao contrário de uma classe Java, ela <strong>não contém métodos</strong>.
+    </div>
+
+    <div class="grid-container">
+        <div class="grid-item">
+            <strong>Java — classe com atributos e métodos</strong>
+<pre>
+public class Aluno {
+    int    matricula;
+    String nome;
+    float  nota;
+
+    // Java permite métodos:
+    float calcularSituacao() {
+        return nota >= 7.0f ? 1 : 0;
+    }
+}
+</pre>
+        </div>
+        <div class="grid-item">
+            <strong>C — struct com campos, sem métodos</strong>
+<pre>
+struct Aluno {
+    int   matricula;
+    char  nome[50];
+    float nota;
+
+    // ❌ C não tem métodos em struct
+    // funções ficam fora da struct
+};
+</pre>
+        </div>
+    </div>
+
+    <div class="info-box">
+        <strong>Struct em C = "classe somente dados" em Java.</strong> Pense em uma struct como uma classe Java que tem apenas atributos — sem construtores, sem métodos, sem encapsulamento por modificadores de acesso. Em C, as funções que operam sobre a struct ficam fora dela e recebem um ponteiro como parâmetro.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 2. DECLARAÇÃO -->
+<div class="content-section">
+    <h2>2. Declarando e Usando uma Struct</h2>
+
+    <h3>Sintaxe básica</h3>
+<pre>
+<span class="code-comment">/* 1. Definição do tipo struct */</span>
+struct Aluno {
+    int   matricula;
+    char  nome[50];
+    float nota1;
+    float nota2;
+};
+
+<span class="code-comment">/* 2. Declaração de variável do tipo struct */</span>
+struct Aluno a1;
+struct Aluno a2, a3;   <span class="code-comment">// múltiplas variáveis</span>
+</pre>
+
+    <div class="warning-box">
+        <strong>⚠️ Em C, a palavra <code>struct</code> é obrigatória ao declarar variáveis</strong> — ao contrário de Java, onde o nome da classe é suficiente. Para eliminar essa repetição, use <code>typedef</code> (seção 4).
+    </div>
+
+    <h3>Acesso com o operador ponto (<code>.</code>)</h3>
+<pre>
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+struct Aluno {
+    int   matricula;
+    char  nome[50];
+    float nota1, nota2;
+};
+
+int main() {
+    struct Aluno a;
+
+    <span class="code-comment">/* Atribuição campo por campo */</span>
+    a.matricula = 1001;
+    strcpy(a.nome, "Ana Oliveira");   <span class="code-comment">// strings precisam de strcpy!</span>
+    a.nota1 = 8.5f;
+    a.nota2 = 9.0f;
+
+    printf("Matrícula: %d\n",   a.matricula);
+    printf("Nome:      %s\n",   a.nome);
+    printf("Notas:     %.1f  %.1f\n", a.nota1, a.nota2);
+    printf("Média:     %.1f\n", (a.nota1 + a.nota2) / 2.0f);
+
+    return 0;
+}
+</pre>
+    <div class="terminal-output">Matrícula: 1001<br>Nome:      Ana Oliveira<br>Notas:     8.5  9.0<br>Média:     8.8</div>
+
+    <div class="grid-container">
+        <div class="grid-item">
+            <strong>Java — acesso por ponto</strong>
+<pre>
+Aluno a = new Aluno();
+a.matricula = 1001;
+a.nome = "Ana Oliveira"; // OK
+a.nota1 = 8.5f;
+System.out.println(a.nome);
+</pre>
+        </div>
+        <div class="grid-item">
+            <strong>C — acesso por ponto (igual!)</strong>
+<pre>
+struct Aluno a;
+a.matricula = 1001;
+strcpy(a.nome, "Ana"); // strcpy!
+a.nota1 = 8.5f;
+printf("%s\n", a.nome);
+</pre>
+        </div>
+    </div>
+
+    <div class="tip-box">
+        <strong>O operador ponto é idêntico ao Java</strong> — <code>a.campo</code> funciona da mesma forma. A diferença prática é que campos <code>char[]</code> exigem <code>strcpy</code> em vez de atribuição simples, pois strings em C são arrays (veja Aula 26).
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 3. INICIALIZAÇÃO -->
+<div class="content-section">
+    <h2>3. Inicialização de Struct</h2>
+
+    <h3>Formas de inicializar</h3>
+<pre>
+struct Ponto {
+    float x;
+    float y;
+};
+
+struct Produto {
+    int   codigo;
+    char  nome[40];
+    float preco;
+};
+
+<span class="code-comment">/* Forma 1 — inicializador posicional (C89) */</span>
+struct Ponto p1 = {3.0f, 4.0f};
+
+<span class="code-comment">/* Forma 2 — designated initializers (C99, mais legível) */</span>
+struct Produto prod = {
+    .codigo = 101,
+    .nome   = "Caneta",
+    .preco  = 2.50f
+};
+
+<span class="code-comment">/* Forma 3 — struct literal (C99) */</span>
+struct Ponto p2 = (struct Ponto){.x = 1.0f, .y = 2.0f};
+
+<span class="code-comment">/* Forma 4 — zero-initialize */</span>
+struct Produto vazio = {0};   <span class="code-comment">// todos os campos zerados</span>
+</pre>
+
+    <div class="grid-container">
+        <div class="grid-item">
+            <strong>Java — construtor</strong>
+<pre>
+// Com construtor explícito:
+Produto p = new Produto(101,
+    "Caneta", 2.50f);
+
+// Sem construtor:
+Produto p = new Produto();
+p.codigo = 101;
+p.nome   = "Caneta";
+p.preco  = 2.50f;
+</pre>
+        </div>
+        <div class="grid-item">
+            <strong>C — designated initializer</strong>
+<pre>
+// C não tem construtores —
+// inicializadores são o recurso mais próximo:
+struct Produto p = {
+    .codigo = 101,
+    .nome   = "Caneta",
+    .preco  = 2.50f
+};
+
+// ou campo a campo após declaração
+</pre>
+        </div>
+    </div>
+
+    <div class="info-box">
+        <strong>Designated initializers (C99)</strong> são a forma mais segura de inicializar structs — você nomeia cada campo, então a ordem não importa e campos omitidos ficam zerados automaticamente. É o padrão recomendado em código moderno.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 4. TYPEDEF -->
+<div class="content-section">
+    <h2>4. <code>typedef</code> — Criando Apelidos de Tipo</h2>
+
+    <p>Escrever <code>struct Aluno</code> toda vez é verboso. O <code>typedef</code> cria um <em>apelido</em> para um tipo, eliminando a necessidade da palavra-chave <code>struct</code>.</p>
+
+    <div class="definicao">
+        <code>typedef</code> cria um <strong>novo nome</strong> para um tipo existente. Não cria um tipo diferente — é apenas um alias. O compilador trata os dois nomes como idênticos. Além de structs, é muito usado para <code>int</code>, <code>unsigned char</code> e outros tipos para dar semântica ao código.
+    </div>
+
+    <h3>Duas formas de combinar struct + typedef</h3>
+<pre>
+<span class="code-comment">/* Forma 1 — separado (mais claro para iniciantes) */</span>
+struct Aluno {
+    int   matricula;
+    char  nome[50];
+    float nota;
+};
+typedef struct Aluno Aluno;   <span class="code-comment">// cria alias "Aluno" para "struct Aluno"</span>
+
+<span class="code-comment">/* Forma 2 — combinado (mais comum na prática) */</span>
+typedef struct {
+    int   matricula;
+    char  nome[50];
+    float nota;
+} Aluno;
+
+<span class="code-comment">/* Com typedef, não precisa mais de "struct" na declaração: */</span>
+Aluno a1;          <span class="code-comment">// ✅ limpo</span>
+struct Aluno a2;   <span class="code-comment">// ✅ ainda funciona na Forma 1</span>
+</pre>
+
+    <div class="grid-container">
+        <div class="grid-item">
+            <strong>Java — nome da classe direto</strong>
+<pre>
+// Em Java o nome da classe
+// já é o tipo — sem prefixo:
+Aluno a = new Aluno();
+Produto p = new Produto();
+</pre>
+        </div>
+        <div class="grid-item">
+            <strong>C sem typedef vs. com typedef</strong>
+<pre>
+/* Sem typedef — verboso */
+struct Aluno a;
+struct Produto p;
+
+/* Com typedef — limpo como Java */
+Aluno a;
+Produto p;
+</pre>
+        </div>
+    </div>
+
+    <h3>typedef para outros tipos</h3>
+<pre>
+<span class="code-comment">/* Dando semântica a tipos primitivos */</span>
+typedef int    Matricula;
+typedef float  Nota;
+typedef char   Nome[50];
+
+Matricula id   = 1001;
+Nota      n1   = 8.5f;
+Nome      nome = "Ana";   <span class="code-comment">// cuidado: Nome é array, usar strcpy para atribuir!</span>
+
+<span class="code-comment">/* typedef com ponteiro — idioma comum em código C profissional */</span>
+typedef int *PonteiroInt;
+PonteiroInt p = &amp;id;    <span class="code-comment">// equivale a: int *p = &id;</span>
+</pre>
+
+    <div class="warning-box">
+        <strong>⚠️ typedef não cria tipos "seguros":</strong> <code>typedef int Metros; typedef int Kilos;</code> não impede somar metros com quilos — o compilador os trata como <code>int</code> idênticos. É apenas documentação.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 5. STRUCTS EM FUNÇÕES -->
+<div class="content-section">
+    <h2>5. Structs em Funções</h2>
+
+    <p>Structs podem ser passadas para funções por valor (cópia de todos os campos) ou por ponteiro (8 bytes, acessa o original). Para structs grandes, o ponteiro é sempre preferível.</p>
+
+    <div class="grid-container">
+        <div class="grid-item">
+            <strong>Java — objetos sempre por referência</strong>
+<pre>
+void exibir(Aluno a) {
+    // Java: a é referência ao objeto
+    // modificações afetam o original
+    System.out.println(a.nome);
+}
+
+void incrementar(Aluno a) {
+    a.nota += 1.0f; // altera o original
+}
+</pre>
+        </div>
+        <div class="grid-item">
+            <strong>C — escolha explícita: valor ou ponteiro</strong>
+<pre>
+// Por valor: cópia — lento, não altera original
+void exibir(Aluno a) {
+    printf("%s\n", a.nome);
+}
+
+// Por ponteiro: rápido, altera original
+void incrementar(Aluno *a) {
+    a->nota += 1.0f;
+}
+</pre>
+        </div>
+    </div>
+
+<pre>
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+typedef struct {
+    int   matricula;
+    char  nome[50];
+    float nota1, nota2;
+} Aluno;
+
+<span class="code-comment">/* Só lê — const evita modificação acidental */</span>
+void exibirAluno(const Aluno *a) {
+    float media = (a-&gt;nota1 + a-&gt;nota2) / 2.0f;
+    printf("%-6d %-20s %.1f  %.1f  %.1f  %s\n",
+           a-&gt;matricula, a-&gt;nome,
+           a-&gt;nota1, a-&gt;nota2, media,
+           media &gt;= 7.0f ? "Aprovado" : "Reprovado");
+}
+
+<span class="code-comment">/* Modifica — ponteiro sem const */</span>
+void aplicarBonus(Aluno *a, float bonus) {
+    a-&gt;nota1 += bonus;
+    a-&gt;nota2 += bonus;
+    if (a-&gt;nota1 &gt; 10.0f) a-&gt;nota1 = 10.0f;
+    if (a-&gt;nota2 &gt; 10.0f) a-&gt;nota2 = 10.0f;
+}
+
+int main() {
+    Aluno turma[] = {
+        {1001, "Ana Oliveira",  8.0f, 7.5f},
+        {1002, "Bruno Santos",  5.0f, 6.0f},
+        {1003, "Carla Mendes",  9.5f, 9.0f}
+    };
+    int n = 3;
+
+    printf("%-6s %-20s %-5s  %-5s  %-5s  %s\n",
+           "Mat.", "Nome", "N1", "N2", "Med.", "Situação");
+    printf("------------------------------------------------------\n");
+    for (int i = 0; i &lt; n; i++)
+        exibirAluno(&amp;turma[i]);
+
+    printf("\nApós bônus de 0.5:\n");
+    printf("------------------------------------------------------\n");
+    for (int i = 0; i &lt; n; i++)
+        aplicarBonus(&amp;turma[i], 0.5f);
+    for (int i = 0; i &lt; n; i++)
+        exibirAluno(&amp;turma[i]);
+
+    return 0;
+}
+</pre>
+    <div class="terminal-output">
+Mat.   Nome                 N1     N2     Med.   Situação<br>
+------------------------------------------------------<br>
+1001   Ana Oliveira         8.0  7.5  7.8  Aprovado<br>
+1002   Bruno Santos         5.0  6.0  5.5  Reprovado<br>
+1003   Carla Mendes         9.5  9.0  9.2  Aprovado<br>
+<br>
+Após bônus de 0.5:<br>
+------------------------------------------------------<br>
+1001   Ana Oliveira         8.5  8.0  8.2  Aprovado<br>
+1002   Bruno Santos         5.5  6.5  6.0  Reprovado<br>
+1003   Carla Mendes        10.0  9.5  9.8  Aprovado
+    </div>
+
+    <div class="tip-box">
+        <strong>Regra prática:</strong> Use <code>const Tipo *p</code> quando a função só lê — eficiente (8 bytes) e protegido contra modificação acidental. Use <code>Tipo *p</code> quando precisa modificar. Nunca passe structs grandes por valor — o custo de cópia é proporcional ao tamanho da struct.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ QUIZ -->
+<div class="content-section exercise-section">
+    <h2>Quiz — Aula 27a</h2>
+    <form class="quiz-form" onsubmit="return false;">
+
+        <div class="content-section quiz-question">
+            <p><strong>1.</strong> Qual a principal diferença entre uma <code>struct</code> em C e uma <code>class</code> em Java?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q1" value="a"> <code>struct</code> não pode ter campos do tipo <code>float</code></label></li>
+                <li><label><input type="radio" name="q1" value="b"> <code>struct</code> agrupa apenas dados (campos); <code>class</code> em Java agrupa dados <em>e</em> comportamento (métodos), além de oferecer encapsulamento e herança</label></li>
+                <li><label><input type="radio" name="q1" value="c"> <code>struct</code> é mais rápida que <code>class</code> porque usa menos memória</label></li>
+                <li><label><input type="radio" name="q1" value="d"> <code>struct</code> e <code>class</code> são equivalentes em todos os aspectos</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>2.</strong> Dado <code>typedef struct { int x; int y; } Ponto;</code>, qual declaração de variável está correta?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q2" value="a"> <code>Ponto p = new Ponto();</code></label></li>
+                <li><label><input type="radio" name="q2" value="b"> <code>Ponto p;</code></label></li>
+                <li><label><input type="radio" name="q2" value="c"> <code>struct p = Ponto();</code></label></li>
+                <li><label><input type="radio" name="q2" value="d"> <code>p Ponto;</code></label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>3.</strong> Qual é a saída?</p>
+<pre>
+typedef struct { int a; int b; } Par;
+int main() {
+    Par p = {10, 20};
+    Par q = p;
+    q.a = 99;
+    printf("%d %d", p.a, q.a);
+}
+</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q3" value="a"> 99 99</label></li>
+                <li><label><input type="radio" name="q3" value="b"> 10 99</label></li>
+                <li><label><input type="radio" name="q3" value="c"> 10 20</label></li>
+                <li><label><input type="radio" name="q3" value="d"> 99 20</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>4.</strong> Em Java, passar um objeto para um método permite que o método modifique seus campos. Em C, para uma função modificar os campos de uma struct, é necessário:</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q4" value="a"> Declarar a struct como <code>global</code></label></li>
+                <li><label><input type="radio" name="q4" value="b"> Passar um ponteiro para a struct (<code>Tipo *p</code>) e usar <code>p-&gt;campo</code> internamente</label></li>
+                <li><label><input type="radio" name="q4" value="c"> Retornar a struct modificada com <code>return</code></label></li>
+                <li><label><input type="radio" name="q4" value="d"> Usar <code>static</code> na declaração da struct</label></li>
+            </ul>
+        </div>
+
+        <button type="button" class="submit-btn" onclick="verificarRespostas()">Verificar Respostas</button>
+    </form>
+    <div id="quiz-results" style="display:none; margin-top:20px; padding:15px; background:#dff0d8; border-radius:5px;"></div>
+</div>
+
+<div class="navigation-buttons">
+    <a href="capitulo26.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">← Aula 26</a>
+    <a href="index.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">Índice</a>
+    <a href="capitulo27b.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">Parte 2 →</a>
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align:center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education"
+                 style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+<script>
+function verificarRespostas() {
+    const gabarito = { q1:"b", q2:"b", q3:"b", q4:"b" };
+    const explicacoes = {
+        q1: "Uma struct em C agrupa apenas campos (dados) — não há métodos, construtores, encapsulamento ou herança. Em Java, uma class agrupa dados e comportamento juntos, com modificadores de acesso e suporte a herança. Pense em struct como uma classe Java que só tem atributos públicos.",
+        q2: "Com typedef, o nome do tipo é usado diretamente sem a palavra 'struct': 'Ponto p;'. Em C não existe 'new' — variáveis de struct são criadas como qualquer outra variável local na stack.",
+        q3: "Em C, 'Par q = p' copia todos os campos de p para q — cria uma cópia independente. Modificar q.a = 99 não afeta p.a, que permanece 10. Diferente de Java, onde 'b = a' cria uma referência ao mesmo objeto na heap.",
+        q4: "Em C, a passagem de struct por valor cria uma cópia — a função não pode modificar o original. Para modificar, é obrigatório passar um ponteiro: 'void f(Tipo *p)' e usar p->campo internamente. Em Java, objetos são sempre passados por referência implícita."
+    };
+
+    let acertos = 0, html = "";
+    const total = Object.keys(gabarito).length;
+    for (const q in gabarito) {
+        const sel = document.querySelector(`input[name="${q}"]:checked`);
+        const num = q.replace("q","");
+        if (sel) {
+            if (sel.value === gabarito[q]) {
+                acertos++;
+                html += `<p>Questão ${num}: <span style="color:green;font-weight:bold;">✅ Correto!</span> — ${explicacoes[q]}</p>`;
+            } else {
+                html += `<p>Questão ${num}: <span style="color:red;font-weight:bold;">❌ Incorreto.</span> Gabarito: <strong>${gabarito[q].toUpperCase()}</strong> — ${explicacoes[q]}</p>`;
+            }
+        } else {
+            html += `<p>Questão ${num}: <span style="color:orange;font-weight:bold;">⚠ Não respondida.</span></p>`;
+        }
+    }
+    const r = document.getElementById("quiz-results");
+    r.innerHTML = `<h3>Sua pontuação: ${acertos} de ${total}</h3>${html}`;
+    r.style.display = "block";
+    r.scrollIntoView({ behavior: "smooth" });
+}
+</script>
+
+</body>
+</html>

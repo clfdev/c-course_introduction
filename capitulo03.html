@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 03 – Entrada e Saída: printf e scanf</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Aula 03 – Entrada e Saída: printf e scanf</h1>
+    <p>Exibindo e lendo dados com precisão — especificadores de formato, largura, casas decimais e locale</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo02.html">← Aula 02</a>
+    <a href="capitulo04.html">Aula 04 →</a>
+</nav>
+
+<!-- ═══════════════════════════════════════ PRINTF -->
+<div class="content-section">
+    <h2>A função printf</h2>
+    <p>O <code>printf</code> (<em>print formatted</em>) é a principal função de saída em C. Ela imprime texto na tela com suporte a formatação precisa de valores numéricos, larguras de coluna e alinhamento.</p>
+
+    <div class="definicao">
+        <code>printf("string de formato", var1, var2, ...);</code><br><br>
+        A <strong>string de formato</strong> pode conter texto comum, sequências de escape (<code>\n</code>, <code>\t</code>) e <strong>especificadores de formato</strong> que começam com <code>%</code> e indicam o tipo e a apresentação de cada valor a ser impresso.
+    </div>
+
+    <pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int    idade  = 22;
+    float  altura = 1.75;
+    char   inicial = 'A';
+
+    printf("Idade: %d anos\n", idade);
+    printf("Altura: %.2f m\n", altura);    <span class="code-comment">// 2 casas decimais</span>
+    printf("Inicial: %c\n", inicial);
+    printf("Idade=%d  Altura=%.2f  Inicial=%c\n", idade, altura, inicial);
+
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>Idade: 22 anos</p>
+        <p>Altura: 1.75 m</p>
+        <p>Inicial: A</p>
+        <p>Idade=22  Altura=1.75  Inicial=A</p>
+    </div>
+
+    <div class="tip-box">
+        <strong>Múltiplos valores em um único printf:</strong> É possível inserir vários especificadores na mesma string de formato. Os valores correspondentes são passados na mesma ordem após a string, separados por vírgulas.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ ESPECIFICADORES -->
+<div class="content-section">
+    <h2>Especificadores de Formato</h2>
+    <p>Um especificador de formato é composto de vários campos opcionais, nessa ordem:</p>
+
+    <div class="definicao">
+        <code>% [flags] [largura] [.precisão] [modificador] tipo</code>
+    </div>
+
+    <h3>Tipos principais</h3>
+    <table>
+        <tr>
+            <th>Especificador</th>
+            <th>Tipo</th>
+            <th>Exemplo de uso</th>
+            <th>Saída</th>
+        </tr>
+        <tr>
+            <td><code>%d</code> ou <code>%i</code></td>
+            <td><code>int</code></td>
+            <td><code>printf("%d", 42)</code></td>
+            <td>42</td>
+        </tr>
+        <tr>
+            <td><code>%u</code></td>
+            <td><code>unsigned int</code></td>
+            <td><code>printf("%u", 3000000000U)</code></td>
+            <td>3000000000</td>
+        </tr>
+        <tr>
+            <td><code>%ld</code></td>
+            <td><code>long</code></td>
+            <td><code>printf("%ld", 2000000000L)</code></td>
+            <td>2000000000</td>
+        </tr>
+        <tr>
+            <td><code>%lld</code></td>
+            <td><code>long long</code></td>
+            <td><code>printf("%lld", 9000000000LL)</code></td>
+            <td>9000000000</td>
+        </tr>
+        <tr>
+            <td><code>%f</code></td>
+            <td><code>float</code> / <code>double</code></td>
+            <td><code>printf("%f", 3.14)</code></td>
+            <td>3.140000</td>
+        </tr>
+        <tr>
+            <td><code>%e</code></td>
+            <td><code>float</code> / <code>double</code> (notação científica)</td>
+            <td><code>printf("%e", 0.000123)</code></td>
+            <td>1.230000e-04</td>
+        </tr>
+        <tr>
+            <td><code>%g</code></td>
+            <td>float / double (formato mais compacto)</td>
+            <td><code>printf("%g", 3.14)</code></td>
+            <td>3.14</td>
+        </tr>
+        <tr>
+            <td><code>%c</code></td>
+            <td><code>char</code></td>
+            <td><code>printf("%c", 'Z')</code></td>
+            <td>Z</td>
+        </tr>
+        <tr>
+            <td><code>%s</code></td>
+            <td>String (<code>char[]</code>)</td>
+            <td><code>printf("%s", "Olá")</code></td>
+            <td>Olá</td>
+        </tr>
+        <tr>
+            <td><code>%p</code></td>
+            <td>Ponteiro (endereço de memória)</td>
+            <td><code>printf("%p", &amp;x)</code></td>
+            <td>0x7fff5a...</td>
+        </tr>
+        <tr>
+            <td><code>%o</code></td>
+            <td>Inteiro em octal</td>
+            <td><code>printf("%o", 8)</code></td>
+            <td>10</td>
+        </tr>
+        <tr>
+            <td><code>%x</code></td>
+            <td>Inteiro em hexadecimal (minúsculo)</td>
+            <td><code>printf("%x", 255)</code></td>
+            <td>ff</td>
+        </tr>
+        <tr>
+            <td><code>%X</code></td>
+            <td>Inteiro em hexadecimal (maiúsculo)</td>
+            <td><code>printf("%X", 255)</code></td>
+            <td>FF</td>
+        </tr>
+        <tr>
+            <td><code>%%</code></td>
+            <td>Imprime o símbolo % literal</td>
+            <td><code>printf("100%%")</code></td>
+            <td>100%</td>
+        </tr>
+    </table>
+</div>
+
+<!-- ═══════════════════════════════════════ LARGURA E PRECISÃO -->
+<div class="content-section">
+    <h2>Largura de Campo e Precisão Decimal</h2>
+    <p>O <code>printf</code> permite controlar <strong>a largura mínima</strong> do espaço ocupado pelo valor impresso e o <strong>número de casas decimais</strong> — muito útil para alinhar colunas em tabelas.</p>
+
+    <h3>Largura de campo</h3>
+    <p>Um número entre <code>%</code> e o tipo define a largura mínima. O valor é alinhado à <strong>direita</strong> por padrão:</p>
+
+    <pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    printf("%5d\n",  42);     <span class="code-comment">// "   42"  — 5 chars, alinhado à direita</span>
+    printf("%5d\n",  1234);   <span class="code-comment">// " 1234"</span>
+    printf("%5d\n",  99999);  <span class="code-comment">// "99999"  — ultrapassa a largura, sem corte</span>
+    printf("%-5d|\n", 42);    <span class="code-comment">// "42   |" — flag - alinha à esquerda</span>
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>&nbsp;&nbsp;&nbsp;42</p>
+        <p>&nbsp;1234</p>
+        <p>99999</p>
+        <p>42&nbsp;&nbsp;&nbsp;|</p>
+    </div>
+
+    <h3>Precisão decimal</h3>
+    <p>O ponto seguido de um número após a largura define as <strong>casas decimais</strong>:</p>
+
+    <pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    double pi = 3.141592653589793;
+
+    printf("%.0f\n",  pi);   <span class="code-comment">// "3"       — sem casas decimais</span>
+    printf("%.2f\n",  pi);   <span class="code-comment">// "3.14"</span>
+    printf("%.5f\n",  pi);   <span class="code-comment">// "3.14159"</span>
+    printf("%.10f\n", pi);   <span class="code-comment">// "3.1415926536"</span>
+    printf("%10.3f\n", pi);  <span class="code-comment">// "     3.142"  — largura 10, 3 decimais</span>
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>3</p>
+        <p>3.14</p>
+        <p>3.14159</p>
+        <p>3.1415926536</p>
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3.142</p>
+    </div>
+
+    <h3>Preenchimento com zeros</h3>
+    <p>A flag <code>0</code> preenche com zeros à esquerda em vez de espaços:</p>
+
+    <pre>
+printf("%05d\n", 42);    <span class="code-comment">// "00042"</span>
+printf("%08.2f\n", 3.14); <span class="code-comment">// "00003.14"</span></pre>
+
+    <div class="terminal-output">
+        <p>00042</p>
+        <p>00003.14</p>
+    </div>
+
+    <h3>Exemplo prático: tabela formatada</h3>
+    <pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    printf("%-12s %6s %8s\n", "Produto", "Qtd", "Preco");
+    printf("%-12s %6d %8.2f\n", "Caneta",   10,  2.50);
+    printf("%-12s %6d %8.2f\n", "Caderno",   3, 15.90);
+    printf("%-12s %6d %8.2f\n", "Regua",     5,  4.75);
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>Produto&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Qtd&nbsp;&nbsp;&nbsp;&nbsp;Preco</p>
+        <p>Caneta&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;10&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2.50</p>
+        <p>Caderno&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3&nbsp;&nbsp;&nbsp;&nbsp;15.90</p>
+        <p>Regua&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;5&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.75</p>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ SCANF -->
+<div class="content-section">
+    <h2>A função scanf</h2>
+    <p>O <code>scanf</code> (<em>scan formatted</em>) lê dados digitados pelo usuário e os armazena em variáveis. Sua sintaxe espelha a do <code>printf</code>, mas exige o operador <code>&amp;</code> (endereço de memória) antes de cada variável — exceto strings.</p>
+
+    <div class="definicao">
+        <code>scanf("string de formato", &amp;var1, &amp;var2, ...);</code><br><br>
+        O <code>&amp;</code> fornece ao <code>scanf</code> o <strong>endereço de memória</strong> de cada variável para que ele possa gravar o valor lido diretamente naquele local. Sem o <code>&amp;</code>, o comportamento é indefinido — um dos erros mais comuns em iniciantes.
+    </div>
+
+    <h3>Lendo diferentes tipos</h3>
+    <pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int    idade;
+    float  altura;
+    char   inicial;
+
+    printf("Digite sua idade: ");
+    scanf("%d", &amp;idade);
+
+    printf("Digite sua altura (ex: 1.75): ");
+    scanf("%f", &amp;altura);
+
+    printf("Digite sua inicial: ");
+    scanf(" %c", &amp;inicial);   <span class="code-comment">// espaço antes de %c — descarta o '\n' residual</span>
+
+    printf("\nIdade: %d | Altura: %.2f m | Inicial: %c\n",
+           idade, altura, inicial);
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>Digite sua idade: 22</p>
+        <p>Digite sua altura (ex: 1.75): 1.75</p>
+        <p>Digite sua inicial: A</p>
+        <p>&nbsp;</p>
+        <p>Idade: 22 | Altura: 1.75 m | Inicial: A</p>
+    </div>
+
+    <h3>Lendo múltiplos valores em um único scanf</h3>
+    <p>É possível ler vários valores de uma vez, separando os especificadores. O usuário deve digitar os valores separados por espaços ou Enter:</p>
+
+    <pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int a, b;
+    printf("Digite dois inteiros: ");
+    scanf("%d %d", &amp;a, &amp;b);
+    printf("Soma: %d\n", a + b);
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>Digite dois inteiros: 10 25</p>
+        <p>Soma: 35</p>
+    </div>
+
+    <div class="warning-box">
+        <strong>Atenção ao buffer do teclado:</strong> Após um <code>scanf("%d")</code>, o caractere <code>\n</code> (Enter) fica no buffer de entrada. Se o próximo <code>scanf</code> usa <code>%c</code>, ele captura esse <code>\n</code> em vez do caractere desejado. A solução é adicionar um espaço antes de <code>%c</code>:<br>
+        <code>scanf(" %c", &amp;letra);</code> — o espaço instrui o scanf a descartar qualquer espaço em branco residual, incluindo o <code>\n</code>.
+    </div>
+
+    <h3>scanf para double: use %lf</h3>
+    <p>Atenção a uma diferença importante: no <code>printf</code>, tanto <code>float</code> quanto <code>double</code> usam <code>%f</code>. No <code>scanf</code>, <code>double</code> exige obrigatoriamente <code>%lf</code>:</p>
+
+    <table>
+        <tr>
+            <th>Tipo</th>
+            <th>scanf</th>
+            <th>printf</th>
+        </tr>
+        <tr>
+            <td><code>float</code></td>
+            <td><code>%f</code></td>
+            <td><code>%f</code></td>
+        </tr>
+        <tr>
+            <td><code>double</code></td>
+            <td><code>%lf</code> ⚠️</td>
+            <td><code>%f</code></td>
+        </tr>
+        <tr>
+            <td><code>long double</code></td>
+            <td><code>%Lf</code></td>
+            <td><code>%Lf</code></td>
+        </tr>
+    </table>
+</div>
+
+<!-- ═══════════════════════════════════════ LOCALE -->
+<div class="content-section">
+    <h2>Suporte a Acentos: locale.h</h2>
+    <p>Por padrão, o C usa o locale "C" (inglês), que pode não exibir corretamente caracteres acentuados como ã, é, ç. Para ativar o suporte ao idioma do sistema operacional, usa-se a função <code>setlocale</code> da biblioteca <code>&lt;locale.h&gt;</code>:</p>
+
+    <pre>
+#include &lt;stdio.h&gt;
+#include &lt;locale.h&gt;
+
+int main() {
+    setlocale(LC_ALL, "");   <span class="code-comment">// ativa o locale do sistema (suporte a acentos)</span>
+
+    printf("Olá, bem-vindo ao Curso de C!\n");
+    printf("Atenção: leia as instruções com cuidado.\n");
+
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>Olá, bem-vindo ao Curso de C!</p>
+        <p>Atenção: leia as instruções com cuidado.</p>
+    </div>
+
+    <div class="tip-box">
+        <strong>DICA:</strong> A string <code>""</code> passada para <code>setlocale</code> significa "use o locale padrão do sistema operacional". Você também pode especificar explicitamente, por exemplo <code>"pt_BR.UTF-8"</code> no Linux ou <code>"Portuguese_Brazil.1252"</code> no Windows, mas usar <code>""</code> é a forma mais portável.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ EXEMPLO COMPLETO DOCX -->
+<div class="content-section">
+    <h2>Exemplo Completo do Material de Referência</h2>
+    <p>O programa abaixo, diretamente da seção 4 do livro de referência do curso, demonstra na prática a leitura e escrita dos três tipos básicos — inteiro, ponto flutuante e caractere — com suporte a acentuação:</p>
+
+    <pre>
+#include &lt;stdio.h&gt;
+#include &lt;locale.h&gt;
+
+void main() {
+    setlocale(LC_ALL, "");  <span class="code-comment">// Permite usar acentos</span>
+
+    printf("Olá \n");
+
+    <span class="code-comment">// ─── Lendo valor inteiro ───────────────────────────────</span>
+    int a = 50;
+    printf("O valor de a é = %d \n", a);
+    printf("Informe o novo valor de a: ");
+    scanf("%d", &amp;a);
+    printf("O valor de a mudou para %d \n", a);
+
+    <span class="code-comment">// ─── Lendo valor com casas decimais ────────────────────</span>
+    float b = 5.5;
+    printf("O valor de b é = %f \n", b);
+    printf("Informe o novo valor de b: ");
+    scanf("%f", &amp;b);
+    printf("O valor de b mudou para %f \n", b);
+
+    <span class="code-comment">// ─── Lendo letra ────────────────────────────────────────</span>
+    char letra = 't';
+    printf("O valor de c é = %c \n", letra);
+    printf("Informe o novo valor de c (letra): ");
+    scanf(" %c", &amp;letra);  <span class="code-comment">// espaço antes de %c</span>
+    printf("O valor de c mudou para %c\n", letra);
+}</pre>
+
+    <div class="info-box">
+        <strong>Nota sobre <code>void main()</code>:</strong> O material de referência usa <code>void main()</code>, o que é aceito por alguns compiladores (como o MinGW no Code::Blocks), mas tecnicamente a forma <strong>padrão ANSI C</strong> é <code>int main()</code> com <code>return 0;</code> ao final. Para novos programas, prefira sempre <code>int main()</code>.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ PRINTF vs JAVA -->
+<div class="content-section">
+    <h2>printf em C versus Java</h2>
+    <p>O Java também possui o método <code>printf</code> (na classe <code>PrintStream</code>), e ele usa os mesmos especificadores de formato. A principal diferença na leitura de dados é o uso de <code>Scanner</code> em Java versus <code>scanf</code> com <code>&amp;</code> em C:</p>
+
+    <table>
+        <tr>
+            <th>Operação</th>
+            <th>C</th>
+            <th>Java</th>
+        </tr>
+        <tr>
+            <td>Imprimir inteiro</td>
+            <td><code>printf("%d\n", x)</code></td>
+            <td><code>System.out.println(x)</code></td>
+        </tr>
+        <tr>
+            <td>Imprimir com 2 decimais</td>
+            <td><code>printf("%.2f\n", x)</code></td>
+            <td><code>System.out.printf("%.2f%n", x)</code></td>
+        </tr>
+        <tr>
+            <td>Ler inteiro</td>
+            <td><code>scanf("%d", &amp;x)</code></td>
+            <td><code>x = sc.nextInt()</code></td>
+        </tr>
+        <tr>
+            <td>Ler double</td>
+            <td><code>scanf("%lf", &amp;x)</code></td>
+            <td><code>x = sc.nextDouble()</code></td>
+        </tr>
+        <tr>
+            <td>Ler char</td>
+            <td><code>scanf(" %c", &amp;c)</code></td>
+            <td><code>c = sc.next().charAt(0)</code></td>
+        </tr>
+        <tr>
+            <td>Suporte a acentos</td>
+            <td><code>setlocale(LC_ALL, "")</code></td>
+            <td>Nativo (Unicode)</td>
+        </tr>
+    </table>
+</div>
+
+<!-- ═══════════════════════════════════════ EXERCÍCIOS -->
+<div class="exercise-section">
+    <h2>Exercícios — Aula 03</h2>
+    <p>Responda às questões abaixo para fixar printf, scanf e especificadores de formato:</p>
+
+    <form class="quiz-form" id="quiz-form">
+
+        <div class="quiz-question">
+            <p><strong>1. Qual será a saída do seguinte código?</strong></p>
+            <pre>printf("%8.2f\n", 3.14159);</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q1" value="a"> <code>3.14159</code></label></li>
+                <li><label><input type="radio" name="q1" value="b"> <code>&nbsp;&nbsp;&nbsp;&nbsp;3.14</code> (4 espaços à esquerda)</label></li>
+                <li><label><input type="radio" name="q1" value="c"> <code>3.14</code></label></li>
+                <li><label><input type="radio" name="q1" value="d"> Erro de compilação</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>2. Para ler um valor do tipo <code>double</code> com scanf, qual especificador deve ser usado?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q2" value="a"> <code>%f</code></label></li>
+                <li><label><input type="radio" name="q2" value="b"> <code>%d</code></label></li>
+                <li><label><input type="radio" name="q2" value="c"> <code>%lf</code></label></li>
+                <li><label><input type="radio" name="q2" value="d"> <code>%g</code></label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>3. O que a flag <code>-</code> faz em um especificador como <code>%-10s</code>?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q3" value="a"> Remove os 10 primeiros caracteres da string</label></li>
+                <li><label><input type="radio" name="q3" value="b"> Alinha o texto à esquerda dentro de um campo de 10 caracteres</label></li>
+                <li><label><input type="radio" name="q3" value="c"> Subtrai 10 do tamanho da string</label></li>
+                <li><label><input type="radio" name="q3" value="d"> Imprime um sinal de menos antes do texto</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>4. Por que é necessário adicionar um espaço antes de <code>%c</code> no scanf, como em <code>scanf(" %c", &amp;c)</code>?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q4" value="a"> O espaço é obrigatório por sintaxe da linguagem C</label></li>
+                <li><label><input type="radio" name="q4" value="b"> Para que o scanf aguarde o usuário pressionar Enter antes de ler</label></li>
+                <li><label><input type="radio" name="q4" value="c"> Para descartar o caractere '\n' residual que ficou no buffer após leituras anteriores</label></li>
+                <li><label><input type="radio" name="q4" value="d"> Para que o scanf aceite letras maiúsculas e minúsculas</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>5. Qual será a saída do código abaixo?</strong></p>
+            <pre>printf("%05d\n", 42);</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q5" value="a"> <code>42</code></label></li>
+                <li><label><input type="radio" name="q5" value="b"> <code>&nbsp;&nbsp;&nbsp;42</code></label></li>
+                <li><label><input type="radio" name="q5" value="c"> <code>00042</code></label></li>
+                <li><label><input type="radio" name="q5" value="d"> <code>42000</code></label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>6. Para que serve a chamada <code>setlocale(LC_ALL, "")</code> no início de um programa C?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q6" value="a"> Define o idioma da variável de saída do programa</label></li>
+                <li><label><input type="radio" name="q6" value="b"> Ativa o suporte a caracteres acentuados e à codificação local do sistema operacional</label></li>
+                <li><label><input type="radio" name="q6" value="c"> Importa a biblioteca de internacionalização do C</label></li>
+                <li><label><input type="radio" name="q6" value="d"> Converte automaticamente todos os textos do programa para UTF-8</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>7. Analise o código. Qual será a saída?</strong></p>
+            <pre>printf("%.0f%%\n", 97.6);</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q7" value="a"> <code>97.6%</code></label></li>
+                <li><label><input type="radio" name="q7" value="b"> <code>98%</code></label></li>
+                <li><label><input type="radio" name="q7" value="c"> <code>97%</code></label></li>
+                <li><label><input type="radio" name="q7" value="d"> Erro: não é possível usar <code>%%</code> com <code>%.0f</code></label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>8. Qual das alternativas lê corretamente dois inteiros em um único scanf?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q8" value="a"> <code>scanf("%d", &amp;a, &amp;b);</code></label></li>
+                <li><label><input type="radio" name="q8" value="b"> <code>scanf("%d %d", a, b);</code></label></li>
+                <li><label><input type="radio" name="q8" value="c"> <code>scanf("%d %d", &amp;a, &amp;b);</code></label></li>
+                <li><label><input type="radio" name="q8" value="d"> <code>scanf("%d, %d", &amp;a, &amp;b);</code></label></li>
+            </ul>
+        </div>
+
+        <button type="button" class="submit-btn" onclick="verificarRespostas()">Verificar Respostas</button>
+    </form>
+
+    <div id="quiz-results" style="display:none; margin-top:20px; padding:15px; background-color:#dff0d8; border-radius:5px;"></div>
+</div>
+
+<div class="navigation-buttons">
+    <a href="capitulo02.html">← Aula 02</a>
+    <a href="index.html">Índice</a>
+    <a href="capitulo04.html">Aula 04 →</a>
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align: center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education" style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+<script>
+    function verificarRespostas() {
+        const gabarito = {
+            q1: "b",
+            q2: "c",
+            q3: "b",
+            q4: "c",
+            q5: "c",
+            q6: "b",
+            q7: "b",
+            q8: "c"
+        };
+
+        const explicacoes = {
+            q1: "%8.2f reserva 8 caracteres de largura com 2 casas decimais. O valor 3.14 ocupa 4 chars (3, ., 1, 4), então são inseridos 4 espaços à esquerda para completar 8.",
+            q2: "No scanf, double exige %lf obrigatoriamente. Usar %f com double no scanf causa comportamento indefinido. No printf, %f funciona para ambos.",
+            q3: "A flag - (menos) força o alinhamento à esquerda dentro do campo definido pela largura. Sem ela, o padrão é alinhar à direita.",
+            q4: "Após um scanf('%d'), o Enter ('\n') fica no buffer de entrada. O espaço antes de %c instrui o scanf a descartar qualquer caractere de espaço em branco residual antes de ler o próximo caractere.",
+            q5: "%05d preenche com zeros à esquerda até completar 5 dígitos. O valor 42 tem 2 dígitos, então recebe 3 zeros à esquerda: 00042.",
+            q6: "setlocale(LC_ALL, '') ativa o locale do sistema operacional, permitindo a exibição correta de acentos e caracteres especiais do idioma local.",
+            q7: "%.0f arredonda o número para 0 casas decimais, então 97.6 vira 98. O %% no final imprime o símbolo % literal. Resultado: 98%.",
+            q8: "Para ler dois inteiros, usa-se dois especificadores %d separados por espaço e dois endereços com &. A opção (a) tem só um %d, (b) faltam os &, e (d) a vírgula literal no formato causaria problema."
+        };
+
+        let acertos = 0;
+        let html = "";
+        const total = Object.keys(gabarito).length;
+
+        for (const q in gabarito) {
+            const selecionada = document.querySelector(`input[name="${q}"]:checked`);
+            const num = q.substring(1);
+            if (selecionada) {
+                if (selecionada.value === gabarito[q]) {
+                    acertos++;
+                    html += `<p>Questão ${num}: <span style="color:green; font-weight:bold;">✓ Correto!</span> — ${explicacoes[q]}</p>`;
+                } else {
+                    html += `<p>Questão ${num}: <span style="color:red; font-weight:bold;">✗ Incorreto.</span> — ${explicacoes[q]}</p>`;
+                }
+            } else {
+                html += `<p>Questão ${num}: <span style="color:orange; font-weight:bold;">⚠ Não respondida.</span></p>`;
+            }
+        }
+
+        const resultado = document.getElementById("quiz-results");
+        resultado.innerHTML = `<h3>Sua pontuação: ${acertos} de ${total}</h3>${html}`;
+        resultado.style.display = "block";
+        resultado.scrollIntoView({ behavior: "smooth" });
+    }
+</script>
+
+</body>
+</html>

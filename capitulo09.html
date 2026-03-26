@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 09 – else-if, switch-case e Operador Ternário</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Aula 09 – else-if, switch-case e Operador Ternário</h1>
+    <p>Decisões múltiplas, seleção por valor e expressões condicionais compactas</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo08.html">← Aula 08</a>
+    <a href="capitulo10.html">Aula 10 →</a>
+</nav>
+
+<!-- ═══════════════════════════════════════ ELSE-IF -->
+<div class="content-section">
+    <h2>Cadeia else-if — Múltiplas Condições</h2>
+    <p>Quando há mais de dois caminhos possíveis, encadeamos blocos <code>else if</code> para testar condições em sequência. O fluxo percorre os testes de cima para baixo e executa o <strong>primeiro bloco cuja condição for verdadeira</strong>. Se nenhuma for, o <code>else</code> final (opcional) é executado.</p>
+
+    <div class="definicao">
+<pre style="background:none; border:none; padding:0; margin:0; font-size:1em;">if (condição1) {
+    // executa se condição1 for verdadeira
+} else if (condição2) {
+    // executa se condição1 for falsa E condição2 for verdadeira
+} else if (condição3) {
+    // executa se condição1 e condição2 forem falsas E condição3 for verdadeira
+} else {
+    // executa se nenhuma condição acima for verdadeira (opcional)
+}</pre>
+    </div>
+
+    <div class="info-box">
+        <strong>Importante:</strong> Em uma cadeia <code>else-if</code>, <em>apenas um</em> dos blocos é executado por vez — assim que uma condição verdadeira é encontrada, os demais blocos são pulados completamente, mesmo que outras condições também fossem verdadeiras.
+    </div>
+
+    <h3>Exemplo: classificação de notas</h3>
+    <pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    float nota = 72.5;
+
+    if (nota >= 90) {
+        printf("Conceito A — Excelente\n");
+    } else if (nota >= 80) {
+        printf("Conceito B — Bom\n");
+    } else if (nota >= 70) {
+        printf("Conceito C — Regular\n");   <span class="code-comment">// este executa</span>
+    } else if (nota >= 60) {
+        printf("Conceito D — Insuficiente\n");
+    } else {
+        printf("Conceito F — Reprovado\n");
+    }
+
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>Conceito C — Regular</p>
+    </div>
+
+    <div class="tip-box">
+        <strong>DICA — ordem importa:</strong> As condições são avaliadas de cima para baixo. Coloque sempre as condições <strong>mais restritivas primeiro</strong>. No exemplo acima, se <code>nota >= 60</code> viesse antes de <code>nota >= 90</code>, todo aluno com nota ≥ 60 seria classificado como "Insuficiente", mesmo os excelentes.
+    </div>
+
+    <h3>Exemplo do material de referência</h3>
+    <pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    char grade = 'B';
+
+    if (grade == 'A') {
+        printf("Excellent!\n");
+    } else if (grade == 'B') {
+        printf("Good job.\n");   <span class="code-comment">// este executa</span>
+    } else {
+        printf("Needs improvement.\n");
+    }
+
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>Good job.</p>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ SWITCH -->
+<div class="content-section">
+    <h2>Estrutura switch-case</h2>
+    <p>O <code>switch</code> é uma alternativa mais eficiente e legível ao <code>else-if</code> quando se precisa comparar uma variável com <strong>múltiplos valores discretos e fixos</strong>. Em vez de avaliar condições booleanas, ele seleciona diretamente o caso correspondente ao valor da expressão.</p>
+
+    <div class="definicao">
+<pre style="background:none; border:none; padding:0; margin:0; font-size:1em;">switch (expressão) {
+    case valor1:
+        // bloco para valor1
+        break;
+    case valor2:
+        // bloco para valor2
+        break;
+    default:
+        // bloco se nenhum case corresponder (opcional)
+}</pre>
+    </div>
+
+    <div class="info-box">
+        <strong>Restrições do switch em C:</strong>
+        <ul>
+            <li>A expressão deve resultar em um valor <strong>inteiro</strong> (<code>int</code>, <code>char</code>, <code>short</code>, <code>long</code> ou <code>enum</code>)</li>
+            <li>Os valores dos <code>case</code> devem ser <strong>constantes</strong> — variáveis e expressões não são permitidas</li>
+            <li><code>float</code>, <code>double</code> e <code>string</code> <strong>não podem</strong> ser usados no <code>switch</code></li>
+        </ul>
+    </div>
+
+    <pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    char grade = 'B';
+
+    switch (grade) {
+        case 'A':
+            printf("Grade: A\n");
+            break;
+        case 'B':
+            printf("Grade: B\n");   <span class="code-comment">// este executa</span>
+            break;
+        case 'C':
+            printf("Grade: C\n");
+            break;
+        default:
+            printf("Grade not recognized.\n");
+    }
+
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>Grade: B</p>
+    </div>
+
+    <h3>O papel do break</h3>
+    <p>O <code>break</code> encerra a execução do <code>switch</code> após o caso correspondente. <strong>Sem o <code>break</code></strong>, o código continua executando os casos seguintes — comportamento chamado de <em>fall-through</em>:</p>
+
+    <pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int x = 2;
+
+    switch (x) {
+        case 1:
+            printf("caso 1\n");
+        case 2:
+            printf("caso 2\n");   <span class="code-comment">// começa aqui...</span>
+        case 3:
+            printf("caso 3\n");   <span class="code-comment">// ...e continua (sem break!)</span>
+        default:
+            printf("default\n");  <span class="code-comment">// ...até aqui</span>
+    }
+
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>caso 2</p>
+        <p>caso 3</p>
+        <p>default</p>
+    </div>
+
+    <div class="warning-box">
+        <strong>Fall-through — quase sempre um bug:</strong> Esquecer o <code>break</code> é um dos erros mais comuns com <code>switch</code>. O compilador <em>não avisa</em> sobre fall-through por padrão — ele é tecnicamente válido e até útil em situações específicas (ver abaixo). Sempre adicione <code>break</code> ao final de cada <code>case</code>, a não ser que o fall-through seja intencional e comentado.
+    </div>
+
+    <h3>Fall-through intencional — agrupando casos</h3>
+    <p>O fall-through pode ser usado de forma controlada para fazer com que múltiplos casos executem o mesmo código:</p>
+
+    <pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int mes = 4;   <span class="code-comment">// abril</span>
+
+    switch (mes) {
+        case 1:
+        case 3:
+        case 5:
+        case 7:
+        case 8:
+        case 10:
+        case 12:
+            printf("Mês com 31 dias.\n");
+            break;
+        case 4:
+        case 6:
+        case 9:
+        case 11:
+            printf("Mês com 30 dias.\n");   <span class="code-comment">// este executa (abril = 4)</span>
+            break;
+        case 2:
+            printf("Fevereiro: 28 ou 29 dias.\n");
+            break;
+        default:
+            printf("Mês inválido.\n");
+    }
+
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>Mês com 30 dias.</p>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ OPERADOR TERNÁRIO -->
+<div class="content-section">
+    <h2>Operador Ternário: ?:</h2>
+    <p>O operador ternário é a forma mais compacta de escrever uma decisão condicional em C. Ele avalia uma condição e retorna um de dois valores — tudo em uma única expressão.</p>
+
+    <div class="definicao">
+        <code>condição ? valor_se_verdadeiro : valor_se_falso</code><br><br>
+        É chamado "ternário" porque envolve três operandos: a condição, o valor para verdadeiro e o valor para falso. É o único operador de três operandos em C.
+    </div>
+
+    <pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int age = 20;
+
+    <span class="code-comment">// Forma equivalente com if-else:</span>
+    // if (age >= 18) status = "Adult"; else status = "Minor";
+
+    const char* status = (age >= 18) ? "Adult" : "Minor";
+    printf("Status: %s\n", status);   <span class="code-comment">// Adult</span>
+
+    <span class="code-comment">// Ternário diretamente no printf</span>
+    int numero = -7;
+    printf("%d é %s\n", numero, (numero >= 0) ? "positivo" : "negativo");
+
+    <span class="code-comment">// Encontrando o maior entre dois valores</span>
+    int a = 15, b = 23;
+    int maior = (a > b) ? a : b;
+    printf("Maior: %d\n", maior);   <span class="code-comment">// 23</span>
+
+    <span class="code-comment">// Valor absoluto</span>
+    int x = -42;
+    int abs_x = (x >= 0) ? x : -x;
+    printf("|%d| = %d\n", x, abs_x);  <span class="code-comment">// |-42| = 42</span>
+
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>Status: Adult</p>
+        <p>-7 é negativo</p>
+        <p>Maior: 23</p>
+        <p>|-42| = 42</p>
+    </div>
+
+    <div class="tip-box">
+        <strong>Quando usar o ternário:</strong> Use-o para expressões simples e curtas onde a intenção fica clara à primeira vista. Para decisões com múltiplas instruções ou lógica mais complexa, prefira o <code>if-else</code> completo — legibilidade é mais importante que concisão.
+    </div>
+
+    <div class="warning-box">
+        <strong>Ternários aninhados — evite:</strong> É tecnicamente possível aninhar ternários, mas o resultado é quase sempre ilegível:
+        <pre>
+<span class="code-comment">// Difícil de ler — evite</span>
+int sinal = (x > 0) ? 1 : (x < 0) ? -1 : 0;
+
+<span class="code-comment">// Preferível — use if-else if</span>
+int sinal;
+if      (x > 0) sinal =  1;
+else if (x < 0) sinal = -1;
+else            sinal =  0;</pre>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ EXEMPLO COMPLETO DOCX -->
+<div class="content-section">
+    <h2>Exemplo Completo do Material de Referência</h2>
+    <p>O programa abaixo reúne todos os tipos de estrutura condicional estudados nesta aula e na anterior, diretamente da seção 5 do livro de referência do curso:</p>
+
+    <pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int age = 25;
+    char grade = 'B';
+    int isStudent = 1;
+
+    <span class="code-comment">// Operador ternário</span>
+    const char* status = (age >= 18) ? "Adult" : "Minor";
+    printf("Status: %s\n", status);
+
+    <span class="code-comment">// if simples</span>
+    if (isStudent) {
+        printf("You are a student.\n");
+    }
+
+    <span class="code-comment">// if-else</span>
+    if (age &lt; 18) {
+        printf("Underage.\n");
+    } else {
+        printf("Of legal age.\n");
+    }
+
+    <span class="code-comment">// if-else if-else</span>
+    if (grade == 'A') {
+        printf("Excellent!\n");
+    } else if (grade == 'B') {
+        printf("Good job.\n");
+    } else {
+        printf("Needs improvement.\n");
+    }
+
+    <span class="code-comment">// switch-case</span>
+    switch (grade) {
+        case 'A':
+            printf("Grade: A\n");
+            break;
+        case 'B':
+            printf("Grade: B\n");
+            break;
+        case 'C':
+            printf("Grade: C\n");
+            break;
+        default:
+            printf("Grade not recognized.\n");
+    }
+
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>Status: Adult</p>
+        <p>You are a student.</p>
+        <p>Of legal age.</p>
+        <p>Good job.</p>
+        <p>Grade: B</p>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ QUANDO USAR CADA UM -->
+<div class="content-section">
+    <h2>Quando Usar Cada Estrutura?</h2>
+
+    <table>
+        <tr>
+            <th>Estrutura</th>
+            <th>Use quando...</th>
+            <th>Evite quando...</th>
+        </tr>
+        <tr>
+            <td><code>if</code></td>
+            <td>Há uma única condição a verificar e um bloco opcional a executar</td>
+            <td>Há muitos caminhos — fica longo e difícil de ler</td>
+        </tr>
+        <tr>
+            <td><code>if-else</code></td>
+            <td>Há exatamente dois caminhos (verdadeiro ou falso)</td>
+            <td>Há mais de dois caminhos — prefira <code>else-if</code></td>
+        </tr>
+        <tr>
+            <td><code>else-if</code></td>
+            <td>Há múltiplas condições booleanas a verificar em sequência</td>
+            <td>As condições comparam um valor com constantes fixas — prefira <code>switch</code></td>
+        </tr>
+        <tr>
+            <td><code>switch-case</code></td>
+            <td>Uma variável inteira ou <code>char</code> é comparada com vários valores fixos</td>
+            <td>Há condições de faixa (<code>&gt;</code>, <code>&lt;=</code>) ou valores <code>float</code>/<code>string</code></td>
+        </tr>
+        <tr>
+            <td>Ternário <code>?:</code></td>
+            <td>A lógica é simples, cabe em uma linha e o resultado é um valor</td>
+            <td>A lógica é complexa ou há múltiplas instruções para executar</td>
+        </tr>
+    </table>
+</div>
+
+<!-- ═══════════════════════════════════════ C VS JAVA -->
+<div class="content-section">
+    <h2>Estruturas Condicionais em C versus Java</h2>
+
+    <table>
+        <tr>
+            <th>Aspecto</th>
+            <th>C</th>
+            <th>Java</th>
+        </tr>
+        <tr>
+            <td><code>else-if</code></td>
+            <td>Idêntico</td>
+            <td>Idêntico</td>
+        </tr>
+        <tr>
+            <td>Operador ternário <code>?:</code></td>
+            <td>Idêntico</td>
+            <td>Idêntico</td>
+        </tr>
+        <tr>
+            <td><code>switch</code> — tipos aceitos</td>
+            <td><code>int</code>, <code>char</code>, <code>short</code>, <code>long</code>, <code>enum</code></td>
+            <td>Idem + <code>String</code> (desde Java 7) e <code>enum</code></td>
+        </tr>
+        <tr>
+            <td><code>switch</code> com <code>String</code></td>
+            <td><strong>Não suportado</strong> — use <code>else-if</code> com <code>strcmp()</code></td>
+            <td>Suportado desde Java 7</td>
+        </tr>
+        <tr>
+            <td>Fall-through sem <code>break</code></td>
+            <td>Ocorre silenciosamente — sem aviso do compilador</td>
+            <td>Ocorre silenciosamente — mesma regra</td>
+        </tr>
+        <tr>
+            <td>Múltiplos valores por <code>case</code></td>
+            <td>Agrupando cases vazios (fall-through intencional)</td>
+            <td>Idem em Java clássico; <code>case 1, 2, 3 -></code> em Java 14+</td>
+        </tr>
+        <tr>
+            <td>Condição do <code>if</code></td>
+            <td>Qualquer inteiro (0 = falso, não-zero = verdadeiro)</td>
+            <td>Deve ser <code>boolean</code> explícito</td>
+        </tr>
+        <tr>
+            <td><code>switch</code> com retorno direto (arrow)</td>
+            <td>Não disponível em C</td>
+            <td><code>case X -> valor;</code> disponível em Java 14+</td>
+        </tr>
+    </table>
+
+    <h3>Equivalente de switch com String em C</h3>
+    <p>Como C não aceita strings no <code>switch</code>, a comparação de texto deve ser feita com <code>strcmp()</code> (de <code>&lt;string.h&gt;</code>) numa cadeia <code>else-if</code>:</p>
+
+    <table>
+        <tr>
+            <th style="width:50%">C — usando else-if + strcmp</th>
+            <th style="width:50%">Java — switch com String</th>
+        </tr>
+        <tr>
+            <td>
+<pre style="margin:0; font-size:0.82em;">
+#include &lt;string.h&gt;
+
+char cor[] = "azul";
+
+if (strcmp(cor, "vermelho") == 0)
+    printf("Para!\n");
+else if (strcmp(cor, "amarelo") == 0)
+    printf("Atenção!\n");
+else if (strcmp(cor, "azul") == 0)
+    printf("Seguro!\n");
+else
+    printf("Cor desconhecida.\n");
+</pre>
+            </td>
+            <td>
+<pre style="margin:0; font-size:0.82em;">
+String cor = "azul";
+
+switch (cor) {
+    case "vermelho":
+        System.out.println("Para!");
+        break;
+    case "amarelo":
+        System.out.println("Atenção!");
+        break;
+    case "azul":
+        System.out.println("Seguro!");
+        break;
+    default:
+        System.out.println("Cor desconhecida.");
+}
+</pre>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<!-- ═══════════════════════════════════════ EXERCÍCIOS -->
+<div class="exercise-section">
+    <h2>Exercícios — Aula 09</h2>
+    <p>Teste seus conhecimentos sobre <code>else-if</code>, <code>switch-case</code> e operador ternário:</p>
+
+    <form class="quiz-form" id="quiz-form">
+
+        <div class="quiz-question">
+            <p><strong>1. Dado <code>float nota = 85.0</code>, qual será a saída da cadeia else-if abaixo?</strong></p>
+            <pre>if (nota >= 60)
+    printf("D\n");
+else if (nota >= 70)
+    printf("C\n");
+else if (nota >= 80)
+    printf("B\n");
+else if (nota >= 90)
+    printf("A\n");</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q1" value="a"> A</label></li>
+                <li><label><input type="radio" name="q1" value="b"> B</label></li>
+                <li><label><input type="radio" name="q1" value="c"> C</label></li>
+                <li><label><input type="radio" name="q1" value="d"> D</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>2. O que acontece quando o <code>break</code> é omitido em um <code>case</code> do <code>switch</code>?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q2" value="a"> O compilador gera um erro e interrompe a compilação</label></li>
+                <li><label><input type="radio" name="q2" value="b"> O compilador gera um aviso mas compila normalmente</label></li>
+                <li><label><input type="radio" name="q2" value="c"> A execução continua pelo próximo <code>case</code> sem verificar o valor (<em>fall-through</em>)</label></li>
+                <li><label><input type="radio" name="q2" value="d"> O <code>switch</code> vai direto para o bloco <code>default</code></label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>3. Qual a saída do código abaixo?</strong></p>
+            <pre>int x = 2;
+switch (x) {
+    case 1: printf("um\n");
+    case 2: printf("dois\n");
+    case 3: printf("tres\n"); break;
+    default: printf("outro\n");
+}</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q3" value="a"> dois</label></li>
+                <li><label><input type="radio" name="q3" value="b"> dois<br>tres</label></li>
+                <li><label><input type="radio" name="q3" value="c"> dois<br>tres<br>outro</label></li>
+                <li><label><input type="radio" name="q3" value="d"> um<br>dois<br>tres</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>4. Qual será o valor de <code>resultado</code> após executar o código abaixo?</strong></p>
+            <pre>int a = 10, b = 3;
+int resultado = (a > b) ? a - b : b - a;</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q4" value="a"> -7</label></li>
+                <li><label><input type="radio" name="q4" value="b"> 7</label></li>
+                <li><label><input type="radio" name="q4" value="c"> 13</label></li>
+                <li><label><input type="radio" name="q4" value="d"> 0</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>5. Qual tipo de dado <u>não</u> pode ser usado na expressão de um <code>switch</code> em C?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q5" value="a"> <code>int</code></label></li>
+                <li><label><input type="radio" name="q5" value="b"> <code>char</code></label></li>
+                <li><label><input type="radio" name="q5" value="c"> <code>double</code></label></li>
+                <li><label><input type="radio" name="q5" value="d"> <code>short</code></label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>6. Na cadeia else-if, o que acontece quando uma condição verdadeira é encontrada?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q6" value="a"> O bloco correspondente é executado e depois as demais condições ainda são verificadas</label></li>
+                <li><label><input type="radio" name="q6" value="b"> O bloco correspondente é executado e os demais blocos são pulados completamente</label></li>
+                <li><label><input type="radio" name="q6" value="c"> Todas as condições são sempre avaliadas, independentemente do resultado</label></li>
+                <li><label><input type="radio" name="q6" value="d"> O programa gera um erro se mais de uma condição for verdadeira</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>7. Qual é a grande vantagem do <code>switch</code> em relação ao <code>else-if</code> quando se compara um valor com muitas constantes?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q7" value="a"> O <code>switch</code> aceita <code>float</code> e <code>string</code>, enquanto o <code>else-if</code> não</label></li>
+                <li><label><input type="radio" name="q7" value="b"> O <code>switch</code> é mais legível e pode ser implementado internamente como uma tabela de salto — mais eficiente que avaliar múltiplas condições em sequência</label></li>
+                <li><label><input type="radio" name="q7" value="c"> O <code>switch</code> permite usar o operador <code>break</code>, que o <code>else-if</code> não suporta</label></li>
+                <li><label><input type="radio" name="q7" value="d"> O <code>switch</code> avalia todas as condições antes de escolher, garantindo maior precisão</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>8. Como comparar strings em uma estrutura de decisão em C, já que o <code>switch</code> não aceita strings?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q8" value="a"> Usando o operador <code>==</code> diretamente com as strings em um <code>if</code></label></li>
+                <li><label><input type="radio" name="q8" value="b"> Usando <code>strcmp()</code> de <code>&lt;string.h&gt;</code> em uma cadeia <code>else-if</code></label></li>
+                <li><label><input type="radio" name="q8" value="c"> Usando <code>switch</code> com o primeiro caractere da string como aproximação</label></li>
+                <li><label><input type="radio" name="q8" value="d"> Não é possível comparar strings em C — deve-se usar Java para isso</label></li>
+            </ul>
+        </div>
+
+        <button type="button" class="submit-btn" onclick="verificarRespostas()">Verificar Respostas</button>
+    </form>
+
+    <div id="quiz-results" style="display:none; margin-top:20px; padding:15px; background-color:#dff0d8; border-radius:5px;"></div>
+</div>
+
+<div class="navigation-buttons">
+    <a href="capitulo08.html">← Aula 08</a>
+    <a href="index.html">Índice</a>
+    <a href="capitulo10.html">Aula 10 →</a>
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align: center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education" style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+<script>
+    function verificarRespostas() {
+        const gabarito = {
+            q1: "d",
+            q2: "c",
+            q3: "b",
+            q4: "b",
+            q5: "c",
+            q6: "b",
+            q7: "b",
+            q8: "b"
+        };
+
+        const explicacoes = {
+            q1: "A cadeia else-if avalia as condições de cima para baixo e para no primeiro verdadeiro. Como nota = 85 satisfaz nota >= 60 imediatamente, imprime 'D' e pula os demais blocos — mesmo que nota >= 80 também fosse verdadeiro. Por isso, a ordem das condições importa: as mais restritivas devem vir primeiro.",
+            q2: "Sem break, ocorre fall-through: após executar o bloco do case correspondente, a execução 'cai' nos cases seguintes sem verificar seus valores, até encontrar um break ou o fim do switch. O compilador não avisa — é um bug silencioso muito comum.",
+            q3: "x = 2: entra no case 2 e imprime 'dois'. Sem break, continua para o case 3 e imprime 'tres'. O break do case 3 encerra o switch antes do default. Saída: 'dois' e 'tres'.",
+            q4: "a = 10 > b = 3 é verdadeiro, então o ternário retorna a - b = 10 - 3 = 7. resultado = 7.",
+            q5: "O switch em C aceita apenas tipos inteiros (int, char, short, long, enum). float e double não são permitidos porque não podem ser comparados com precisão exata. String também não é aceita em C (ao contrário de Java 7+).",
+            q6: "Em uma cadeia else-if, assim que uma condição verdadeira é encontrada, o bloco correspondente é executado e todos os outros blocos são ignorados. Apenas um bloco é executado por vez.",
+            q7: "O switch é mais legível para comparações com muitas constantes e pode ser otimizado pelo compilador como uma tabela de salto (jump table), tornando a seleção O(1) em vez de avaliar condições em sequência. O else-if avalia cada condição uma a uma, sendo O(n) no pior caso.",
+            q8: "Em C, o operador == aplicado a strings compara endereços de memória, não o conteúdo. Para comparar o conteúdo de strings, deve-se usar strcmp() de <string.h>, que retorna 0 quando as strings são iguais. Isso é feito em uma cadeia else-if, já que o switch não aceita strings."
+        };
+
+        let acertos = 0;
+        let html = "";
+        const total = Object.keys(gabarito).length;
+
+        for (const q in gabarito) {
+            const selecionada = document.querySelector(`input[name="${q}"]:checked`);
+            const num = q.substring(1);
+            if (selecionada) {
+                if (selecionada.value === gabarito[q]) {
+                    acertos++;
+                    html += `<p>Questão ${num}: <span style="color:green; font-weight:bold;">✓ Correto!</span> — ${explicacoes[q]}</p>`;
+                } else {
+                    html += `<p>Questão ${num}: <span style="color:red; font-weight:bold;">✗ Incorreto.</span> — ${explicacoes[q]}</p>`;
+                }
+            } else {
+                html += `<p>Questão ${num}: <span style="color:orange; font-weight:bold;">⚠ Não respondida.</span></p>`;
+            }
+        }
+
+        const resultado = document.getElementById("quiz-results");
+        resultado.innerHTML = `<h3>Sua pontuação: ${acertos} de ${total}</h3>${html}`;
+        resultado.style.display = "block";
+        resultado.scrollIntoView({ behavior: "smooth" });
+    }
+</script>
+
+</body>
+</html>

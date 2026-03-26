@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 37 - Lista Ligada por Arranjo</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <style>
+        /* ── diagrama de array genérico ── */
+        .arr-wrap {
+            font-family: 'Courier New', monospace;
+            background: #f5f5f5;
+            border-left: 4px solid #1149c3;
+            border-radius: 5px;
+            padding: 20px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+        .arr-label { color: #555; font-size: 0.82em; margin-bottom: 8px; line-height: 1.6; }
+        .arr-row { display: flex; align-items: stretch; margin-bottom: 2px; }
+        .arr-tag {
+            background: #3047bb; color: white;
+            padding: 8px 10px; font-size: 0.80em;
+            display: flex; align-items: center; justify-content: center;
+            min-width: 58px; border-radius: 4px 0 0 4px;
+            white-space: nowrap;
+        }
+        .arr-cell {
+            border: 2px solid #3047bb; border-left: none;
+            padding: 8px 0; text-align: center; min-width: 58px;
+            font-weight: bold; font-size: 0.92em;
+        }
+        .arr-cell:last-child { border-radius: 0 4px 4px 0; }
+        .arr-cell.val   { background: #e8eaf6; color: #1a237e; }
+        .arr-cell.cur   { background: #fff8e1; color: #e65100; }
+        .arr-cell.avail { background: #f3e5f5; color: #6a1b9a; }
+        .arr-cell.empty { background: #f5f5f5; color: #bbb; }
+        .arr-cell.highlight { background: #fff9c4; color: #f57f17; border-color: #f9a825; }
+        .arr-cell.changed   { background: #d4edda; color: #155724; border-color: #28a745; }
+        .arr-cell.deleted   { background: #f8d7da; color: #721c24; border-color: #dc3545; text-decoration: line-through; }
+        .arr-cell.new-elem  { background: #e8f5e9; color: #1b5e20; border-color: #43a047; }
+        .arr-idx { display: flex; margin-left: 58px; margin-bottom: 3px; }
+        .arr-idx span {
+            min-width: 58px; text-align: center;
+            font-size: 0.76em; color: #888;
+            border-left: 1px dashed #ccc; padding: 2px 0;
+            font-family: 'Courier New', monospace;
+        }
+        .arr-idx span:first-child { border-left: none; }
+
+        /* ── caixa de estado (inicio / dispo) ── */
+        .state-box {
+            display: inline-flex; flex-direction: column; gap: 3px;
+            margin-right: 12px; vertical-align: top; margin-top: 4px;
+        }
+        .state-cell {
+            display: flex; align-items: center; gap: 6px;
+            font-family: 'Courier New', monospace; font-size: 0.84em;
+        }
+        .state-label { color: #555; min-width: 44px; }
+        .state-val {
+            border: 2px solid #3047bb; border-radius: 3px;
+            padding: 4px 10px; background: #e8eaf6; color: #1a237e;
+            font-weight: bold; min-width: 28px; text-align: center;
+        }
+        .state-val.dispo { background: #f3e5f5; color: #6a1b9a; border-color: #8e24aa; }
+
+        /* ── seta de ligação lógica (texto) ── */
+        .chain-txt {
+            font-family: 'Courier New', monospace;
+            font-size: 0.88em; color: #333;
+            margin: 10px 0 0 0; line-height: 1.9;
+        }
+        .c-use  { color: #1a237e; font-weight: bold; }
+        .c-free { color: #6a1b9a; font-weight: bold; }
+        .c-new  { color: #1b5e20; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Aula 37 — Lista Ligada por Arranjo</h1>
+        <p style="margin:0; font-size:0.9em; opacity:0.85;">
+            Lista ordenada pela chave, sem repetição de elementos
+        </p>
+    </header>
+
+    <nav>
+        <a href="index.html">Voltar ao Índice</a>
+        <a href="capitulo36.html">Aula Anterior</a>
+        <a href="capitulo38.html">Próxima Aula</a>
+    </nav>
+
+
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- 1. MOTIVAÇÃO — LIMITE DA LISTA SEQUENCIAL                     -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <div class="content-section">
+        <h2>Motivação: o limite da lista sequencial</h2>
+        <p>
+            A lista sequencial das aulas 29–36 guarda os registros lado a lado num array
+            de tamanho fixo <code>MAX</code>. Inserir ou remover um elemento no meio exige
+            deslocar fisicamente todos os que vêm depois — custo O(n).
+        </p>
+
+        <div class="arr-wrap">
+            <div class="arr-label">Excluir o 8 de [5, 8, 9] na lista <em>sequencial</em> — 1 exclusão = N−1 deslocamentos</div>
+            <div class="arr-idx"><span>[0]</span><span>[1]</span><span>[2]</span><span>[3]</span><span>[4]</span></div>
+            <div class="arr-row">
+                <div class="arr-tag">A[ ]</div>
+                <div class="arr-cell val">5</div>
+                <div class="arr-cell deleted">8</div>
+                <div class="arr-cell val" style="background:#fff9c4;color:#f57f17;">9 ←</div>
+                <div class="arr-cell empty">(—)</div>
+                <div class="arr-cell empty">(—)</div>
+            </div>
+            <div class="arr-label" style="margin-top:8px;">
+                Para remover A[1]=8, o elemento A[2]=9 precisa ser copiado para A[1].
+                Com 50 000 elementos, uma remoção no início desloca 49 999 registros.
+            </div>
+        </div>
+
+        <div class="warning-box">
+            <strong>Problema central:</strong> a ordem lógica da lista está amarrada à
+            ordem física do array. Mover a ordem lógica exige mover os dados.
+            A solução: <strong>separar ordem lógica de posição física</strong> usando cursores.
+        </div>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- 2. IDEIA GERAL — CURSORES                                     -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <div class="content-section">
+        <h2>Ideia geral: cada elemento indica seu sucessor</h2>
+        <p>
+            Em vez de exigir adjacência física, adicionamos ao array uma segunda linha de
+            <strong>cursores</strong>: cada posição guarda o <em>índice</em> do seu
+            sucessor na ordem lógica. O marcador de fim de cadeia é <code>INVALIDO = −1</code>.
+        </p>
+
+        <div class="arr-wrap">
+            <div class="arr-label">Array com valores e cursores — lista lógica: 5 → 7 → 8 → 9</div>
+            <div class="arr-idx"><span>[0]</span><span>[1]</span><span>[2]</span><span>[3]</span></div>
+            <div class="arr-row" style="margin-bottom:2px;">
+                <div class="arr-tag">valor</div>
+                <div class="arr-cell val">5</div>
+                <div class="arr-cell val">9</div>
+                <div class="arr-cell val">8</div>
+                <div class="arr-cell val">7</div>
+            </div>
+            <div class="arr-row">
+                <div class="arr-tag">cursor</div>
+                <div class="arr-cell cur">3</div>
+                <div class="arr-cell cur">−1</div>
+                <div class="arr-cell cur">1</div>
+                <div class="arr-cell cur">2</div>
+            </div>
+            <div class="arr-label" style="margin-top:12px;">
+                A partir do índice 0: A[0]=5 →<span class="c-use"> cur=3</span> → A[3]=7 →<span class="c-use"> cur=2</span> → A[2]=8 →<span class="c-use"> cur=1</span> → A[1]=9 →<span class="c-use"> cur=−1 (fim)</span>
+            </div>
+        </div>
+
+        <h3>Excluindo o 8 — apenas um cursor muda</h3>
+        <p>
+            O elemento 7 (A[3]) aponta para 8 (A[2]). O sucessor de 8 é 9 (A[1]).
+            Para excluir 8, basta redirecionar o cursor de A[3] de <code>2</code> para <code>1</code>.
+            <strong>Nenhum dado é movido.</strong>
+        </p>
+
+        <div class="arr-wrap">
+            <div class="arr-idx"><span>[0]</span><span>[1]</span><span>[2]</span><span>[3]</span></div>
+            <div class="arr-row" style="margin-bottom:2px;">
+                <div class="arr-tag">valor</div>
+                <div class="arr-cell val">5</div>
+                <div class="arr-cell val">9</div>
+                <div class="arr-cell deleted">8</div>
+                <div class="arr-cell val">7</div>
+            </div>
+            <div class="arr-row">
+                <div class="arr-tag">cursor</div>
+                <div class="arr-cell cur">3</div>
+                <div class="arr-cell cur">−1</div>
+                <div class="arr-cell deleted">1</div>
+                <div class="arr-cell changed">1 ←</div>
+            </div>
+            <div class="arr-label" style="margin-top:10px;">
+                Nova cadeia: 5 → 7 → 9 &nbsp;|&nbsp; Célula verde = único campo alterado &nbsp;|&nbsp; Célula vermelha = posição desligada da cadeia
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- 3. ESTRUTURA DE DADOS                                         -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <div class="content-section">
+        <h2>Estrutura de dados: dois campos, duas cadeias</h2>
+        <p>
+            A lista ligada por arranjo usa um único array <code>A[MAX]</code>, mas mantém
+            <strong>duas cadeias independentes</strong> dentro dele:
+        </p>
+        <ul>
+            <li><strong>Cadeia de uso</strong> (<code>inicio</code>): percorre os elementos válidos em ordem lógica crescente.</li>
+            <li><strong>Cadeia de disponíveis</strong> (<code>dispo</code>): percorre as posições livres para reutilização.</li>
+        </ul>
+
+        <pre>
+<span class="code-comment">/*------------------------------------------------------------
+ *  listaLigadaArranjo.c
+ *  Lista ligada por arranjo — ordenada por chave, sem repetição
+ *------------------------------------------------------------*/</span>
+#include &lt;stdio.h&gt;
+#include &lt;stdbool.h&gt;
+
+#define MAX      5
+#define INVALIDO -1
+
+typedef int TIPOCHAVE;
+
+typedef struct {
+    TIPOCHAVE chave;
+    <span class="code-comment">// outros campos do registro...</span>
+} REGISTRO;
+
+<span class="code-comment">/* Cada célula do arranjo: um registro + cursor para o próximo */</span>
+typedef struct {
+    REGISTRO reg;
+    int prox;   <span class="code-comment">/* índice do próximo na cadeia (INVALIDO = fim) */</span>
+} ELEMENTO;
+
+<span class="code-comment">/* Cabeça da lista: o arranjo + dois cursores de controle */</span>
+typedef struct {
+    ELEMENTO A[MAX];
+    int inicio;  <span class="code-comment">/* índice do 1º elemento em uso   (INVALIDO = lista vazia) */</span>
+    int dispo;   <span class="code-comment">/* índice do 1º espaço disponível (INVALIDO = lista cheia) */</span>
+} LISTA;</pre>
+
+        <div class="info-box">
+            <strong>Diferença fundamental da lista sequencial:</strong> a struct <code>LISTA</code>
+            agora tem dois campos de controle (<code>inicio</code> e <code>dispo</code>) e cada
+            célula carrega um campo <code>prox</code>. Não há <code>nroElem</code> — o tamanho é
+            calculado percorrendo a cadeia de uso.
+        </div>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- 4. INICIALIZAÇÃO                                              -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <div class="content-section">
+        <h2>Inicialização</h2>
+        <p>
+            Inicializar a lista significa montar a <strong>cadeia de disponíveis</strong>
+            ligando todas as células do array em sequência, do índice 0 ao MAX−1.
+            A cadeia de uso começa vazia (<code>inicio = INVALIDO</code>).
+        </p>
+
+        <pre>
+void inicializarLista(LISTA* l) {
+    int i;
+    for (i = 0; i &lt; MAX-1; i++)
+        l->A[i].prox = i + 1;   <span class="code-comment">/* cada célula aponta para a próxima */</span>
+    l->A[MAX-1].prox = INVALIDO; <span class="code-comment">/* última célula: fim da cadeia        */</span>
+    l->inicio = INVALIDO;        <span class="code-comment">/* cadeia de uso vazia                 */</span>
+    l->dispo  = 0;               <span class="code-comment">/* primeiro disponível: índice 0       */</span>
+}</pre>
+
+        <div class="arr-wrap">
+            <div class="arr-label">Estado após <code>inicializarLista</code> (MAX = 5)</div>
+
+            <div style="display:flex; align-items:flex-start; gap:16px; flex-wrap:wrap; margin-bottom:10px;">
+                <div class="state-box">
+                    <div class="state-cell"><span class="state-label">inicio</span><span class="state-val">−1</span></div>
+                    <div class="state-cell"><span class="state-label">dispo</span><span class="state-val dispo">0</span></div>
+                </div>
+                <div>
+                    <div class="arr-idx"><span>[0]</span><span>[1]</span><span>[2]</span><span>[3]</span><span>[4]</span></div>
+                    <div class="arr-row" style="margin-bottom:2px;">
+                        <div class="arr-tag">valor</div>
+                        <div class="arr-cell empty">?</div>
+                        <div class="arr-cell empty">?</div>
+                        <div class="arr-cell empty">?</div>
+                        <div class="arr-cell empty">?</div>
+                        <div class="arr-cell empty">?</div>
+                    </div>
+                    <div class="arr-row">
+                        <div class="arr-tag">prox</div>
+                        <div class="arr-cell avail">1</div>
+                        <div class="arr-cell avail">2</div>
+                        <div class="arr-cell avail">3</div>
+                        <div class="arr-cell avail">4</div>
+                        <div class="arr-cell avail">−1</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chain-txt">
+                <span class="c-use">Cadeia de uso:</span> inicio=−1 → lista vazia, nenhum elemento válido<br>
+                <span class="c-free">Cadeia de disponíveis:</span> dispo=0 → A[0] → A[1] → A[2] → A[3] → A[4] → −1 (todas as posições livres)
+            </div>
+        </div>
+
+        <div class="tip-box">
+            <strong>Observe:</strong> os valores (<code>reg</code>) das células são lixo de memória
+            — isso não importa porque nenhuma delas está na cadeia de uso ainda.
+            Somente os cursores <code>prox</code> da cadeia de disponíveis importam agora.
+        </div>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- 5. TAMANHO                                                     -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <div class="content-section">
+        <h2>Retornar o número de elementos</h2>
+        <p>
+            Não há um campo <code>nroElem</code>. Para contar os elementos, percorremos a
+            cadeia de uso desde <code>inicio</code> até encontrar <code>INVALIDO</code>:
+        </p>
+
+        <pre>
+int tamanho(LISTA* l) {
+    int i   = l->inicio;
+    int tam = 0;
+    while (i != INVALIDO) {
+        tam++;
+        i = l->A[i].prox;   <span class="code-comment">/* avança pelo cursor da cadeia de uso */</span>
+    }
+    return tam;
+}</pre>
+
+        <div class="tip-box">
+            <strong>Complexidade O(n):</strong> diferente da lista sequencial, onde o tamanho
+            é simplesmente <code>l->nroElem</code> (O(1)). Aqui precisamos percorrer a cadeia.
+            Se tamanho for consultado com frequência, vale manter um campo contador separado.
+        </div>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- 6. EXIBIÇÃO / IMPRESSÃO                                       -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <div class="content-section">
+        <h2>Exibição / Impressão</h2>
+        <p>
+            Percorremos a cadeia de uso a partir de <code>inicio</code>, imprimindo
+            <code>A[i].reg.chave</code> a cada passo:
+        </p>
+
+        <pre>
+void exibirLista(LISTA* l) {
+    int i = l->inicio;
+    printf("Lista: \" ");
+    while (i != INVALIDO) {
+        printf("%i ", l->A[i].reg.chave);
+        i = l->A[i].prox;               <span class="code-comment">/* avança para o próximo da cadeia */</span>
+    }
+    printf("\"\n");
+}</pre>
+
+        <div class="exemplo">
+            Para a lista com cadeia de uso 5 → 7 → 9 (início no índice 2):<br><br>
+            <code>i = inicio = 2</code> → A[2].reg.chave = 5 → imprime 5 → i = A[2].prox<br>
+            <code>i = 0</code> → A[0].reg.chave = 7 → imprime 7 → i = A[0].prox<br>
+            <code>i = 3</code> → A[3].reg.chave = 9 → imprime 9 → i = A[3].prox<br>
+            <code>i = −1</code> → INVALIDO → loop encerra<br><br>
+            Saída: <code>Lista: " 5 7 9 "</code>
+        </div>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- 7. BUSCA                                                       -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <div class="content-section">
+        <h2>Buscar por elemento</h2>
+        <p>A função de busca deve:</p>
+        <ul>
+            <li>Receber uma <strong>chave</strong> do usuário.</li>
+            <li>Retornar a <strong>posição no arranjo</strong> em que o elemento se encontra (caso seja encontrado).</li>
+            <li>Retornar <strong><code>INVALIDO</code></strong> caso não haja um registro com essa chave na lista.</li>
+        </ul>
+
+        <p>
+            Como a lista é <strong>ordenada por chave</strong>, a busca pode parar antecipadamente:
+            se <code>A[i].reg.chave</code> já for maior ou igual à chave procurada, os elementos
+            seguintes também serão maiores — não há necessidade de continuar.
+        </p>
+
+        <pre>
+<span class="code-comment">/* Busca sequencial em lista ordenada — retorna índice no arranjo ou INVALIDO */</span>
+int buscaSequencialOrd(LISTA* l, TIPOCHAVE ch) {
+    int i = l->inicio;
+    while (i != INVALIDO && l->A[i].reg.chave &lt; ch)
+        i = l->A[i].prox;
+    if (i != INVALIDO && l->A[i].reg.chave == ch)
+        return i;
+    return INVALIDO;
+}</pre>
+
+        <div class="tip-box">
+            <strong>Atenção:</strong> o valor retornado é o <em>índice no arranjo</em>, não a
+            posição lógica na lista. Isso é natural — o usuário normalmente só precisa saber
+            se o elemento existe, e o índice permite acessar o registro diretamente via <code>l->A[i].reg</code>.
+        </div>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- 8. INSERÇÃO — INTRODUÇÃO                                      -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <div class="content-section">
+        <h2>Inserção de um elemento</h2>
+        <p>
+            A inserção nesta lista obedece a três regras:
+        </p>
+        <ul>
+            <li>Os elementos são mantidos em <strong>ordem crescente pela chave</strong>.</li>
+            <li><strong>Não são permitidos elementos com chaves repetidas</strong>.</li>
+            <li>O novo elemento ocupa a <strong>primeira posição disponível</strong> no arranjo
+                (primeiro índice da cadeia de disponíveis).</li>
+        </ul>
+        <p>
+            O algoritmo precisa fazer duas coisas ao mesmo tempo: encontrar
+            <em>entre quais elementos</em> o novo será inserido (ordem lógica), e
+            <em>em qual posição física</em> do array ele será colocado (cadeia de disponíveis).
+        </p>
+
+        <h3>Função auxiliar: <code>obterNo</code></h3>
+        <p>
+            <code>obterNo</code> retira o primeiro nó da cadeia de disponíveis e retorna seu índice.
+            É o equivalente de um <code>malloc</code> manual — reserva um espaço para uso:
+        </p>
+
+        <pre>
+int obterNo(LISTA* l) {
+    int resultado = l->dispo;              <span class="code-comment">/* salva índice do 1º disponível   */</span>
+    if (l->dispo != INVALIDO)
+        l->dispo = l->A[l->dispo].prox;    <span class="code-comment">/* avança dispo para o próximo     */</span>
+    return resultado;                      <span class="code-comment">/* INVALIDO se lista estava cheia  */</span>
+}</pre>
+
+    </div>
+
+
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- 9. INSERÇÃO — DIAGRAMA                                        -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <div class="content-section">
+        <h2>Inserção ordenada — exemplo visual: inserir o 8</h2>
+        <p>
+            Estado inicial: lista com [5, 7, 9]. Vamos inserir o 8.
+            O 8 fica entre o 7 e o 9 — precisamos atualizar o cursor do 7 para apontar
+            para o 8, e o cursor do 8 para apontar para o 9.
+        </p>
+
+        <div class="arr-wrap">
+            <div class="arr-label"><strong>Antes da inserção</strong> — lista lógica: 5 → 7 → 9 | inicio=0, dispo=3</div>
+            <div style="display:flex; align-items:flex-start; gap:16px; flex-wrap:wrap; margin-bottom:8px;">
+                <div class="state-box">
+                    <div class="state-cell"><span class="state-label">inicio</span><span class="state-val">0</span></div>
+                    <div class="state-cell"><span class="state-label">dispo</span><span class="state-val dispo">3</span></div>
+                </div>
+                <div>
+                    <div class="arr-idx"><span>[0]</span><span>[1]</span><span>[2]</span><span>[3]</span><span>[4]</span></div>
+                    <div class="arr-row" style="margin-bottom:2px;">
+                        <div class="arr-tag">valor</div>
+                        <div class="arr-cell val">5</div>
+                        <div class="arr-cell val">7</div>
+                        <div class="arr-cell val">9</div>
+                        <div class="arr-cell avail">?</div>
+                        <div class="arr-cell avail">?</div>
+                    </div>
+                    <div class="arr-row">
+                        <div class="arr-tag">prox</div>
+                        <div class="arr-cell cur">1</div>
+                        <div class="arr-cell cur">2</div>
+                        <div class="arr-cell cur">−1</div>
+                        <div class="arr-cell avail">4</div>
+                        <div class="arr-cell avail">−1</div>
+                    </div>
+                </div>
+            </div>
+            <div class="chain-txt">
+                <span class="c-use">Cadeia de uso:</span> 0(5)→1(7)→2(9)→−1<br>
+                <span class="c-free">Cadeia de disponíveis:</span> 3→4→−1
+            </div>
+        </div>
+
+        <p>
+            Algoritmo de inserção para o valor 8:
+        </p>
+        <ol>
+            <li>Percorre a cadeia de uso: A[0]=5 &lt; 8 → avança. A[1]=7 &lt; 8 → avança (<code>ant=1</code>). A[2]=9 ≥ 8 → para (<code>i=2</code>).</li>
+            <li>Não é duplicata (9 ≠ 8).</li>
+            <li>Chama <code>obterNo</code>: retorna índice 3; <code>dispo</code> avança para 4.</li>
+            <li>Grava A[3].reg.chave = 8.</li>
+            <li>Como <code>ant=1</code> (não é INVALIDO): A[3].prox = A[1].prox = 2; A[1].prox = 3.</li>
+        </ol>
+
+        <div class="arr-wrap">
+            <div class="arr-label"><strong>Após a inserção</strong> — lista lógica: 5 → 7 → 8 → 9 | inicio=0, dispo=4</div>
+            <div style="display:flex; align-items:flex-start; gap:16px; flex-wrap:wrap; margin-bottom:8px;">
+                <div class="state-box">
+                    <div class="state-cell"><span class="state-label">inicio</span><span class="state-val">0</span></div>
+                    <div class="state-cell"><span class="state-label">dispo</span><span class="state-val dispo">4</span></div>
+                </div>
+                <div>
+                    <div class="arr-idx"><span>[0]</span><span>[1]</span><span>[2]</span><span>[3]</span><span>[4]</span></div>
+                    <div class="arr-row" style="margin-bottom:2px;">
+                        <div class="arr-tag">valor</div>
+                        <div class="arr-cell val">5</div>
+                        <div class="arr-cell val">7</div>
+                        <div class="arr-cell val">9</div>
+                        <div class="arr-cell new-elem">8 ← novo</div>
+                        <div class="arr-cell avail">?</div>
+                    </div>
+                    <div class="arr-row">
+                        <div class="arr-tag">prox</div>
+                        <div class="arr-cell cur">1</div>
+                        <div class="arr-cell changed">3 ← alt.</div>
+                        <div class="arr-cell cur">−1</div>
+                        <div class="arr-cell new-elem">2</div>
+                        <div class="arr-cell avail">−1</div>
+                    </div>
+                </div>
+            </div>
+            <div class="chain-txt">
+                <span class="c-use">Nova cadeia de uso:</span> 0(5) → 1(7) → 3(8) → 2(9) → −1<br>
+                <span class="c-free">Cadeia de disponíveis:</span> 4 → −1<br>
+                <span class="c-new">Apenas 2 cursores foram alterados</span> (A[1].prox e A[3].prox). Nenhum dado foi movido.
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- 10. INSERÇÃO — CÓDIGO COMPLETO                                -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <div class="content-section">
+        <h2>Inserção ordenada — código completo</h2>
+
+        <pre>
+bool inserirElemListaOrd(LISTA* l, REGISTRO reg) {
+
+    <span class="code-comment">/* ── Parte 1: validação e localização ── */</span>
+
+    if (l->dispo == INVALIDO) return false;  <span class="code-comment">/* lista cheia */</span>
+
+    int ant = INVALIDO;                      <span class="code-comment">/* antecessor do ponto de inserção */</span>
+    int i   = l->inicio;
+    TIPOCHAVE ch = reg.chave;
+
+    <span class="code-comment">/* percorre enquanto a chave da lista for menor que a nova */</span>
+    while ((i != INVALIDO) && (l->A[i].reg.chave &lt; ch)) {
+        ant = i;
+        i   = l->A[i].prox;
+    }
+    <span class="code-comment">/* elemento duplicado: rejeita inserção */</span>
+    if (i != INVALIDO && l->A[i].reg.chave == ch) return false;
+
+    <span class="code-comment">/* ── Parte 2: inserção física e ajuste de cursores ── */</span>
+
+    i = obterNo(l);          <span class="code-comment">/* pega o 1º nó disponível               */</span>
+    l->A[i].reg = reg;       <span class="code-comment">/* grava o registro no nó obtido         */</span>
+
+    if (ant == INVALIDO) {   <span class="code-comment">/* inserção no início da cadeia de uso   */</span>
+        l->A[i].prox = l->inicio;
+        l->inicio    = i;
+    } else {                 <span class="code-comment">/* inserção no meio ou no final          */</span>
+        l->A[i].prox   = l->A[ant].prox;
+        l->A[ant].prox = i;
+    }
+    return true;
+}</pre>
+
+        <div class="info-box">
+            <strong>Dois casos de inserção:</strong><br>
+            <strong>ant == INVALIDO</strong> — o novo elemento é o menor de todos (ou a lista estava vazia). Ele vira o novo <code>inicio</code>.<br>
+            <strong>ant != INVALIDO</strong> — o novo elemento entra entre A[ant] e quem A[ant] apontava. Primeiro o novo aponta para o sucessor de ant (<code>A[i].prox = A[ant].prox</code>), depois ant aponta para o novo (<code>A[ant].prox = i</code>). A ordem dessas duas linhas importa!
+        </div>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- 11. EXCLUSÃO                                                   -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <div class="content-section">
+        <h2>Exclusão de um elemento</h2>
+        <h3>Função auxiliar: <code>devolverNo</code></h3>
+        <p>
+            Assim como a inserção usa <code>obterNo</code> para <em>reservar</em> um espaço,
+            a exclusão usa <code>devolverNo</code> para <em>devolvê-lo</em> à cadeia de
+            disponíveis. É o equivalente manual do <code>free</code>:
+        </p>
+
+        <pre>
+void devolverNo(LISTA* l, int j) {
+    l->A[j].prox = l->dispo;   <span class="code-comment">/* j aponta para o antigo 1º disponível */</span>
+    l->dispo = j;              <span class="code-comment">/* j passa a ser o novo 1º disponível   */</span>
+}</pre>
+
+        <div class="info-box">
+            <strong>Simetria com <code>obterNo</code>:</strong> <code>obterNo</code> retira da
+            frente da cadeia de disponíveis; <code>devolverNo</code> insere na frente.
+            Juntas, elas formam um par análogo a <code>malloc</code> / <code>free</code>,
+            mas operando sobre o array estático.
+        </div>
+
+        <h3>Código da exclusão</h3>
+        <p>
+            A exclusão percorre a cadeia de uso procurando a chave. Ao encontrá-la,
+            desliga o nó da cadeia de uso e o devolve à cadeia de disponíveis via
+            <code>devolverNo</code>:
+        </p>
+
+        <pre>
+bool excluirElemLista(LISTA* l, TIPOCHAVE ch) {
+    int ant = INVALIDO;
+    int i   = l->inicio;
+
+    <span class="code-comment">/* avança enquanto a chave do nó for menor que a buscada */</span>
+    while ((i != INVALIDO) && (l->A[i].reg.chave &lt; ch)) {
+        ant = i;
+        i   = l->A[i].prox;
+    }
+
+    <span class="code-comment">/* não encontrou: chegou no fim ou passou da posição esperada */</span>
+    if (i == INVALIDO || l->A[i].reg.chave != ch) return false;
+
+    <span class="code-comment">/* desliga o nó da cadeia de uso */</span>
+    if (ant == INVALIDO)
+        l->inicio = l->A[i].prox;   <span class="code-comment">/* era o primeiro elemento */</span>
+    else
+        l->A[ant].prox = l->A[i].prox;
+
+    devolverNo(l, i);   <span class="code-comment">/* devolve o nó à cadeia de disponíveis */</span>
+    return true;
+}</pre>
+
+        <div class="arr-wrap">
+            <div class="arr-label"><strong>Excluir o 7</strong> — lista [5, 7, 8, 9] → [5, 8, 9]</div>
+            <div style="display:flex; gap:24px; flex-wrap:wrap; margin-bottom:8px;">
+                <div>
+                    <div class="arr-label" style="font-weight:bold; color:#1a237e;">Antes</div>
+                    <div style="display:flex; align-items:flex-start; gap:10px; flex-wrap:wrap;">
+                        <div class="state-box">
+                            <div class="state-cell"><span class="state-label">inicio</span><span class="state-val">0</span></div>
+                            <div class="state-cell"><span class="state-label">dispo</span><span class="state-val dispo">4</span></div>
+                        </div>
+                        <div>
+                            <div class="arr-idx"><span>[0]</span><span>[1]</span><span>[2]</span><span>[3]</span><span>[4]</span></div>
+                            <div class="arr-row" style="margin-bottom:2px;">
+                                <div class="arr-tag">valor</div>
+                                <div class="arr-cell val">5</div>
+                                <div class="arr-cell val">7</div>
+                                <div class="arr-cell val">9</div>
+                                <div class="arr-cell val">8</div>
+                                <div class="arr-cell avail">?</div>
+                            </div>
+                            <div class="arr-row">
+                                <div class="arr-tag">prox</div>
+                                <div class="arr-cell cur">1</div>
+                                <div class="arr-cell cur">3</div>
+                                <div class="arr-cell cur">−1</div>
+                                <div class="arr-cell cur">2</div>
+                                <div class="arr-cell avail">−1</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chain-txt"><span class="c-use">Uso:</span> 0(5)→1(7)→3(8)→2(9)→−1</div>
+                </div>
+
+                <div>
+                    <div class="arr-label" style="font-weight:bold; color:#155724;">Depois (excluiu índice 1)</div>
+                    <div style="display:flex; align-items:flex-start; gap:10px; flex-wrap:wrap;">
+                        <div class="state-box">
+                            <div class="state-cell"><span class="state-label">inicio</span><span class="state-val">0</span></div>
+                            <div class="state-cell"><span class="state-label">dispo</span><span class="state-val dispo">1</span></div>
+                        </div>
+                        <div>
+                            <div class="arr-idx"><span>[0]</span><span>[1]</span><span>[2]</span><span>[3]</span><span>[4]</span></div>
+                            <div class="arr-row" style="margin-bottom:2px;">
+                                <div class="arr-tag">valor</div>
+                                <div class="arr-cell val">5</div>
+                                <div class="arr-cell deleted">7</div>
+                                <div class="arr-cell val">9</div>
+                                <div class="arr-cell val">8</div>
+                                <div class="arr-cell avail">?</div>
+                            </div>
+                            <div class="arr-row">
+                                <div class="arr-tag">prox</div>
+                                <div class="arr-cell changed">3 ← alt.</div>
+                                <div class="arr-cell avail">4</div>
+                                <div class="arr-cell cur">−1</div>
+                                <div class="arr-cell cur">2</div>
+                                <div class="arr-cell avail">−1</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chain-txt">
+                        <span class="c-use">Uso:</span> 0(5)→3(8)→2(9)→−1<br>
+                        <span class="c-free">Disponíveis:</span> 1→4→−1
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <strong>O nó devolvido entra na frente da cadeia de disponíveis.</strong>
+            Após excluir A[1], <code>dispo</code> passa de 4 para 1, e A[1].prox aponta para o
+            antigo <code>dispo</code> (4). A célula excluída pode ser reutilizada pela próxima
+            inserção — seu valor de <code>reg</code> é ignorado até ser sobrescrito.
+        </div>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- 12. EXEMPLO COMPLETO                                          -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <div class="content-section">
+        <h2>Exemplo completo com todas as operações</h2>
+        <p>
+            O programa a seguir exercita todas as funções implementadas nesta aula.
+            Note que a lista ordena automaticamente os elementos ao inserir, mesmo que
+            os inserimos fora de ordem:
+        </p>
+
+        <pre>
+int main() {
+    LISTA l;
+    REGISTRO r;
+
+    inicializarLista(&l);
+    exibirLista(&l);
+    printf("Tamanho: %d\n\n", tamanho(&l));
+
+    <span class="code-comment">/* Inserções fora de ordem — a lista se auto-ordena */</span>
+    r.chave = 7; inserirElemListaOrd(&l, r);
+    r.chave = 3; inserirElemListaOrd(&l, r);
+    r.chave = 9; inserirElemListaOrd(&l, r);
+    r.chave = 1; inserirElemListaOrd(&l, r);
+    r.chave = 5; inserirElemListaOrd(&l, r);
+    exibirLista(&l);
+    printf("Tamanho: %d\n\n", tamanho(&l));
+
+    <span class="code-comment">/* Inserção com lista cheia */</span>
+    r.chave = 11;
+    if (!inserirElemListaOrd(&l, r))
+        printf("Inserção de 11 recusada: lista cheia\n");
+
+    <span class="code-comment">/* Inserção de duplicata */</span>
+    r.chave = 3;
+    if (!inserirElemListaOrd(&l, r))
+        printf("Inserção de 3 recusada: elemento já existe\n\n");
+
+    <span class="code-comment">/* Busca */</span>
+    int pos = buscaSequencialOrd(&l, 9);
+    if (pos != INVALIDO)
+        printf("Chave 9 encontrada na posição %d do arranjo\n", pos);
+    pos = buscaSequencialOrd(&l, 4);
+    if (pos == INVALIDO)
+        printf("Chave 4 não encontrada\n\n");
+
+    <span class="code-comment">/* Exclusões */</span>
+    if (excluirElemLista(&l, 3)) printf("Chave 3 excluída\n");
+    if (excluirElemLista(&l, 1)) printf("Chave 1 excluída\n");
+    if (!excluirElemLista(&l, 8)) printf("Chave 8 não encontrada\n\n");
+
+    exibirLista(&l);
+    printf("Tamanho: %d\n", tamanho(&l));
+
+    return 0;
+}</pre>
+
+        <div class="terminal-output">
+            <p>Lista: " "</p>
+            <p>Tamanho: 0</p>
+            <p>&nbsp;</p>
+            <p>Lista: " 1 3 5 7 9 "</p>
+            <p>Tamanho: 5</p>
+            <p>&nbsp;</p>
+            <p>Inserção de 11 recusada: lista cheia</p>
+            <p>Inserção de 3 recusada: elemento já existe</p>
+            <p>&nbsp;</p>
+            <p>Chave 9 encontrada na posição 2 do arranjo</p>
+            <p>Chave 4 não encontrada</p>
+            <p>&nbsp;</p>
+            <p>Chave 3 excluída</p>
+            <p>Chave 1 excluída</p>
+            <p>Chave 8 não encontrada</p>
+            <p>&nbsp;</p>
+            <p>Lista: " 5 7 9 "</p>
+            <p>Tamanho: 3</p>
+        </div>
+
+        <div class="tip-box">
+            <strong>Inserimos 7, 3, 9, 1, 5 nessa ordem</strong>, mas a lista exibe
+            <strong>1 3 5 7 9</strong> — em ordem crescente. A inserção ordenada garante isso
+            independentemente da sequência de entradas.
+        </div>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- 13. CÓDIGO-FONTE COMPLETO                                     -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <div class="content-section">
+        <h2>Código-fonte completo</h2>
+        <p>Todas as definições e funções reunidas num único arquivo:</p>
+
+        <pre>
+#include &lt;stdio.h&gt;
+#include &lt;stdbool.h&gt;
+
+#define MAX      5
+#define INVALIDO -1
+
+typedef int TIPOCHAVE;
+
+typedef struct { TIPOCHAVE chave; } REGISTRO;
+
+typedef struct { REGISTRO reg; int prox; } ELEMENTO;
+
+typedef struct {
+    ELEMENTO A[MAX];
+    int inicio;
+    int dispo;
+} LISTA;
+
+<span class="code-comment">/* ── Inicialização ── */</span>
+void inicializarLista(LISTA* l) {
+    int i;
+    for (i = 0; i &lt; MAX-1; i++) l->A[i].prox = i + 1;
+    l->A[MAX-1].prox = INVALIDO;
+    l->inicio = INVALIDO;
+    l->dispo  = 0;
+}
+
+<span class="code-comment">/* ── Tamanho ── */</span>
+int tamanho(LISTA* l) {
+    int i = l->inicio, tam = 0;
+    while (i != INVALIDO) { tam++; i = l->A[i].prox; }
+    return tam;
+}
+
+<span class="code-comment">/* ── Exibição ── */</span>
+void exibirLista(LISTA* l) {
+    int i = l->inicio;
+    printf("Lista: \" ");
+    while (i != INVALIDO) { printf("%i ", l->A[i].reg.chave); i = l->A[i].prox; }
+    printf("\"\n");
+}
+
+<span class="code-comment">/* ── Busca ── */</span>
+int buscaSequencialOrd(LISTA* l, TIPOCHAVE ch) {
+    int i = l->inicio;
+    while (i != INVALIDO && l->A[i].reg.chave &lt; ch) i = l->A[i].prox;
+    if (i != INVALIDO && l->A[i].reg.chave == ch) return i;
+    return INVALIDO;
+}
+
+<span class="code-comment">/* ── Auxiliares de nó ── */</span>
+int obterNo(LISTA* l) {
+    int r = l->dispo;
+    if (l->dispo != INVALIDO) l->dispo = l->A[l->dispo].prox;
+    return r;
+}
+
+void devolverNo(LISTA* l, int j) {
+    l->A[j].prox = l->dispo;
+    l->dispo = j;
+}
+
+<span class="code-comment">/* ── Inserção ── */</span>
+bool inserirElemListaOrd(LISTA* l, REGISTRO reg) {
+    if (l->dispo == INVALIDO) return false;
+    int ant = INVALIDO, i = l->inicio;
+    TIPOCHAVE ch = reg.chave;
+    while ((i != INVALIDO) && (l->A[i].reg.chave &lt; ch)) { ant = i; i = l->A[i].prox; }
+    if (i != INVALIDO && l->A[i].reg.chave == ch) return false;
+    i = obterNo(l);
+    l->A[i].reg = reg;
+    if (ant == INVALIDO) { l->A[i].prox = l->inicio; l->inicio = i; }
+    else { l->A[i].prox = l->A[ant].prox; l->A[ant].prox = i; }
+    return true;
+}
+
+<span class="code-comment">/* ── Exclusão ── */</span>
+bool excluirElemLista(LISTA* l, TIPOCHAVE ch) {
+    int ant = INVALIDO, i = l->inicio;
+    while ((i != INVALIDO) && (l->A[i].reg.chave &lt; ch)) { ant = i; i = l->A[i].prox; }
+    if (i == INVALIDO || l->A[i].reg.chave != ch) return false;
+    if (ant == INVALIDO) l->inicio = l->A[i].prox;
+    else l->A[ant].prox = l->A[i].prox;
+    devolverNo(l, i);
+    return true;
+}</pre>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- 14. RESUMO                                                    -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <div class="content-section">
+        <h2>Resumo: o que você precisa saber desta aula</h2>
+
+        <div class="summary-box">
+            <ol style="margin:0; padding-left:1.4em; line-height:2.2;">
+                <li>A lista ligada por arranjo mantém os dados em um array estático, mas usa
+                    <strong>cursores inteiros</strong> (<code>prox</code>) para definir a ordem lógica —
+                    separando ordem lógica de posição física.</li>
+                <li>A struct <code>LISTA</code> tem <strong>dois cursores de controle</strong>:
+                    <code>inicio</code> (cadeia de uso) e <code>dispo</code> (cadeia de disponíveis).</li>
+                <li><strong>Inicialização</strong>: liga todas as células na cadeia de disponíveis;
+                    <code>inicio = INVALIDO</code>.</li>
+                <li><strong>Tamanho e exibição</strong>: percorrem a cadeia de uso via <code>while (i != INVALIDO)</code>.</li>
+                <li><strong>Busca ordenada</strong>: para antecipadamente quando <code>A[i].reg.chave ≥ ch</code>.</li>
+                <li><strong>Inserção</strong>: usa <code>obterNo</code> para reservar uma posição física e ajusta
+                    dois cursores para encaixar o elemento na posição lógica correta.</li>
+                <li><strong>Exclusão</strong>: ajusta o cursor do antecessor para saltar o elemento removido,
+                    depois usa <code>devolverNo</code> para devolvê-lo à cadeia de disponíveis.</li>
+                <li><strong>Limitação que persiste:</strong> o tamanho máximo ainda é fixo (<code>MAX</code>).
+                    A lista encadeada com ponteiros e <code>malloc</code> — tema da próxima aula — elimina
+                    essa última restrição.</li>
+            </ol>
+        </div>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- 15. EXERCÍCIOS                                                -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <div class="exercise-section">
+        <h2>Exercícios</h2>
+        <p>Teste sua compreensão sobre a lista ligada por arranjo:</p>
+
+        <form class="quiz-form" id="quiz-form">
+
+            <div class="quiz-question">
+                <p><strong>1. Após <code>inicializarLista</code> com MAX=5, quais são os valores de <code>inicio</code> e <code>dispo</code>?</strong></p>
+                <ul class="options-list">
+                    <li><label><input type="radio" name="q1" value="a"> inicio=0, dispo=−1</label></li>
+                    <li><label><input type="radio" name="q1" value="b"> inicio=−1, dispo=0</label></li>
+                    <li><label><input type="radio" name="q1" value="c"> inicio=0, dispo=0</label></li>
+                    <li><label><input type="radio" name="q1" value="d"> inicio=−1, dispo=−1</label></li>
+                </ul>
+            </div>
+
+            <div class="quiz-question">
+                <p><strong>2. O que a função <code>obterNo</code> faz?</strong></p>
+                <ul class="options-list">
+                    <li><label><input type="radio" name="q2" value="a"> Percorre a cadeia de uso e retorna o índice do último elemento.</label></li>
+                    <li><label><input type="radio" name="q2" value="b"> Retira o primeiro índice da cadeia de disponíveis, avança <code>dispo</code> e retorna o índice retirado.</label></li>
+                    <li><label><input type="radio" name="q2" value="c"> Insere um novo registro no array e retorna o índice onde foi inserido.</label></li>
+                    <li><label><input type="radio" name="q2" value="d"> Verifica se a lista está cheia e retorna <code>INVALIDO</code> nesse caso.</label></li>
+                </ul>
+            </div>
+
+            <div class="quiz-question">
+                <p><strong>3. Em <code>inserirElemListaOrd</code>, a condição <code>if (ant == INVALIDO)</code> na parte 2 indica que:</strong></p>
+                <ul class="options-list">
+                    <li><label><input type="radio" name="q3" value="a"> A lista está vazia ou o elemento a inserir é maior que todos os existentes.</label></li>
+                    <li><label><input type="radio" name="q3" value="b"> A lista está cheia e a inserção deve ser recusada.</label></li>
+                    <li><label><input type="radio" name="q3" value="c"> A lista está vazia ou o elemento a inserir é menor que todos os existentes, tornando-se o novo <code>inicio</code>.</label></li>
+                    <li><label><input type="radio" name="q3" value="d"> O elemento a inserir já existe na lista (duplicata).</label></li>
+                </ul>
+            </div>
+
+            <div class="quiz-question">
+                <p><strong>4. Qual é o papel de <code>devolverNo</code> na exclusão?</strong></p>
+                <ul class="options-list">
+                    <li><label><input type="radio" name="q4" value="a"> Apagar o valor do registro excluído, zerando o campo <code>reg.chave</code>.</label></li>
+                    <li><label><input type="radio" name="q4" value="b"> Inserir o índice liberado na frente da cadeia de disponíveis para reutilização futura.</label></li>
+                    <li><label><input type="radio" name="q4" value="c"> Decrementar um contador de elementos válidos na struct LISTA.</label></li>
+                    <li><label><input type="radio" name="q4" value="d"> Verificar se o nó excluído era o último e atualizar <code>inicio</code> para INVALIDO.</label></li>
+                </ul>
+            </div>
+
+            <div class="quiz-question">
+                <p><strong>5. Inserimos as chaves 5, 2, 8, 1 nessa ordem em uma lista inicialmente vazia. Qual é a ordem lógica resultante da cadeia de uso?</strong></p>
+                <ul class="options-list">
+                    <li><label><input type="radio" name="q5" value="a"> 5 → 2 → 8 → 1 (ordem de inserção)</label></li>
+                    <li><label><input type="radio" name="q5" value="b"> 1 → 2 → 5 → 8 (ordem crescente)</label></li>
+                    <li><label><input type="radio" name="q5" value="c"> 8 → 5 → 2 → 1 (ordem decrescente)</label></li>
+                    <li><label><input type="radio" name="q5" value="d"> 1 → 5 → 2 → 8 (depende do índice físico)</label></li>
+                </ul>
+            </div>
+
+            <button type="button" class="submit-btn" onclick="checkAnswers()">Verificar Respostas</button>
+        </form>
+
+        <div id="quiz-results" style="display:none; margin-top:20px; padding:15px;
+             background-color:#dff0d8; border-radius:5px;"></div>
+    </div>
+
+    <div class="navigation-buttons">
+        <a href="capitulo36.html" class="nav a">Aula Anterior</a>
+        <a href="index.html" class="nav a">Voltar ao Índice</a>
+        <a href="capitulo38.html" class="nav a">Próxima Aula</a>
+    </div>
+
+    <footer>
+        <div class="container">
+            <div style="text-align:center;">
+                <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education"
+                     style="width:100%; max-height:50px; display:inline-block;" />
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function checkAnswers() {
+            const correctAnswers = { q1:"b", q2:"b", q3:"c", q4:"b", q5:"b" };
+
+            const explanations = {
+                q1: "<code>inicio = INVALIDO (−1)</code> porque a lista de uso está vazia. <code>dispo = 0</code> porque o primeiro espaço disponível é o índice 0 — todos os nós estão livres.",
+                q2: "<code>obterNo</code> é o equivalente manual de <code>malloc</code>: retira o primeiro nó da cadeia de disponíveis (<code>resultado = l->dispo</code>), avança <code>dispo</code> para o próximo disponível, e retorna o índice retirado para uso imediato.",
+                q3: "<code>ant == INVALIDO</code> significa que nenhum elemento foi visitado antes de encontrar a posição de inserção — portanto o novo elemento tem a menor chave e deve se tornar o novo <code>inicio</code> da cadeia de uso.",
+                q4: "<code>devolverNo</code> insere o índice liberado na <em>frente</em> da cadeia de disponíveis: <code>A[j].prox = dispo; dispo = j</code>. Isso torna o espaço imediatamente disponível para a próxima inserção.",
+                q5: "A inserção sempre mantém a lista em ordem crescente. Independentemente da ordem de inserção (5, 2, 8, 1), a cadeia de uso resultante é sempre <strong>1 → 2 → 5 → 8</strong>."
+            };
+
+            let score = 0;
+            let feedback = "";
+
+            for (const question in correctAnswers) {
+                const selected = document.querySelector(`input[name="${question}"]:checked`);
+                const num = question.substring(1);
+                if (selected) {
+                    if (selected.value === correctAnswers[question]) {
+                        score++;
+                        feedback += `<p>Questão ${num}: <span style="color:green;font-weight:bold;">✔ Correto!</span> — ${explanations[question]}</p>`;
+                    } else {
+                        feedback += `<p>Questão ${num}: <span style="color:red;font-weight:bold;">✘ Incorreto.</span> — ${explanations[question]}</p>`;
+                    }
+                } else {
+                    feedback += `<p>Questão ${num}: <span style="color:orange;font-weight:bold;">— Não respondida.</span></p>`;
+                }
+            }
+
+            const div = document.getElementById("quiz-results");
+            div.innerHTML = `<h3>Sua pontuação: ${score} de 5</h3>${feedback}`;
+            div.style.display = "block";
+            div.scrollIntoView({ behavior: "smooth" });
+        }
+    </script>
+</body>
+</html>

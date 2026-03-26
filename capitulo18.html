@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 18 – Programação Multi-arquivo no VSCode</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Aula 18 — Programação Multi-arquivo no VSCode</h1>
+    <p>Dividindo um programa em módulos — <code>.h</code>, <code>.c</code> e <code>main.c</code> compilando juntos</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo17.html">← Aula 17</a>
+    <a href="capitulo19.html">Aula 19 →</a>
+</nav>
+
+<!-- ═══════════════════════════════════════ 1. POR QUE MÚLTIPLOS ARQUIVOS? -->
+<div class="content-section">
+    <h2>1. Por que Dividir em Múltiplos Arquivos?</h2>
+
+    <p>Ao longo das aulas anteriores, escrevemos tudo num único arquivo <code>main.c</code>. Funciona para programas pequenos, mas conforme o projeto cresce isso se torna um problema: o arquivo fica enorme, difícil de navegar, e qualquer alteração numa parte pode quebrar outra.</p>
+
+    <div class="definicao">
+        <strong>Programação multi-arquivo</strong> é o padrão de organizar um projeto C em arquivos separados por responsabilidade: cada módulo tem seu par <code>.h</code> (interface) + <code>.c</code> (implementação), e o <code>main.c</code> orquestra tudo. Os arquivos são compilados independentemente e depois <strong>ligados</strong> (linked) em um único executável.
+    </div>
+
+    <table>
+        <tr>
+            <th>Arquivo</th>
+            <th>Papel</th>
+            <th>Contém</th>
+        </tr>
+        <tr>
+            <td><code>aluno.h</code></td>
+            <td>Interface do módulo</td>
+            <td>Inclusion guard, <code>struct</code>, <code>typedef</code>, protótipos</td>
+        </tr>
+        <tr>
+            <td><code>aluno.c</code></td>
+            <td>Implementação do módulo</td>
+            <td><code>#include "aluno.h"</code> + código das funções</td>
+        </tr>
+        <tr>
+            <td><code>main.c</code></td>
+            <td>Ponto de entrada</td>
+            <td><code>#include "aluno.h"</code> + lógica principal</td>
+        </tr>
+    </table>
+</div>
+
+<!-- ═══════════════════════════════════════ 2. CONFIGURANDO O VSCODE -->
+<div class="content-section">
+    <h2>2. Configurando o VSCode para C Multi-arquivo</h2>
+
+    <h3>Pré-requisitos</h3>
+    <p>Você precisa do VSCode instalado com a extensão <strong>C/C++</strong> (da Microsoft) e do compilador GCC disponível no terminal. No Windows, a forma mais simples é instalar o <strong>MinGW-w64</strong> via <a href="https://www.msys2.org/" target="_blank">MSYS2</a> e adicionar o caminho ao PATH do sistema.</p>
+
+    <div class="info-box">
+        <strong>Para verificar se o GCC está disponível:</strong> Abra o terminal do VSCode (<code>Ctrl + `</code>) e digite <code>gcc --version</code>. Se aparecer a versão, está pronto.
+    </div>
+
+    <h3>Estrutura de diretório recomendada</h3>
+<pre>
+meu_projeto/
+├── main.c
+├── aluno.h
+└── aluno.c
+</pre>
+
+    <p>Crie a pasta do projeto, abra-a no VSCode com <strong>File → Open Folder</strong>, e crie os três arquivos clicando no ícone de novo arquivo no painel Explorer.</p>
+
+    <h3>Compilando via terminal integrado</h3>
+    <p>A forma mais direta é usar o <strong>terminal integrado</strong> do VSCode (<code>Ctrl + `</code>) e compilar com <code>gcc</code> listando todos os arquivos <code>.c</code>:</p>
+
+<pre>
+<span class="code-comment"># Compilar todos os arquivos .c e gerar o executável "programa"</span>
+gcc main.c aluno.c -o programa
+
+<span class="code-comment"># Executar</span>
+./programa          <span class="code-comment"># Linux / macOS</span>
+.\programa.exe      <span class="code-comment"># Windows</span>
+</pre>
+
+    <div class="tip-box">
+        <strong>Flag <code>-Wall</code>:</strong> Adicione <code>-Wall</code> ao comando para ativar todos os avisos do compilador — uma boa prática que ajuda a encontrar bugs antes de executar:
+        <code>gcc -Wall main.c aluno.c -o programa</code>
+    </div>
+
+    <h3>Configurando o botão ▶ (Run) para projetos multi-arquivo</h3>
+    <p>O botão de play do VSCode, por padrão, compila apenas o arquivo aberto. Para compilar múltiplos arquivos automaticamente, edite o arquivo <code>.vscode/tasks.json</code>:</p>
+
+<pre>
+<span class="code-comment">// .vscode/tasks.json</span>
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Compilar projeto C",
+            "type": "shell",
+            "command": "gcc",
+            "args": [
+                "-Wall",
+                "${workspaceFolder}/*.c",   <span class="code-comment">// compila todos os .c da pasta</span>
+                "-o",
+                "${workspaceFolder}/programa"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": ["$gcc"]
+        }
+    ]
+}
+</pre>
+
+    <p>Com isso, <code>Ctrl + Shift + B</code> compila o projeto inteiro. Para executar após compilar, adicione uma segunda task com <code>"dependsOn"</code>, ou simplesmente use o terminal.</p>
+</div>
+
+<!-- ═══════════════════════════════════════ 3. PROJETO COMPLETO: CADASTRO DE ALUNOS -->
+<div class="content-section">
+    <h2>3. Projeto Completo: Módulo de Cadastro de Alunos</h2>
+
+    <p>Vamos construir um mini-sistema de cadastro dividido em três arquivos. O módulo <code>aluno</code> cuida de toda a lógica de dados; o <code>main.c</code> apenas usa a interface.</p>
+
+    <h3>Arquivo 1: <code>aluno.h</code></h3>
+<pre>
+/* ============================================================
+   aluno.h — Interface do módulo de cadastro de alunos
+   ============================================================ */
+#ifndef ALUNO_H
+#define ALUNO_H
+
+<span class="code-comment">/* Constante pública */</span>
+#define MAX_ALUNOS 50
+#define NOME_MAX   60
+
+<span class="code-comment">/* Tipo público */</span>
+typedef struct {
+    int   matricula;
+    char  nome[NOME_MAX];
+    float nota1;
+    float nota2;
+} Aluno;
+
+<span class="code-comment">/* Protótipos das funções públicas */</span>
+void  inicializarCadastro(Aluno lista[], int *total);
+int   cadastrarAluno(Aluno lista[], int *total, int mat, const char *nome, float n1, float n2);
+void  listarAlunos(const Aluno lista[], int total);
+float mediaGeral(const Aluno lista[], int total);
+int   buscarPorMatricula(const Aluno lista[], int total, int mat);
+
+#endif /* ALUNO_H */
+</pre>
+
+    <h3>Arquivo 2: <code>aluno.c</code></h3>
+<pre>
+/* ============================================================
+   aluno.c — Implementação do módulo de alunos
+   ============================================================ */
+#include "aluno.h"
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+<span class="code-comment">/* ── Funções privadas (static) ──────────────────────────── */</span>
+
+<span class="code-comment">/* Verifica se nota está no intervalo [0, 10] */</span>
+static int notaValida(float nota) {
+    return nota &gt;= 0.0f &amp;&amp; nota &lt;= 10.0f;
+}
+
+<span class="code-comment">/* Calcula a média de um aluno */</span>
+static float mediaAluno(const Aluno *a) {
+    return (a-&gt;nota1 + a-&gt;nota2) / 2.0f;
+}
+
+<span class="code-comment">/* ── Funções públicas ───────────────────────────────────── */</span>
+
+void inicializarCadastro(Aluno lista[], int *total) {
+    *total = 0;
+}
+
+int cadastrarAluno(Aluno lista[], int *total, int mat,
+                   const char *nome, float n1, float n2) {
+    if (*total &gt;= MAX_ALUNOS) {
+        printf("Cadastro cheio!\n");
+        return 0;
+    }
+    if (!notaValida(n1) || !notaValida(n2)) {
+        printf("Nota invalida para %s.\n", nome);
+        return 0;
+    }
+    lista[*total].matricula = mat;
+    strncpy(lista[*total].nome, nome, NOME_MAX - 1);
+    lista[*total].nota1 = n1;
+    lista[*total].nota2 = n2;
+    (*total)++;
+    return 1;
+}
+
+void listarAlunos(const Aluno lista[], int total) {
+    if (total == 0) { printf("Nenhum aluno cadastrado.\n"); return; }
+    printf("\n%-8s %-30s %6s %6s %7s %s\n",
+           "Matric.", "Nome", "Nota1", "Nota2", "Media", "Situacao");
+    printf("--------------------------------------------------------------\n");
+    for (int i = 0; i &lt; total; i++) {
+        float m = mediaAluno(&lista[i]);
+        printf("%-8d %-30s %6.1f %6.1f %7.1f %s\n",
+               lista[i].matricula, lista[i].nome,
+               lista[i].nota1, lista[i].nota2, m,
+               m &gt;= 5.0f ? "Aprovado" : "Reprovado");
+    }
+}
+
+float mediaGeral(const Aluno lista[], int total) {
+    if (total == 0) return 0.0f;
+    float soma = 0.0f;
+    for (int i = 0; i &lt; total; i++)
+        soma += mediaAluno(&lista[i]);
+    return soma / total;
+}
+
+int buscarPorMatricula(const Aluno lista[], int total, int mat) {
+    for (int i = 0; i &lt; total; i++)
+        if (lista[i].matricula == mat)
+            return i;   <span class="code-comment">// retorna índice, ou -1 se não encontrado</span>
+    return -1;
+}
+</pre>
+
+    <h3>Arquivo 3: <code>main.c</code></h3>
+<pre>
+/* ============================================================
+   main.c — Ponto de entrada: usa o módulo aluno
+   ============================================================ */
+#include &lt;stdio.h&gt;
+#include "aluno.h"   <span class="code-comment">// inclui apenas o .h, não o .c!</span>
+
+int main() {
+    Aluno turma[MAX_ALUNOS];
+    int total;
+
+    inicializarCadastro(turma, &amp;total);
+
+    <span class="code-comment">/* Cadastro de alunos de exemplo */</span>
+    cadastrarAluno(turma, &amp;total, 1001, "Ana Souza",   8.5f, 9.0f);
+    cadastrarAluno(turma, &amp;total, 1002, "Bruno Lima",  4.5f, 5.5f);
+    cadastrarAluno(turma, &amp;total, 1003, "Carla Matos", 7.0f, 7.5f);
+    cadastrarAluno(turma, &amp;total, 1004, "Diego Nunes", 3.0f, 4.0f);
+
+    <span class="code-comment">/* Listagem */</span>
+    listarAlunos(turma, total);
+
+    <span class="code-comment">/* Estatísticas */</span>
+    printf("\nMedia geral da turma: %.1f\n", mediaGeral(turma, total));
+
+    <span class="code-comment">/* Busca */</span>
+    int pos = buscarPorMatricula(turma, total, 1003);
+    if (pos &gt;= 0)
+        printf("Encontrado: %s (pos %d)\n", turma[pos].nome, pos);
+    else
+        printf("Matricula nao encontrada.\n");
+
+    return 0;
+}
+</pre>
+
+    <h3>Resultado da execução</h3>
+    <div class="terminal-output">
+Matric.  Nome                           Nota1  Nota2   Media Situacao<br>
+--------------------------------------------------------------<br>
+1001     Ana Souza                        8.5    9.0     8.8 Aprovado<br>
+1002     Bruno Lima                       4.5    5.5     5.0 Aprovado<br>
+1003     Carla Matos                      7.0    7.5     7.2 Aprovado<br>
+1004     Diego Nunes                      3.0    4.0     3.5 Reprovado<br>
+<br>
+Media geral da turma: 6.1<br>
+Encontrado: Carla Matos (pos 2)
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 4. COMO O COMPILADOR PROCESSA -->
+<div class="content-section">
+    <h2>4. Como o Compilador Processa Múltiplos Arquivos</h2>
+
+    <p>Quando você roda <code>gcc main.c aluno.c -o programa</code>, o compilador faz duas etapas:</p>
+
+    <table>
+        <tr>
+            <th>Etapa</th>
+            <th>O que acontece</th>
+            <th>Resultado</th>
+        </tr>
+        <tr>
+            <td><strong>1. Compilação</strong></td>
+            <td>Cada arquivo <code>.c</code> é compilado separadamente para código-objeto. O compilador usa os protótipos do <code>.h</code> para verificar tipos, mas não precisa do código das funções ainda.</td>
+            <td><code>main.o</code> e <code>aluno.o</code></td>
+        </tr>
+        <tr>
+            <td><strong>2. Ligação (linking)</strong></td>
+            <td>O linker une todos os arquivos <code>.o</code> e resolve as referências cruzadas — conecta a chamada de <code>listarAlunos()</code> em <code>main.o</code> com a implementação em <code>aluno.o</code>.</td>
+            <td><code>programa</code> (executável)</td>
+        </tr>
+    </table>
+
+    <div class="info-box">
+        <strong>Por que isso importa?</strong> Essa separação permite <strong>recompilar apenas o arquivo que mudou</strong>. Em projetos grandes com dezenas de arquivos, isso economiza minutos de compilação. Ferramentas como <code>make</code> automatizam isso.
+    </div>
+
+    <h3>Compilação em duas etapas explícitas (opcional, mas instrutivo)</h3>
+<pre>
+<span class="code-comment"># Etapa 1: compilar cada .c para .o sem linkar (-c = compile only)</span>
+gcc -Wall -c main.c   -o main.o
+gcc -Wall -c aluno.c  -o aluno.o
+
+<span class="code-comment"># Etapa 2: linkar os .o em um executável</span>
+gcc main.o aluno.o -o programa
+</pre>
+</div>
+
+<!-- ═══════════════════════════════════════ 5. ERROS COMUNS -->
+<div class="content-section">
+    <h2>5. Erros Comuns em Projetos Multi-arquivo</h2>
+
+    <table>
+        <tr>
+            <th>Erro</th>
+            <th>Causa</th>
+            <th>Solução</th>
+        </tr>
+        <tr>
+            <td><code>undefined reference to 'funcao'</code></td>
+            <td>O arquivo <code>.c</code> com a função não foi incluído na compilação</td>
+            <td>Adicionar o <code>.c</code> ao comando <code>gcc</code></td>
+        </tr>
+        <tr>
+            <td><code>implicit declaration of function</code></td>
+            <td>Função usada sem protótipo visível</td>
+            <td>Incluir o <code>.h</code> correto no arquivo que chama a função</td>
+        </tr>
+        <tr>
+            <td><code>multiple definition of 'X'</code></td>
+            <td>Variável ou função definida (não só declarada) diretamente no <code>.h</code>, que é incluído em múltiplos <code>.c</code></td>
+            <td>Mover a definição para o <code>.c</code>; manter apenas declaração no <code>.h</code></td>
+        </tr>
+        <tr>
+            <td>Inclusion guard faltando → erros de redeclaração</td>
+            <td><code>.h</code> incluído indiretamente mais de uma vez</td>
+            <td>Sempre usar <code>#ifndef / #define / #endif</code> no <code>.h</code></td>
+        </tr>
+        <tr>
+            <td>Usar <code>#include "aluno.c"</code> em vez de <code>"aluno.h"</code></td>
+            <td>Inclui o código-fonte diretamente, duplicando definições</td>
+            <td>Sempre incluir o <code>.h</code>, nunca o <code>.c</code></td>
+        </tr>
+    </table>
+
+    <div class="warning-box">
+        <strong>⚠️ Nunca faça <code>#include "modulo.c"</code>!</strong> Isso insere o código-fonte completo do módulo no arquivo corrente, duplicando todas as definições de função quando ambos são compilados. O correto é incluir apenas o <code>.h</code> e informar o <code>.c</code> ao compilador.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 6. C VS JAVA -->
+<div class="content-section">
+    <h2>6. C vs. Java — Organização em Módulos</h2>
+
+    <table>
+        <tr>
+            <th>Aspecto</th>
+            <th>C</th>
+            <th>Java</th>
+        </tr>
+        <tr>
+            <td>Unidade de modularização</td>
+            <td>Par de arquivos <code>.h</code> + <code>.c</code></td>
+            <td>Classe (arquivo <code>.java</code>)</td>
+        </tr>
+        <tr>
+            <td>Interface pública</td>
+            <td>Protótipos no <code>.h</code></td>
+            <td>Membros <code>public</code> da classe</td>
+        </tr>
+        <tr>
+            <td>Implementação privada</td>
+            <td>Funções <code>static</code> no <code>.c</code></td>
+            <td>Membros <code>private</code> da classe</td>
+        </tr>
+        <tr>
+            <td>Importar módulo</td>
+            <td><code>#include "modulo.h"</code></td>
+            <td><code>import pacote.Classe;</code></td>
+        </tr>
+        <tr>
+            <td>Compilação separada</td>
+            <td>Manual (ou via Makefile)</td>
+            <td>Automática pelo compilador Java</td>
+        </tr>
+        <tr>
+            <td>Risco de inclusão dupla</td>
+            <td>✅ Existe — resolvido com inclusion guard</td>
+            <td>❌ Não existe — Java gerencia imports</td>
+        </tr>
+    </table>
+</div>
+
+<!-- ═══════════════════════════════════════ QUIZ -->
+<div class="content-section exercise-section">
+    <h2>Quiz — Aula 37</h2>
+    <form class="quiz-form" onsubmit="return false;">
+
+        <div class="content-section quiz-question">
+            <p><strong>1.</strong> Para compilar <code>main.c</code> e <code>aluno.c</code> juntos gerando o executável <code>programa</code>, qual comando está correto?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q1" value="a"> <code>gcc main.c -include aluno.c -o programa</code></label></li>
+                <li><label><input type="radio" name="q1" value="b"> <code>gcc main.c aluno.c -o programa</code></label></li>
+                <li><label><input type="radio" name="q1" value="c"> <code>gcc main.c -link aluno.c -o programa</code></label></li>
+                <li><label><input type="radio" name="q1" value="d"> <code>gcc main.c -import aluno -o programa</code></label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>2.</strong> O erro <code>undefined reference to 'listarAlunos'</code> durante a linkagem indica:</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q2" value="a"> Falta o protótipo no arquivo <code>.h</code></label></li>
+                <li><label><input type="radio" name="q2" value="b"> O arquivo <code>aluno.c</code> não foi incluído no comando de compilação</label></li>
+                <li><label><input type="radio" name="q2" value="c"> A função foi declarada <code>static</code> incorretamente</label></li>
+                <li><label><input type="radio" name="q2" value="d"> O inclusion guard está faltando no <code>.h</code></label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>3.</strong> Por que em <code>main.c</code> escrevemos <code>#include "aluno.h"</code> e não <code>#include "aluno.c"</code>?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q3" value="a"> O compilador não suporta <code>#include</code> de arquivos <code>.c</code></label></li>
+                <li><label><input type="radio" name="q3" value="b"> Incluir o <code>.c</code> duplicaria todas as definições quando ambos os arquivos fossem compilados, causando erros de múltipla definição</label></li>
+                <li><label><input type="radio" name="q3" value="c"> É apenas uma convenção estilística sem impacto real</label></li>
+                <li><label><input type="radio" name="q3" value="d"> O <code>.c</code> não contém informações úteis para outros módulos</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>4.</strong> No <code>tasks.json</code> do VSCode, o que <code>${workspaceFolder}/*.c</code> faz?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q4" value="a"> Compila apenas o arquivo atualmente aberto no editor</label></li>
+                <li><label><input type="radio" name="q4" value="b"> Compila todos os arquivos <code>.c</code> dentro da pasta do projeto</label></li>
+                <li><label><input type="radio" name="q4" value="c"> Cria um arquivo <code>.c</code> vazio na pasta do projeto</label></li>
+                <li><label><input type="radio" name="q4" value="d"> Lista os arquivos <code>.c</code> mas não os compila</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>5.</strong> Qual é a diferença entre a etapa de <strong>compilação</strong> e a etapa de <strong>linkagem</strong> (linking)?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q5" value="a"> Compilação e linkagem são dois nomes para o mesmo processo</label></li>
+                <li><label><input type="radio" name="q5" value="b"> Compilação transforma cada <code>.c</code> em código-objeto (<code>.o</code>); linkagem une os <code>.o</code> e resolve referências cruzadas para gerar o executável</label></li>
+                <li><label><input type="radio" name="q5" value="c"> Compilação gera o executável; linkagem verifica se os tipos estão corretos</label></li>
+                <li><label><input type="radio" name="q5" value="d"> Compilação lida com arquivos <code>.h</code>; linkagem lida com arquivos <code>.c</code></label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>6.</strong> A função <code>static int notaValida(float nota)</code> em <code>aluno.c</code> está marcada como <code>static</code>. Isso significa que:</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q6" value="a"> A função não pode modificar nenhuma variável externa</label></li>
+                <li><label><input type="radio" name="q6" value="b"> A função só pode ser chamada de dentro de <code>aluno.c</code> e não deve aparecer em <code>aluno.h</code></label></li>
+                <li><label><input type="radio" name="q6" value="c"> A função é compartilhada entre todos os arquivos do projeto automaticamente</label></li>
+                <li><label><input type="radio" name="q6" value="d"> A função retorna sempre o mesmo valor independentemente dos parâmetros</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>7.</strong> Qual vantagem prática a separação em múltiplos arquivos traz em projetos grandes?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q7" value="a"> Elimina a necessidade de protótipos e inclusion guards</label></li>
+                <li><label><input type="radio" name="q7" value="b"> Permite recompilar apenas o arquivo alterado, economizando tempo em recompilações parciais</label></li>
+                <li><label><input type="radio" name="q7" value="c"> Faz o programa executar mais rápido porque o compilador otimiza melhor</label></li>
+                <li><label><input type="radio" name="q7" value="d"> Elimina a necessidade de usar <code>-Wall</code> na compilação</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>8.</strong> O que acontece se você remover o inclusion guard de <code>aluno.h</code> e um arquivo incluir <code>"aluno.h"</code> indiretamente duas vezes?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q8" value="a"> O programa compila normalmente — o compilador detecta duplicatas automaticamente</label></li>
+                <li><label><input type="radio" name="q8" value="b"> Os protótipos e tipos são redeclarados, causando erros de compilação</label></li>
+                <li><label><input type="radio" name="q8" value="c"> O programa compila mas executa com comportamento indefinido</label></li>
+                <li><label><input type="radio" name="q8" value="d"> O segundo <code>#include</code> é simplesmente ignorado sem erros</label></li>
+            </ul>
+        </div>
+
+        <button type="button" class="submit-btn" onclick="verificarRespostas()">Verificar Respostas</button>
+    </form>
+    <div id="quiz-results" style="display:none; margin-top:20px; padding:15px; background:#dff0d8; border-radius:5px;"></div>
+</div>
+
+<div class="navigation-buttons">
+    <a href="capitulo17.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">← Aula 15</a>
+    <a href="index.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">Índice</a>
+    <a href="capitulo19.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">Aula 17 →</a>
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align:center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education" style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+<script>
+function verificarRespostas() {
+    const gabarito = { q1:"b", q2:"b", q3:"b", q4:"b", q5:"b", q6:"b", q7:"b", q8:"b" };
+    const explicacoes = {
+        q1: "O gcc aceita múltiplos arquivos .c diretamente na linha de comando. Basta listá-los separados por espaço antes de '-o'.",
+        q2: "'undefined reference' é um erro de linkagem: o linker encontrou uma chamada para 'listarAlunos' em main.o, mas não achou a definição em nenhum .o. Isso indica que aluno.c não foi compilado e incluído na linkagem.",
+        q3: "Se você incluir aluno.c, o código-fonte completo (com as definições das funções) é inserido em main.c. Quando o gcc compila ambos, as funções ficam definidas duas vezes — em main.o e em aluno.o — causando 'multiple definition'.",
+        q4: "O glob *.c expande para todos os arquivos .c na pasta. Assim, adicionar um novo módulo ao projeto não exige alterar o tasks.json.",
+        q5: "Compilação (gcc -c) transforma código-fonte em código-objeto (.o), verificando sintaxe e tipos. Linkagem (sem -c) une os .o, resolve símbolos externos e gera o executável final.",
+        q6: "static numa função em C significa ligação interna: a função é invisível fora do arquivo onde foi definida. É análogo a private em Java — um detalhe de implementação que não deve ser exposto no .h.",
+        q7: "Com múltiplos arquivos, ferramentas como make recompilam apenas os .c que mudaram desde a última compilação. Em projetos com centenas de arquivos, isso pode reduzir o tempo de 'rebuild' de minutos para segundos.",
+        q8: "Sem o inclusion guard, o preprocessador insere o conteúdo do .h duas vezes no mesmo arquivo de compilação. Structs e typedefs redeclarados causam erros como 'redefinition of struct Aluno'."
+    };
+
+    let acertos = 0, html = "";
+    const total = Object.keys(gabarito).length;
+    for (const q in gabarito) {
+        const sel = document.querySelector(`input[name="${q}"]:checked`);
+        const num = q.replace("q","");
+        if (sel) {
+            if (sel.value === gabarito[q]) {
+                acertos++;
+                html += `<p>Questão ${num}: <span style="color:green;font-weight:bold;">✅ Correto!</span> — ${explicacoes[q]}</p>`;
+            } else {
+                html += `<p>Questão ${num}: <span style="color:red;font-weight:bold;">❌ Incorreto.</span> Gabarito: <strong>${gabarito[q].toUpperCase()}</strong> — ${explicacoes[q]}</p>`;
+            }
+        } else {
+            html += `<p>Questão ${num}: <span style="color:orange;font-weight:bold;">⚠ Não respondida.</span></p>`;
+        }
+    }
+    const r = document.getElementById("quiz-results");
+    r.innerHTML = `<h3>Sua pontuação: ${acertos} de ${total}</h3>${html}`;
+    r.style.display = "block";
+    r.scrollIntoView({ behavior: "smooth" });
+}
+</script>
+
+</body>
+</html>

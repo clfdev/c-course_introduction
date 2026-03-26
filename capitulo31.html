@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 31 – Ponteiros e Passagem por Referência</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Aula 31 — Ponteiros e Passagem por Referência</h1>
+    <p>O conceito mais crítico de C — e por que usamos <code style="color:#aad4ff">LISTA*</code> em vez de <code style="color:#aad4ff">LISTA</code> em todas as funções</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo30.html">← Aula 30</a>
+    <a href="capitulo32.html">Aula 32 →</a>
+</nav>
+
+<!-- ═══════════════════════════════════════ 0. NOMENCLATURA FORMAL -->
+<div class="content-section">
+    <h2>0. Nomenclatura Formal: Call by Value e Call by Reference</h2>
+
+    <p>Esta aula aprofunda um conceito já introduzido na Aula 14. Antes de estudar ponteiros com structs e listas, é importante fixar a terminologia padrão da literatura — você a encontrará em qualquer livro de Estruturas de Dados ou Sistemas Operacionais.</p>
+
+    <div class="definicao">
+        <strong>Call by Value (Passagem por Valor):</strong> A função recebe uma <em>cópia independente</em> do argumento. Modificações feitas dentro da função não afetam a variável original. É o comportamento padrão de C para tipos primitivos e structs quando passados sem ponteiro.
+    </div>
+
+    <div class="definicao">
+        <strong>Call by Reference (Passagem por Referência):</strong> A função recebe o <em>endereço de memória</em> da variável original. Através do ponteiro, a função pode ler e modificar diretamente o conteúdo na memória — sem criar cópia. Em C, isso é feito explicitamente com <code>&amp;</code> na chamada e <code>*</code> no parâmetro.
+    </div>
+
+    <h3>Por que isso é crítico para structs — especialmente a LISTA?</h3>
+    <p>Passagem por valor copia o argumento inteiro. Um <code>int</code> ocupa 4 bytes — cópia barata. Uma <code>LISTA</code> com 50 REGISTROs pode ocupar centenas de bytes — cópia cara. Mas o problema real não é desempenho: é que a <strong>função não consegue modificar a lista original</strong> se receber uma cópia.</p>
+
+<pre>
+<span class="code-comment">/* ❌ CALL BY VALUE — recebe cópia da struct */</span>
+void inicializar_errado(LISTA l) {
+    l.nroElem = 0;   <span class="code-comment">// zera só a cópia local</span>
+}                    <span class="code-comment">// a lista original continua com lixo</span>
+
+<span class="code-comment">/* ✅ CALL BY REFERENCE — recebe endereço da struct */</span>
+void inicializar_correto(LISTA *l) {
+    l-&gt;nroElem = 0;  <span class="code-comment">// zera através do endereço</span>
+}                    <span class="code-comment">// a lista original é modificada</span>
+
+int main() {
+    LISTA lista;
+
+    inicializar_errado(lista);      <span class="code-comment">// lista.nroElem ainda contém lixo</span>
+    inicializar_correto(&amp;lista);    <span class="code-comment">// lista.nroElem agora é 0</span>
+    return 0;
+}
+</pre>
+
+    <table>
+        <tr>
+            <th></th>
+            <th>Call by Value</th>
+            <th>Call by Reference (ponteiro)</th>
+        </tr>
+        <tr>
+            <td>O que é passado</td>
+            <td>Cópia do valor/struct</td>
+            <td>Endereço de memória</td>
+        </tr>
+        <tr>
+            <td>Pode modificar o original?</td>
+            <td>❌ Não</td>
+            <td>✅ Sim</td>
+        </tr>
+        <tr>
+            <td>Custo de memória</td>
+            <td>Copia tudo (caro para structs grandes)</td>
+            <td>Copia apenas o endereço (8 bytes)</td>
+        </tr>
+        <tr>
+            <td>Sintaxe na chamada</td>
+            <td><code>f(lista)</code></td>
+            <td><code>f(&amp;lista)</code></td>
+        </tr>
+        <tr>
+            <td>Sintaxe no parâmetro</td>
+            <td><code>void f(LISTA l)</code></td>
+            <td><code>void f(LISTA *l)</code></td>
+        </tr>
+        <tr>
+            <td>Acessa campos com</td>
+            <td><code>l.campo</code></td>
+            <td><code>l-&gt;campo</code> (equivale a <code>(*l).campo</code>)</td>
+        </tr>
+    </table>
+
+    <div class="tip-box">
+        <strong>Regra prática para listas e structs:</strong> Se a função precisa <em>modificar</em> a struct — use ponteiro (<code>LISTA *l</code>). Se a função só precisa <em>ler</em> — use ponteiro com <code>const</code> (<code>const LISTA *l</code>) para eficiência sem risco de modificação. Nunca passe structs grandes por valor.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 1. O PROBLEMA -->
+<div class="content-section">
+    <h2>1. O Problema: funções que não funcionam como esperado</h2>
+
+    <p>Imagine que você quer escrever uma função <code>inicializar</code> que zera o contador de elementos da lista. Observe a armadilha:</p>
+
+<pre>
+<span class="code-comment">// ❌ VERSÃO ERRADA — compila, mas não inicializa a lista original</span>
+void inicializarLista(LISTA l) {
+    l.nroElem = 0;   <span class="code-comment">// zera uma CÓPIA local, não a original</span>
+}
+
+int main() {
+    LISTA lista;
+    inicializarLista(lista);
+    printf("%d\n", lista.nroElem);  <span class="code-comment">// imprime lixo — não foi inicializada!</span>
+    return 0;
+}
+</pre>
+
+    <div class="warning-box">
+        <strong>Por que não funciona?</strong> Em C, quando você passa <code>LISTA l</code> para uma função, o C <strong>copia a struct inteira</strong> para um espaço novo na memória. A função trabalha com a cópia — a original permanece intocada.
+    </div>
+
+    <div class="definicao">
+        Este comportamento se chama <strong>passagem por valor</strong>: a função recebe uma <em>cópia</em> do argumento. Qualquer modificação feita dentro da função afeta apenas a cópia — jamais a variável original.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 2. O QUE É UM PONTEIRO -->
+<div class="content-section">
+    <h2>2. O que é um Ponteiro?</h2>
+
+    <p>Um <strong>ponteiro</strong> é uma variável que armazena o <strong>endereço de memória</strong> de outra variável — em vez de armazenar o valor em si.</p>
+
+<pre>
+int x = 42;        <span class="code-comment">// variável comum: armazena o valor 42</span>
+int *p = &amp;x;       <span class="code-comment">// ponteiro: armazena o ENDEREÇO de x</span>
+                   <span class="code-comment">// &amp;x significa "endereço de x"</span>
+
+printf("%d\n", x);   <span class="code-comment">// imprime 42 (o valor)</span>
+printf("%p\n", p);   <span class="code-comment">// imprime algo como 0x7ffd2a1b (o endereço)</span>
+printf("%d\n", *p);  <span class="code-comment">// imprime 42 (o valor no endereço — "desreferência")</span>
+
+*p = 100;            <span class="code-comment">// modifica x através do ponteiro</span>
+printf("%d\n", x);   <span class="code-comment">// agora imprime 100!</span>
+</pre>
+
+    <table>
+        <tr><th>Operador</th><th>Nome</th><th>O que faz</th></tr>
+        <tr><td><code>&amp;</code></td><td>Endereço-de</td><td>Obtém o endereço de uma variável</td></tr>
+        <tr><td><code>*</code> (na declaração)</td><td>Declaração de ponteiro</td><td>Indica que a variável é um ponteiro</td></tr>
+        <tr><td><code>*</code> (no uso)</td><td>Desreferência</td><td>Acessa o valor no endereço apontado</td></tr>
+        <tr><td><code>-&gt;</code></td><td>Seta</td><td>Acessa campo de uma struct via ponteiro (equivale a <code>(*p).campo</code>)</td></tr>
+    </table>
+</div>
+
+<!-- ═══════════════════════════════════════ 3. PASSAGEM POR REFERÊNCIA -->
+<div class="content-section">
+    <h2>3. Passagem por Referência com Ponteiros</h2>
+
+    <p>Para que uma função possa modificar a variável original, passamos o <strong>endereço</strong> da variável — não a variável em si.</p>
+
+<pre>
+#include &lt;stdio.h&gt;
+
+<span class="code-comment">// ✅ VERSÃO CORRETA — recebe o endereço da lista</span>
+void inicializarLista(LISTA *l) {
+    l-&gt;nroElem = 0;   <span class="code-comment">// l-> acessa o campo do original através do ponteiro</span>
+}
+
+int main() {
+    LISTA lista;
+    inicializarLista(&amp;lista);          <span class="code-comment">// passa o ENDEREÇO de lista</span>
+    printf("%d\n", lista.nroElem);     <span class="code-comment">// imprime 0 — inicializado corretamente!</span>
+    return 0;
+}
+</pre>
+
+    <div class="info-box">
+        <strong>O operador <code>-&gt;</code>:</strong> Quando temos um <em>ponteiro para struct</em>, usar <code>(*l).nroElem</code> é válido mas verboso. O operador <code>-&gt;</code> é um atalho: <code>l-&gt;nroElem</code> significa exatamente o mesmo — "acesse o campo <code>nroElem</code> da struct apontada por <code>l</code>".
+    </div>
+
+    <h3>Diagrama de memória — o que acontece</h3>
+    <table>
+        <tr>
+            <th>Endereço</th>
+            <th>Variável</th>
+            <th>Valor</th>
+        </tr>
+        <tr>
+            <td><code>0x1000</code></td>
+            <td><code>lista</code> (em main)</td>
+            <td><code>nroElem = ?</code> (lixo antes)</td>
+        </tr>
+        <tr>
+            <td><code>0x2000</code></td>
+            <td><code>l</code> (em inicializarLista)</td>
+            <td><code>0x1000</code> ← armazena o endereço de lista</td>
+        </tr>
+        <tr>
+            <td colspan="3" style="text-align:center; color:#28a745;"><code>l-&gt;nroElem = 0</code> escreve em 0x1000, alterando <code>lista.nroElem</code> diretamente</td>
+        </tr>
+        <tr>
+            <td><code>0x1000</code></td>
+            <td><code>lista</code> (em main)</td>
+            <td><code>nroElem = 0</code> ✅</td>
+        </tr>
+    </table>
+</div>
+
+<!-- ═══════════════════════════════════════ 4. POR QUE LISTA* EM TODAS AS FUNÇÕES -->
+<div class="content-section">
+    <h2>4. Por que <code>LISTA*</code> em Todas as Funções da Lista?</h2>
+
+    <p>Agora que você entende passagem por referência, fica claro por que <strong>todas</strong> as funções da Lista Linear Sequencial recebem <code>LISTA *l</code>:</p>
+
+    <table>
+        <tr>
+            <th>Função</th>
+            <th>Por que precisa de <code>LISTA*</code></th>
+        </tr>
+        <tr>
+            <td><code>inicializarLista(LISTA *l)</code></td>
+            <td>Modifica <code>l-&gt;nroElem</code></td>
+        </tr>
+        <tr>
+            <td><code>inserirElemLista(LISTA *l, ...)</code></td>
+            <td>Modifica <code>l-&gt;A[]</code> e incrementa <code>l-&gt;nroElem</code></td>
+        </tr>
+        <tr>
+            <td><code>excluirElemLista(LISTA *l, ...)</code></td>
+            <td>Modifica <code>l-&gt;A[]</code> e decrementa <code>l-&gt;nroElem</code></td>
+        </tr>
+        <tr>
+            <td><code>exibirLista(LISTA *l)</code></td>
+            <td>Só lê — mas ponteiro evita copiar 200+ bytes desnecessariamente</td>
+        </tr>
+        <tr>
+            <td><code>tamanho(LISTA *l)</code></td>
+            <td>Só lê — mesma razão: eficiência</td>
+        </tr>
+        <tr>
+            <td><code>buscaSequencial(LISTA *l, ...)</code></td>
+            <td>Usa <code>const LISTA*</code> — lê sem modificar, mas sem copiar</td>
+        </tr>
+    </table>
+
+    <div class="dica">
+        Para funções que <em>apenas leem</em> a lista, o ideal é usar <code>const LISTA *l</code>: assim o compilador impede modificações acidentais, mas a eficiência de não copiar é mantida. Quando a aula de estruturas de dados apresentar o código completo, você verá esse padrão em ação.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 5. PONTO E SETA -->
+<div class="content-section">
+    <h2>5. Ponto (<code>.</code>) vs. Seta (<code>-&gt;</code>)</h2>
+
+    <p>Um erro muito comum ao começar com structs e ponteiros é confundir os dois operadores de acesso:</p>
+
+    <table>
+        <tr>
+            <th>Situação</th>
+            <th>Operador</th>
+            <th>Exemplo</th>
+        </tr>
+        <tr>
+            <td>Variável é a própria struct</td>
+            <td><code>.</code> (ponto)</td>
+            <td><code>lista.nroElem</code></td>
+        </tr>
+        <tr>
+            <td>Variável é um <em>ponteiro</em> para struct</td>
+            <td><code>-&gt;</code> (seta)</td>
+            <td><code>l-&gt;nroElem</code></td>
+        </tr>
+    </table>
+
+<pre>
+LISTA lista;          <span class="code-comment">// variável struct</span>
+LISTA *p = &amp;lista;   <span class="code-comment">// ponteiro para struct</span>
+
+<span class="code-comment">// As quatro formas abaixo são equivalentes:</span>
+lista.nroElem = 0;    <span class="code-comment">// ✅ ponto — acesso direto</span>
+(*p).nroElem = 0;     <span class="code-comment">// ✅ desreferência + ponto (verboso)</span>
+p-&gt;nroElem = 0;      <span class="code-comment">// ✅ seta — atalho para (*p).nroElem</span>
+
+<span class="code-comment">// ❌ Erros comuns:</span>
+<span class="code-comment">// p.nroElem = 0;    — p é ponteiro, não struct — use -></span>
+<span class="code-comment">// lista->nroElem;   — lista é struct, não ponteiro — use .</span>
+</pre>
+
+    <div class="info-box">
+        <strong>Regra mnemônica:</strong> "<em>Ponto para variável, seta para ponteiro.</em>" Ou mais formalmente: se o tipo antes do operador tem um <code>*</code> na declaração, use <code>-&gt;</code>. Se não tem <code>*</code>, use <code>.</code>.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 6. PONTEIRO PARA STRUCT NA PRÁTICA -->
+<div class="content-section">
+    <h2>6. Exemplo Prático Completo</h2>
+
+    <p>Um exemplo autossuficiente que demonstra tudo que vimos: struct, ponteiro para struct, passagem por referência, operador seta e eficiência de memória.</p>
+
+<pre>
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+typedef struct {
+    int   matricula;
+    char  nome[50];
+    float nota;
+} Aluno;
+
+<span class="code-comment">/* Inicializa via ponteiro — modifica o original */</span>
+void inicializarAluno(Aluno *a, int mat, const char *nome, float nota) {
+    a-&gt;matricula = mat;
+    strncpy(a-&gt;nome, nome, 49);
+    a-&gt;nota = nota;
+}
+
+<span class="code-comment">/* Só lê — const protege de modificação acidental */</span>
+void exibirAluno(const Aluno *a) {
+    printf("Mat: %d | Nome: %-20s | Nota: %.1f | %s\n",
+           a-&gt;matricula, a-&gt;nome, a-&gt;nota,
+           a-&gt;nota &gt;= 5.0f ? "Aprovado" : "Reprovado");
+}
+
+<span class="code-comment">/* Aplica bônus — modifica via ponteiro */</span>
+void aplicarBonus(Aluno *a, float bonus) {
+    a-&gt;nota += bonus;
+    if (a-&gt;nota &gt; 10.0f) a-&gt;nota = 10.0f;
+}
+
+int main() {
+    Aluno a1, a2;
+
+    inicializarAluno(&amp;a1, 1001, "Ana Souza",   7.5f);
+    inicializarAluno(&amp;a2, 1002, "Bruno Lima",  4.0f);
+
+    printf("=== Antes do bônus ===\n");
+    exibirAluno(&amp;a1);
+    exibirAluno(&amp;a2);
+
+    aplicarBonus(&amp;a2, 1.5f);
+
+    printf("\n=== Após bônus de 1.5 para Bruno ===\n");
+    exibirAluno(&amp;a1);
+    exibirAluno(&amp;a2);
+
+    return 0;
+}
+</pre>
+    <div class="terminal-output">
+=== Antes do bônus ===<br>
+Mat: 1001 | Nome: Ana Souza              | Nota: 7.5 | Aprovado<br>
+Mat: 1002 | Nome: Bruno Lima             | Nota: 4.0 | Reprovado<br>
+<br>
+=== Após bônus de 1.5 para Bruno ===<br>
+Mat: 1001 | Nome: Ana Souza              | Nota: 7.5 | Aprovado<br>
+Mat: 1002 | Nome: Bruno Lima             | Nota: 5.5 | Aprovado
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 7. C VS JAVA -->
+<div class="content-section">
+    <h2>7. C vs. Java</h2>
+
+    <table>
+        <tr>
+            <th>Aspecto</th>
+            <th>C</th>
+            <th>Java</th>
+        </tr>
+        <tr>
+            <td>Passagem de struct/objeto</td>
+            <td>Por valor (cópia) ou por ponteiro (explícito)</td>
+            <td>Objetos sempre por referência automática</td>
+        </tr>
+        <tr>
+            <td>Modificar struct em função</td>
+            <td>Obrigatório usar <code>LISTA *l</code> e <code>l-&gt;campo</code></td>
+            <td>Automático — qualquer método pode modificar o objeto</td>
+        </tr>
+        <tr>
+            <td>Acesso a campos</td>
+            <td><code>variavel.campo</code> ou <code>ponteiro-&gt;campo</code></td>
+            <td>Sempre <code>objeto.campo</code></td>
+        </tr>
+        <tr>
+            <td>Proteção somente leitura</td>
+            <td><code>const LISTA *l</code></td>
+            <td>Sem equivalente direto para campos individuais</td>
+        </tr>
+        <tr>
+            <td>Custo de cópia de struct grande</td>
+            <td>⚠️ Você controla — use ponteiro para evitar</td>
+            <td>Automático — JVM gerencia cópias via GC</td>
+        </tr>
+    </table>
+</div>
+
+<!-- ═══════════════════════════════════════ QUIZ -->
+<div class="content-section exercise-section">
+    <h2>Quiz — Aula 31</h2>
+    <form class="quiz-form" onsubmit="return false;">
+
+        <div class="content-section quiz-question">
+            <p><strong>1.</strong> Qual é a saída do código abaixo?</p>
+<pre>
+typedef struct { int x; } S;
+void f(S s) { s.x = 99; }
+int main() {
+    S s; s.x = 1;
+    f(s);
+    printf("%d", s.x);
+}
+</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q1" value="a"> 99</label></li>
+                <li><label><input type="radio" name="q1" value="b"> 1</label></li>
+                <li><label><input type="radio" name="q1" value="c"> 0</label></li>
+                <li><label><input type="radio" name="q1" value="d"> Erro de compilação</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>2.</strong> Para que a função abaixo consiga modificar o campo <code>nroElem</code> da lista original, o que deve substituir <code>???</code>?</p>
+<pre>
+void zerar(??? l) { l->nroElem = 0; }
+</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q2" value="a"> <code>LISTA</code></label></li>
+                <li><label><input type="radio" name="q2" value="b"> <code>LISTA &amp;</code></label></li>
+                <li><label><input type="radio" name="q2" value="c"> <code>LISTA *</code></label></li>
+                <li><label><input type="radio" name="q2" value="d"> <code>const LISTA</code></label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>3.</strong> Dado <code>LISTA *l</code>, qual expressão acessa corretamente o campo <code>nroElem</code>?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q3" value="a"> <code>l.nroElem</code></label></li>
+                <li><label><input type="radio" name="q3" value="b"> <code>l-&gt;nroElem</code></label></li>
+                <li><label><input type="radio" name="q3" value="c"> <code>*l.nroElem</code></label></li>
+                <li><label><input type="radio" name="q3" value="d"> <code>&amp;l.nroElem</code></label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>4.</strong> Por que passar uma <code>LISTA</code> grande por ponteiro é mais eficiente do que por valor?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q4" value="a"> Ponteiros são compilados com instruções mais rápidas pelo processador</label></li>
+                <li><label><input type="radio" name="q4" value="b"> Passar por ponteiro copia apenas o endereço (8 bytes); por valor copia toda a struct (centenas de bytes)</td></li>
+                <li><label><input type="radio" name="q4" value="c"> Funções com ponteiros não usam a stack do processador</label></li>
+                <li><label><input type="radio" name="q4" value="d"> O compilador otimiza automaticamente structs passadas por valor para ponteiros</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>5.</strong> <code>p-&gt;campo</code> é equivalente a qual expressão?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q5" value="a"> <code>&amp;p.campo</code></label></li>
+                <li><label><input type="radio" name="q5" value="b"> <code>p.campo</code></label></li>
+                <li><label><input type="radio" name="q5" value="c"> <code>(*p).campo</code></label></li>
+                <li><label><input type="radio" name="q5" value="d"> <code>*p.campo</code></label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>6.</strong> Quando uma função recebe <code>const LISTA *l</code>, o que isso garante?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q6" value="a"> A função não pode ler os campos da lista</label></li>
+                <li><label><input type="radio" name="q6" value="b"> A função pode ler mas não modificar os campos da lista — o compilador avisa se tentar</label></li>
+                <li><label><input type="radio" name="q6" value="c"> A struct é copiada antes de ser passada</label></li>
+                <li><label><input type="radio" name="q6" value="d"> A função não pode ser chamada mais de uma vez</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>7.</strong> Por que usar <code>LISTA *l</code> em <code>exibirLista</code>, sendo que ela apenas lê a lista sem modificar?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q7" value="a"> Por convenção do código, mesmo sem necessidade técnica</label></li>
+                <li><label><input type="radio" name="q7" value="b"> Para evitar copiar centenas de bytes da struct sem necessidade — eficiência de memória</label></li>
+                <li><label><input type="radio" name="q7" value="c"> Porque funções que imprimem sempre precisam de ponteiros em C</label></li>
+                <li><label><input type="radio" name="q7" value="d"> Para que a função possa modificar a lista se necessário no futuro</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>8.</strong> Em Java, modificar campos de um objeto dentro de um método é automático. Em C, para modificar campos de uma struct passada a uma função, é necessário:</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q8" value="a"> Declarar a struct como global</label></li>
+                <li><label><input type="radio" name="q8" value="b"> Passar o endereço com <code>&amp;</code> na chamada e usar <code>*</code> ou <code>-&gt;</code> dentro da função</label></li>
+                <li><label><input type="radio" name="q8" value="c"> Retornar a struct modificada com <code>return</code></label></li>
+                <li><label><input type="radio" name="q8" value="d"> Declarar a struct com <code>static</code></label></li>
+            </ul>
+        </div>
+
+        <button type="button" class="submit-btn" onclick="verificarRespostas()">Verificar Respostas</button>
+    </form>
+    <div id="quiz-results" style="display:none; margin-top:20px; padding:15px; background:#dff0d8; border-radius:5px;"></div>
+</div>
+
+<div class="navigation-buttons">
+    <a href="capitulo30.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">← Aula 30</a>
+    <a href="index.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">Índice</a>
+    <a href="capitulo32.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">Aula 32 →</a>
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align:center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education" style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+<script>
+function verificarRespostas() {
+    const gabarito = { q1:"b", q2:"c", q3:"b", q4:"b", q5:"c", q6:"b", q7:"b", q8:"b" };
+    const explicacoes = {
+        q1: "Call by value: a função f recebe uma cópia da struct s. A modificação s.x = 99 afeta apenas a cópia local. A variável original em main mantém s.x = 1.",
+        q2: "Para modificar a struct original via ponteiro é preciso declarar o parâmetro como 'LISTA *l'. O operador -> então acessa os campos através do endereço apontado.",
+        q3: "l->nroElem é o operador seta: atalho para (*l).nroElem. Quando l é um ponteiro, usa-se -> para acessar campos. O ponto (.) é usado quando a variável é a própria struct, não um ponteiro.",
+        q4: "Passar por ponteiro copia apenas o endereço de memória, que ocupa 8 bytes em sistemas de 64 bits. Passar por valor copia toda a struct — uma LISTA com 50 registros pode ocupar 200+ bytes.",
+        q5: "p->campo é exatamente equivalente a (*p).campo: primeiro desreferencia o ponteiro (obtém a struct), depois acessa o campo. O operador -> foi criado precisamente para simplificar essa expressão.",
+        q6: "const LISTA *l significa que os campos da struct apontada não podem ser modificados dentro da função. Tentar fazer l->campo = valor resulta em erro de compilação. O ponteiro l em si ainda pode ser reatribuído.",
+        q7: "Mesmo que exibirLista apenas leia a lista, passar por valor copiaria a struct inteira (centenas de bytes) para a stack da função — desperdício desnecessário. Com ponteiro, apenas 8 bytes são copiados. Idealmente usa-se const LISTA *l.",
+        q8: "Em C, para que uma função modifique campos de uma struct, é obrigatório passar o endereço com & e usar -> (ou *) dentro da função. Ao contrário de Java, onde objetos são sempre referências automáticas, em C você gerencia isso explicitamente."
+    };
+
+    let acertos = 0, html = "";
+    const total = Object.keys(gabarito).length;
+    for (const q in gabarito) {
+        const sel = document.querySelector(`input[name="${q}"]:checked`);
+        const num = q.replace("q","");
+        if (sel) {
+            if (sel.value === gabarito[q]) {
+                acertos++;
+                html += `<p>Questão ${num}: <span style="color:green;font-weight:bold;">✅ Correto!</span> — ${explicacoes[q]}</p>`;
+            } else {
+                html += `<p>Questão ${num}: <span style="color:red;font-weight:bold;">❌ Incorreto.</span> Gabarito: <strong>${gabarito[q].toUpperCase()}</strong> — ${explicacoes[q]}</p>`;
+            }
+        } else {
+            html += `<p>Questão ${num}: <span style="color:orange;font-weight:bold;">⚠ Não respondida.</span></p>`;
+        }
+    }
+    const r = document.getElementById("quiz-results");
+    r.innerHTML = `<h3>Sua pontuação: ${acertos} de ${total}</h3>${html}`;
+    r.style.display = "block";
+    r.scrollIntoView({ behavior: "smooth" });
+}
+</script>
+
+</body>
+</html>

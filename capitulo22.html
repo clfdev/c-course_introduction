@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 22 – Alocação Dinâmica: malloc, calloc, realloc e free</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Aula 22 — Alocação Dinâmica de Memória</h1>
+    <p><code style="color:#aad4ff">malloc</code> · <code style="color:#aad4ff">calloc</code> · <code style="color:#aad4ff">realloc</code> · <code style="color:#aad4ff">free</code> — gerenciando memória em tempo de execução</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo21.html">← Aula 21</a>
+    <a href="capitulo23.html">Aula 23 →</a>
+</nav>
+
+<!-- ═══════════════════════════════════════ 1. MOTIVAÇÃO -->
+<div class="content-section">
+    <h2>1. Por que Alocar Memória Dinamicamente?</h2>
+
+    <p>Até agora, todos os arrays que você declarou tinham tamanho fixo em tempo de compilação:</p>
+
+<pre>
+int notas[30];          <span class="code-comment">// sempre 30 — mesmo se só houver 3 alunos</span>
+float precos[1000];     <span class="code-comment">// sempre 1000 — mesmo se forem 5 produtos</span>
+</pre>
+
+    <p>Esse modelo tem dois problemas sérios: ou você desperdiça memória (declarou 1000, usa 5), ou fica sem espaço (declarou 30, mas vieram 31 alunos). A <strong>alocação dinâmica</strong> resolve os dois.</p>
+
+    <div class="definicao">
+        <strong>Alocação dinâmica</strong> é a capacidade de reservar blocos de memória durante a execução do programa, na quantidade exata necessária — que pode depender de entradas do usuário, do tamanho de um arquivo, ou de qualquer cálculo em tempo real. Em C, isso é feito com as funções <code>malloc</code>, <code>calloc</code> e <code>realloc</code> da biblioteca <code>&lt;stdlib.h&gt;</code>.
+    </div>
+
+    <h3>Memória estática vs. dinâmica</h3>
+    <table>
+        <tr>
+            <th>Característica</th>
+            <th>Estática (stack)</th>
+            <th>Dinâmica (heap)</th>
+        </tr>
+        <tr>
+            <td>Tamanho definido em</td>
+            <td>Tempo de compilação</td>
+            <td>Tempo de execução</td>
+        </tr>
+        <tr>
+            <td>Gerenciamento</td>
+            <td>Automático — criada e destruída com a função</td>
+            <td>Manual — você aloca e você libera</td>
+        </tr>
+        <tr>
+            <td>Capacidade</td>
+            <td>Limitada (stack típica: 1–8 MB)</td>
+            <td>Limitada apenas pela RAM disponível</td>
+        </tr>
+        <tr>
+            <td>Flexibilidade</td>
+            <td>Baixa — tamanho fixo</td>
+            <td>Alta — pode crescer e encolher</td>
+        </tr>
+        <tr>
+            <td>Risco</td>
+            <td>Stack overflow (recursão profunda)</td>
+            <td>Memory leak se não liberar com <code>free</code></td>
+        </tr>
+    </table>
+
+    <div class="info-box">
+        <strong>Incluir <code>&lt;stdlib.h&gt;</code> é obrigatório.</strong> As funções <code>malloc</code>, <code>calloc</code>, <code>realloc</code> e <code>free</code> são declaradas nesse cabeçalho. Sem ele, o compilador não conhece os protótipos e pode gerar erros ou avisos.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 2. MALLOC -->
+<div class="content-section">
+    <h2>2. <code>malloc</code> — Alocar um Bloco de Memória</h2>
+
+    <div class="definicao">
+        <code>malloc(size)</code> (<em>memory allocation</em>) aloca um bloco contíguo de <code>size</code> bytes no heap e retorna um ponteiro <code>void *</code> para o início do bloco. O conteúdo <strong>não é inicializado</strong> — pode conter qualquer valor. Retorna <code>NULL</code> se a alocação falhar.
+    </div>
+
+    <h3>Sintaxe</h3>
+<pre>
+void *malloc(size_t size);
+
+<span class="code-comment">/* Uso típico: alocar n elementos de um tipo */</span>
+tipo *p = (tipo *) malloc(n * sizeof(tipo));
+</pre>
+
+    <div class="tip-box">
+        <strong>Por que usar <code>sizeof(tipo)</code>?</strong> O tamanho de cada tipo pode variar entre compiladores e plataformas. <code>sizeof(int)</code> garante o tamanho correto independente do sistema. Nunca escreva valores fixos como <code>malloc(n * 4)</code> — use sempre <code>malloc(n * sizeof(int))</code>.
+    </div>
+
+    <h3>Exemplo 1 — vetor de tamanho definido pelo usuário</h3>
+<pre>
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+int main() {
+    int n;
+    printf("Quantos alunos? ");
+    scanf("%d", &amp;n);
+
+    <span class="code-comment">/* Aloca exatamente n inteiros no heap */</span>
+    int *notas = (int *) malloc(n * sizeof(int));
+
+    <span class="code-comment">/* SEMPRE verifique se a alocação teve sucesso */</span>
+    if (notas == NULL) {
+        printf("Erro: memória insuficiente!\n");
+        return 1;
+    }
+
+    <span class="code-comment">/* Usa exatamente como um array normal */</span>
+    for (int i = 0; i &lt; n; i++) {
+        printf("Nota do aluno %d: ", i + 1);
+        scanf("%d", &amp;notas[i]);
+    }
+
+    int soma = 0;
+    for (int i = 0; i &lt; n; i++)
+        soma += notas[i];
+
+    printf("Média: %.1f\n", (float)soma / n);
+
+    <span class="code-comment">/* Libera a memória — obrigatório! */</span>
+    free(notas);
+    notas = NULL;   <span class="code-comment">// boa prática: evita dangling pointer</span>
+
+    return 0;
+}
+</pre>
+    <div class="terminal-output">Quantos alunos? 3<br>Nota do aluno 1: 8<br>Nota do aluno 2: 7<br>Nota do aluno 3: 9<br>Média: 8.0</div>
+
+    <h3>O que acontece na memória</h3>
+    <table>
+        <tr>
+            <th>Região</th>
+            <th>Conteúdo</th>
+            <th>Endereço (exemplo)</th>
+        </tr>
+        <tr>
+            <td>Stack</td>
+            <td>Variável <code>notas</code> (o ponteiro)</td>
+            <td><code>0x7fff...10</code></td>
+        </tr>
+        <tr>
+            <td>Heap</td>
+            <td>Bloco de <code>n × 4</code> bytes (os dados)</td>
+            <td><code>0x5555...a0</code></td>
+        </tr>
+    </table>
+    <p>O ponteiro <code>notas</code> na stack aponta para o bloco de dados no heap. Após <code>free(notas)</code>, o bloco no heap é devolvido ao sistema — mas o ponteiro ainda contém o endereço antigo até você atribuir <code>NULL</code>.</p>
+</div>
+
+<!-- ═══════════════════════════════════════ 3. CALLOC -->
+<div class="content-section">
+    <h2>3. <code>calloc</code> — Alocar e Zerar</h2>
+
+    <div class="definicao">
+        <code>calloc(quantidade, tamanho)</code> (<em>contiguous allocation</em>) aloca espaço para <code>quantidade</code> elementos de <code>tamanho</code> bytes cada, e <strong>inicializa todos os bytes com zero</strong>. É equivalente a <code>malloc</code> seguido de <code>memset(..., 0, ...)</code>, mas geralmente mais eficiente.
+    </div>
+
+    <h3>Sintaxe</h3>
+<pre>
+void *calloc(size_t quantidade, size_t tamanho);
+
+<span class="code-comment">/* Uso típico */</span>
+int *v = (int *) calloc(n, sizeof(int));   <span class="code-comment">// todos os elementos começam em 0</span>
+</pre>
+
+    <h3>Comparação direta: malloc vs. calloc</h3>
+<pre>
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+int main() {
+    int n = 5;
+
+    <span class="code-comment">/* malloc: conteúdo indefinido (lixo) */</span>
+    int *vm = (int *) malloc(n * sizeof(int));
+    printf("malloc (sem init): ");
+    for (int i = 0; i &lt; n; i++)
+        printf("%d ", vm[i]);   <span class="code-comment">// valores imprevisíveis!</span>
+    printf("\n");
+
+    <span class="code-comment">/* calloc: todos zeros garantidos */</span>
+    int *vc = (int *) calloc(n, sizeof(int));
+    printf("calloc (zeros):    ");
+    for (int i = 0; i &lt; n; i++)
+        printf("%d ", vc[i]);   <span class="code-comment">// sempre 0 0 0 0 0</span>
+    printf("\n");
+
+    free(vm);
+    free(vc);
+    return 0;
+}
+</pre>
+    <div class="terminal-output">malloc (sem init): 0 0 134513 0 0  ← valores imprevisíveis<br>calloc (zeros):    0 0 0 0 0</div>
+
+    <h3>Quando usar cada um</h3>
+    <table>
+        <tr>
+            <th>Use <code>malloc</code> quando…</th>
+            <th>Use <code>calloc</code> quando…</th>
+        </tr>
+        <tr>
+            <td>Você vai preencher todos os elementos imediatamente</td>
+            <td>Os elementos precisam começar em zero (contadores, flags, matrizes)</td>
+        </tr>
+        <tr>
+            <td>Você lê o array com <code>scanf</code> logo após alocar</td>
+            <td>Parte do array pode ficar sem inicialização explícita</td>
+        </tr>
+        <tr>
+            <td>Desempenho é crítico e zeros não são necessários</td>
+            <td>Você quer garantia de estado inicial limpo</td>
+        </tr>
+    </table>
+
+    <h3>Exemplo: tabela de frequência com calloc</h3>
+<pre>
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+int main() {
+    <span class="code-comment">/* Frequência de cada letra (a-z) — começa tudo em 0 */</span>
+    int *freq = (int *) calloc(26, sizeof(int));
+    if (freq == NULL) return 1;
+
+    char frase[] = "alocacao dinamica em c";
+
+    for (int i = 0; frase[i] != '\0'; i++) {
+        if (frase[i] &gt;= 'a' &amp;&amp; frase[i] &lt;= 'z')
+            freq[frase[i] - 'a']++;    <span class="code-comment">// índice 0='a', 1='b', ...</span>
+    }
+
+    printf("Frequência de letras em \"%s\":\n", frase);
+    for (int i = 0; i &lt; 26; i++) {
+        if (freq[i] &gt; 0)
+            printf("  '%c': %d\n", 'a' + i, freq[i]);
+    }
+
+    free(freq);
+    return 0;
+}
+</pre>
+    <div class="terminal-output">Frequência de letras em "alocacao dinamica em c":<br>&nbsp;&nbsp;'a': 5<br>&nbsp;&nbsp;'c': 3<br>&nbsp;&nbsp;'d': 1<br>&nbsp;&nbsp;'e': 1<br>&nbsp;&nbsp;'i': 2<br>&nbsp;&nbsp;'l': 1<br>&nbsp;&nbsp;'m': 2<br>&nbsp;&nbsp;'n': 1<br>&nbsp;&nbsp;'o': 2</div>
+</div>
+
+<!-- ═══════════════════════════════════════ 4. REALLOC -->
+<div class="content-section">
+    <h2>4. <code>realloc</code> — Redimensionar um Bloco</h2>
+
+    <div class="definicao">
+        <code>realloc(ptr, novo_tamanho)</code> redimensiona um bloco previamente alocado com <code>malloc</code> ou <code>calloc</code>. Se possível, expande o bloco no mesmo lugar; caso contrário, aloca um novo bloco, copia os dados antigos e libera o bloco original. Retorna <code>NULL</code> se falhar — sem liberar o bloco original.
+    </div>
+
+    <h3>Sintaxe</h3>
+<pre>
+void *realloc(void *ptr, size_t novo_tamanho);
+</pre>
+
+    <div class="warning-box">
+        <strong>⚠️ Armadilha clássica do <code>realloc</code>:</strong> Se você escrever <code>p = realloc(p, ...)</code> e a alocação falhar, <code>realloc</code> retorna <code>NULL</code> <em>sem liberar o bloco original</em>. Ao atribuir <code>NULL</code> a <code>p</code>, você perde a referência ao bloco original — causando um memory leak. Sempre use uma variável temporária:
+<pre>
+<span class="code-comment">/* ❌ ERRADO — memory leak se realloc falhar */</span>
+p = realloc(p, novo_tamanho);
+
+<span class="code-comment">/* ✅ CORRETO — preserva o ponteiro original em caso de falha */</span>
+int *temp = realloc(p, novo_tamanho);
+if (temp == NULL) {
+    printf("Erro de alocação!\n");
+    free(p);   <span class="code-comment">// libera o bloco original antes de sair</span>
+    return 1;
+}
+p = temp;
+</pre>
+    </div>
+
+    <h3>Exemplo: lista que cresce dinamicamente</h3>
+<pre>
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+int main() {
+    int capacidade = 4;       <span class="code-comment">// tamanho inicial</span>
+    int tamanho    = 0;       <span class="code-comment">// elementos realmente usados</span>
+
+    int *lista = (int *) malloc(capacidade * sizeof(int));
+    if (lista == NULL) return 1;
+
+    int valor;
+    printf("Digite inteiros (0 para parar):\n");
+
+    while (1) {
+        printf("  > ");
+        scanf("%d", &amp;valor);
+        if (valor == 0) break;
+
+        <span class="code-comment">/* Se cheio, dobra a capacidade */</span>
+        if (tamanho == capacidade) {
+            capacidade *= 2;
+            int *temp = (int *) realloc(lista, capacidade * sizeof(int));
+            if (temp == NULL) {
+                printf("Sem memória!\n");
+                free(lista);
+                return 1;
+            }
+            lista = temp;
+            printf("  [capacidade expandida para %d]\n", capacidade);
+        }
+
+        lista[tamanho++] = valor;
+    }
+
+    printf("\nLista (%d elementos): ", tamanho);
+    for (int i = 0; i &lt; tamanho; i++)
+        printf("%d ", lista[i]);
+    printf("\n");
+
+    free(lista);
+    return 0;
+}
+</pre>
+    <div class="terminal-output">Digite inteiros (0 para parar):<br>&nbsp;&nbsp;&gt; 10<br>&nbsp;&nbsp;&gt; 20<br>&nbsp;&nbsp;&gt; 30<br>&nbsp;&nbsp;&gt; 40<br>&nbsp;&nbsp;&gt; 50<br>&nbsp;&nbsp;[capacidade expandida para 8]<br>&nbsp;&nbsp;&gt; 60<br>&nbsp;&nbsp;&gt; 0<br><br>Lista (6 elementos): 10 20 30 40 50 60</div>
+
+    <div class="info-box">
+        <strong>Estratégia de dobrar a capacidade</strong> é usada pelo <code>ArrayList</code> do Java e pela maioria das estruturas dinâmicas de alto desempenho. Ao dobrar (em vez de somar 1), o custo amortizado de cada inserção permanece O(1) — o número de realocações cresce apenas logaritmicamente com o total de elementos.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 5. FREE -->
+<div class="content-section">
+    <h2>5. <code>free</code> — Liberar Memória</h2>
+
+    <div class="definicao">
+        <code>free(ptr)</code> devolve ao sistema o bloco de memória previamente alocado com <code>malloc</code>, <code>calloc</code> ou <code>realloc</code>. Após o <code>free</code>, o bloco não pertence mais ao programa — acessá-lo é comportamento indefinido.
+    </div>
+
+<pre>
+#include &lt;stdlib.h&gt;
+
+int *p = (int *) malloc(10 * sizeof(int));
+<span class="code-comment">/* ... usa p ... */</span>
+free(p);       <span class="code-comment">// devolve os 40 bytes ao sistema</span>
+p = NULL;      <span class="code-comment">// evita dangling pointer</span>
+</pre>
+
+    <h3>Regras fundamentais do <code>free</code></h3>
+    <table>
+        <tr>
+            <th>Regra</th>
+            <th>O que acontece se violar</th>
+        </tr>
+        <tr>
+            <td>Só libere ponteiros obtidos de <code>malloc</code>/<code>calloc</code>/<code>realloc</code></td>
+            <td>Comportamento indefinido — corrupção do heap</td>
+        </tr>
+        <tr>
+            <td>Não chame <code>free</code> duas vezes no mesmo ponteiro (<em>double free</em>)</td>
+            <td>Comportamento indefinido — pode travar ou comprometer a segurança</td>
+        </tr>
+        <tr>
+            <td>Não use o ponteiro após <code>free</code> (<em>use after free</em>)</td>
+            <td>Comportamento indefinido — pode acessar dados de outra variável</td>
+        </tr>
+        <tr>
+            <td><code>free(NULL)</code> é seguro e não faz nada</td>
+            <td>— (operação segura por definição)</td>
+        </tr>
+    </table>
+
+    <h3>Memory leak — o erro mais silencioso</h3>
+<pre>
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+<span class="code-comment">/* ❌ ERRADO — cada chamada vaza memória */</span>
+void processarDados_errado(int n) {
+    int *buf = (int *) malloc(n * sizeof(int));
+    <span class="code-comment">/* ... processa ... */</span>
+    return;   <span class="code-comment">// buf não foi liberado! memória perdida para sempre</span>
+}
+
+<span class="code-comment">/* ✅ CORRETO — libera antes de retornar */</span>
+void processarDados_correto(int n) {
+    int *buf = (int *) malloc(n * sizeof(int));
+    if (buf == NULL) return;
+    <span class="code-comment">/* ... processa ... */</span>
+    free(buf);   <span class="code-comment">// libera antes de sair da função</span>
+    buf = NULL;
+}
+</pre>
+
+    <div class="warning-box">
+        <strong>⚠️ Memory leaks em programas longos são sérios.</strong> Um vazamento de 1 KB por chamada parece inofensivo, mas em um servidor que processa 1 milhão de requisições/dia, isso representa quase 1 GB de memória perdida por dia. Ferramentas como <strong>Valgrind</strong> (Linux) detectam vazamentos automaticamente.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 6. MATRIZES DINÂMICAS -->
+<div class="content-section">
+    <h2>6. Matrizes Dinâmicas</h2>
+
+    <p>Matrizes bidimensionais também podem ser alocadas dinamicamente. Há duas abordagens principais:</p>
+
+    <h3>Abordagem 1 — Array único (mais eficiente)</h3>
+    <p>Aloca todos os elementos em um único bloco contíguo e usa aritmética de índice para simular linhas e colunas:</p>
+<pre>
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+int main() {
+    int linhas = 3, colunas = 4;
+
+    <span class="code-comment">/* Bloco único de linhas × colunas elementos */</span>
+    int *matriz = (int *) malloc(linhas * colunas * sizeof(int));
+    if (matriz == NULL) return 1;
+
+    <span class="code-comment">/* Preenche com linha × coluna */</span>
+    for (int i = 0; i &lt; linhas; i++)
+        for (int j = 0; j &lt; colunas; j++)
+            matriz[i * colunas + j] = i * 10 + j;   <span class="code-comment">// fórmula do índice</span>
+
+    <span class="code-comment">/* Imprime */</span>
+    printf("Matriz %dx%d:\n", linhas, colunas);
+    for (int i = 0; i &lt; linhas; i++) {
+        for (int j = 0; j &lt; colunas; j++)
+            printf("%4d", matriz[i * colunas + j]);
+        printf("\n");
+    }
+
+    free(matriz);    <span class="code-comment">// um único free — simples!</span>
+    return 0;
+}
+</pre>
+    <div class="terminal-output">Matriz 3x4:<br>&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;1&nbsp;&nbsp;&nbsp;2&nbsp;&nbsp;&nbsp;3<br>&nbsp;&nbsp;10&nbsp;&nbsp;11&nbsp;&nbsp;12&nbsp;&nbsp;13<br>&nbsp;&nbsp;20&nbsp;&nbsp;21&nbsp;&nbsp;22&nbsp;&nbsp;23</div>
+
+    <h3>Abordagem 2 — Array de ponteiros (linhas de tamanhos diferentes)</h3>
+    <p>Permite linhas com tamanhos diferentes (<em>jagged array</em>) — muito útil para triângulos, grafos e matrizes esparsas:</p>
+<pre>
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+int main() {
+    int linhas = 3;
+    int cols[] = {2, 4, 3};   <span class="code-comment">// cada linha tem tamanho diferente</span>
+
+    <span class="code-comment">/* Aloca array de ponteiros (uma linha cada) */</span>
+    int **m = (int **) malloc(linhas * sizeof(int *));
+    if (m == NULL) return 1;
+
+    <span class="code-comment">/* Aloca cada linha individualmente */</span>
+    for (int i = 0; i &lt; linhas; i++) {
+        m[i] = (int *) malloc(cols[i] * sizeof(int));
+        if (m[i] == NULL) { /* tratar erro */ return 1; }
+        for (int j = 0; j &lt; cols[i]; j++)
+            m[i][j] = (i + 1) * 10 + j;
+    }
+
+    <span class="code-comment">/* Imprime */</span>
+    for (int i = 0; i &lt; linhas; i++) {
+        printf("Linha %d (%d elem): ", i, cols[i]);
+        for (int j = 0; j &lt; cols[i]; j++)
+            printf("%d ", m[i][j]);
+        printf("\n");
+    }
+
+    <span class="code-comment">/* Libera: cada linha e depois o array de ponteiros */</span>
+    for (int i = 0; i &lt; linhas; i++)
+        free(m[i]);
+    free(m);
+
+    return 0;
+}
+</pre>
+    <div class="terminal-output">Linha 0 (2 elem): 10 11<br>Linha 1 (4 elem): 20 21 22 23<br>Linha 2 (3 elem): 30 31 32</div>
+</div>
+
+<!-- ═══════════════════════════════════════ 7. PADRÃO COMPLETO -->
+<div class="content-section">
+    <h2>7. Padrão Completo: Alocar, Usar, Verificar, Liberar</h2>
+
+    <p>Um programa robusto que usa alocação dinâmica segue sempre este padrão:</p>
+
+<pre>
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+typedef struct {
+    char  nome[50];
+    float salario;
+    int   anos;
+} Funcionario;
+
+int main() {
+    int n;
+    printf("Número de funcionários: ");
+    scanf("%d", &amp;n);
+
+    <span class="code-comment">/* 1. ALOCAR — e verificar imediatamente */</span>
+    Funcionario *equipe = (Funcionario *) malloc(n * sizeof(Funcionario));
+    if (equipe == NULL) {
+        fprintf(stderr, "Erro: memória insuficiente para %d funcionários.\n", n);
+        return 1;
+    }
+
+    <span class="code-comment">/* 2. USAR */</span>
+    for (int i = 0; i &lt; n; i++) {
+        printf("\n--- Funcionário %d ---\n", i + 1);
+        printf("Nome:    "); scanf(" %49[^\n]", equipe[i].nome);
+        printf("Salário: "); scanf("%f",         &amp;equipe[i].salario);
+        printf("Anos:    "); scanf("%d",          &amp;equipe[i].anos);
+    }
+
+    <span class="code-comment">/* 3. PROCESSAR */</span>
+    float total = 0;
+    int   senioridade = 0;
+    for (int i = 0; i &lt; n; i++) {
+        total += equipe[i].salario;
+        if (equipe[i].anos &gt;= 5) senioridade++;
+    }
+
+    printf("\n=== Resumo da Equipe ===\n");
+    printf("Total de funcionários: %d\n", n);
+    printf("Folha total:           R$%.2f\n", total);
+    printf("Salário médio:         R$%.2f\n", total / n);
+    printf("Seniores (≥5 anos):    %d\n", senioridade);
+
+    <span class="code-comment">/* 4. LIBERAR — sempre ao final */</span>
+    free(equipe);
+    equipe = NULL;
+
+    return 0;
+}
+</pre>
+    <div class="terminal-output">Número de funcionários: 2<br><br>--- Funcionário 1 ---<br>Nome:    Ana Oliveira<br>Salário: 5500<br>Anos:    7<br><br>--- Funcionário 2 ---<br>Nome:    Carlos Mota<br>Salário: 4200<br>Anos:    2<br><br>=== Resumo da Equipe ===<br>Total de funcionários: 2<br>Folha total:           R$9700.00<br>Salário médio:         R$4850.00<br>Seniores (≥5 anos):    1</div>
+</div>
+
+<!-- ═══════════════════════════════════════ 8. RESUMO DAS FUNÇÕES -->
+<div class="content-section">
+    <h2>8. Resumo das Funções de Alocação</h2>
+
+    <table>
+        <tr>
+            <th>Função</th>
+            <th>Assinatura</th>
+            <th>Inicializa?</th>
+            <th>Parâmetros</th>
+            <th>Uso principal</th>
+        </tr>
+        <tr>
+            <td><code>malloc</code></td>
+            <td><code>void *malloc(size_t n)</code></td>
+            <td>❌ Lixo</td>
+            <td>Total de bytes</td>
+            <td>Alocação rápida quando vai preencher imediatamente</td>
+        </tr>
+        <tr>
+            <td><code>calloc</code></td>
+            <td><code>void *calloc(size_t qtd, size_t tam)</code></td>
+            <td>✅ Zeros</td>
+            <td>Quantidade e tamanho de cada elemento</td>
+            <td>Arrays de contadores, matrizes, flags</td>
+        </tr>
+        <tr>
+            <td><code>realloc</code></td>
+            <td><code>void *realloc(void *p, size_t n)</code></td>
+            <td>— (preserva dados)</td>
+            <td>Ponteiro existente e novo tamanho total</td>
+            <td>Crescimento ou encolhimento dinâmico</td>
+        </tr>
+        <tr>
+            <td><code>free</code></td>
+            <td><code>void free(void *p)</code></td>
+            <td>—</td>
+            <td>Ponteiro a liberar</td>
+            <td>Obrigatório após cada <code>malloc</code>/<code>calloc</code></td>
+        </tr>
+    </table>
+
+    <h3>Checklist de boas práticas</h3>
+    <div class="good-practice">
+        <strong>✅ Sempre faça:</strong>
+        <ul style="margin:8px 0 0 16px; line-height:2;">
+            <li>Verificar se o retorno é <code>NULL</code> imediatamente após cada alocação</li>
+            <li>Usar <code>sizeof(tipo)</code> no cálculo do tamanho — nunca valores fixos</li>
+            <li>Atribuir <code>NULL</code> ao ponteiro após <code>free</code></li>
+            <li>Usar variável temporária ao chamar <code>realloc</code></li>
+            <li>Liberar toda memória alocada antes de o programa terminar</li>
+        </ul>
+    </div>
+
+    <div class="bad-practice">
+        <strong>❌ Nunca faça:</strong>
+        <ul style="margin:8px 0 0 16px; line-height:2;">
+            <li><em>Double free</em> — chamar <code>free</code> duas vezes no mesmo ponteiro</li>
+            <li><em>Use after free</em> — usar o ponteiro depois de liberar</li>
+            <li>Esquecer o <code>free</code> em qualquer caminho de saída da função</li>
+            <li>Fazer <code>p = realloc(p, ...)</code> sem variável temporária</li>
+            <li>Chamar <code>free</code> em ponteiro para variável local (stack)</li>
+        </ul>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 9. C VS JAVA -->
+<div class="content-section">
+    <h2>9. C vs. Java — Gerenciamento de Memória</h2>
+
+    <table>
+        <tr>
+            <th>Aspecto</th>
+            <th>C</th>
+            <th>Java</th>
+        </tr>
+        <tr>
+            <td>Alocação</td>
+            <td>Manual — <code>malloc</code>, <code>calloc</code>, <code>realloc</code></td>
+            <td>Automática — <code>new</code></td>
+        </tr>
+        <tr>
+            <td>Liberação</td>
+            <td>Manual — <code>free</code> obrigatório</td>
+            <td>Automática — Garbage Collector</td>
+        </tr>
+        <tr>
+            <td>Memory leak</td>
+            <td>⚠️ Possível e silencioso</td>
+            <td>✅ Improvável — GC libera memória inacessível</td>
+        </tr>
+        <tr>
+            <td>Dangling pointer</td>
+            <td>⚠️ Possível — <code>use after free</code></td>
+            <td>✅ Impossível — referência nula gera exceção</td>
+        </tr>
+        <tr>
+            <td>Controle sobre desempenho</td>
+            <td>✅ Total — você decide quando alocar e liberar</td>
+            <td>⚠️ Parcial — GC pode pausar o programa inesperadamente</td>
+        </tr>
+        <tr>
+            <td>Array dinâmico equivalente</td>
+            <td><code>realloc</code> manual</td>
+            <td><code>ArrayList&lt;Integer&gt;</code> automático</td>
+        </tr>
+    </table>
+
+    <h3>Side-by-side: array de tamanho dinâmico</h3>
+    <div class="grid-container">
+        <div class="grid-item">
+            <strong>C — manual e explícito</strong>
+<pre>
+int n = lerTamanho();
+int *v = malloc(n * sizeof(int));
+if (!v) { /* erro */ }
+
+<span class="code-comment">// ... usa v[0]..v[n-1] ...</span>
+
+free(v);   <span class="code-comment">// obrigatório!</span>
+</pre>
+        </div>
+        <div class="grid-item">
+            <strong>Java — automático e seguro</strong>
+<pre>
+int n = lerTamanho();
+int[] v = new int[n];
+
+<span class="code-comment">// ... usa v[0]..v[n-1] ...</span>
+
+<span class="code-comment">// GC libera quando v sair de
+// escopo — não há free</span>
+</pre>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ QUIZ -->
+<div class="content-section exercise-section">
+    <h2>Quiz — Aula 22</h2>
+    <form class="quiz-form" onsubmit="return false;">
+
+        <div class="content-section quiz-question">
+            <p><strong>1.</strong> Qual é a diferença fundamental entre <code>malloc</code> e <code>calloc</code>?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q1" value="a"> <code>malloc</code> aloca na stack; <code>calloc</code> aloca no heap</label></li>
+                <li><label><input type="radio" name="q1" value="b"> <code>malloc</code> não inicializa o bloco (pode conter lixo); <code>calloc</code> inicializa todos os bytes com zero</label></li>
+                <li><label><input type="radio" name="q1" value="c"> <code>malloc</code> é para tipos primitivos; <code>calloc</code> é para structs</label></li>
+                <li><label><input type="radio" name="q1" value="d"> Não há diferença funcional — são aliases</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>2.</strong> O que <code>malloc</code> retorna quando a alocação de memória falha?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q2" value="a"> <code>-1</code></label></li>
+                <li><label><input type="radio" name="q2" value="b"> Um ponteiro para um bloco de zeros</label></li>
+                <li><label><input type="radio" name="q2" value="c"> <code>NULL</code></label></li>
+                <li><label><input type="radio" name="q2" value="d"> Uma exceção de memória</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>3.</strong> Por que é importante usar <code>sizeof(int)</code> em vez do valor fixo <code>4</code> ao chamar <code>malloc</code>?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q3" value="a"> Porque <code>malloc</code> não aceita valores literais como argumento</label></li>
+                <li><label><input type="radio" name="q3" value="b"> Porque o tamanho de <code>int</code> pode variar entre plataformas; <code>sizeof</code> garante o valor correto para o compilador atual</label></li>
+                <li><label><input type="radio" name="q3" value="c"> Porque <code>4</code> é reservado para ponteiros; usar <code>sizeof</code> evita conflito</label></li>
+                <li><label><input type="radio" name="q3" value="d"> Apenas por questão de legibilidade — o resultado é sempre o mesmo</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>4.</strong> Qual é o erro no código abaixo?</p>
+<pre>
+int *p = (int *) malloc(10 * sizeof(int));
+p = realloc(p, 20 * sizeof(int));
+</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q4" value="a"> <code>realloc</code> não pode ser usado com ponteiros obtidos de <code>malloc</code></label></li>
+                <li><label><input type="radio" name="q4" value="b"> Se <code>realloc</code> falhar e retornar <code>NULL</code>, o bloco original é perdido (memory leak) porque <code>p</code> foi sobrescrito com <code>NULL</code></label></li>
+                <li><label><input type="radio" name="q4" value="c"> O novo tamanho deve ser menor que o original</label></li>
+                <li><label><input type="radio" name="q4" value="d"> Não há erro — o código está correto</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>5.</strong> Qual das afirmações sobre <code>free</code> é <strong>verdadeira</strong>?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q5" value="a"> <code>free(NULL)</code> causa segmentation fault</label></li>
+                <li><label><input type="radio" name="q5" value="b"> Após <code>free(p)</code>, chamar <code>free(p)</code> novamente é seguro se <code>p != NULL</code></label></li>
+                <li><label><input type="radio" name="q5" value="c"> <code>free(NULL)</code> é seguro e não faz nada; chamar <code>free</code> duas vezes no mesmo ponteiro não nulo é comportamento indefinido</label></li>
+                <li><label><input type="radio" name="q5" value="d"> <code>free</code> zera automaticamente o bloco liberado</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>6.</strong> Qual é a vantagem de usar a estratégia de dobrar a capacidade no <code>realloc</code> em vez de aumentar 1 elemento por vez?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q6" value="a"> Usa menos memória total no final</label></li>
+                <li><label><input type="radio" name="q6" value="b"> O custo amortizado de inserção permanece O(1) — o número de realocações cresce apenas logaritmicamente</label></li>
+                <li><label><input type="radio" name="q6" value="c"> Evita completamente a necessidade de usar <code>realloc</code></label></li>
+                <li><label><input type="radio" name="q6" value="d"> Permite usar <code>calloc</code> em vez de <code>realloc</code></label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>7.</strong> Qual é a fórmula correta para acessar o elemento na linha <code>i</code>, coluna <code>j</code> de uma matriz alocada como array único com <code>C</code> colunas?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q7" value="a"> <code>matriz[i + j]</code></label></li>
+                <li><label><input type="radio" name="q7" value="b"> <code>matriz[i * C + j]</code></label></li>
+                <li><label><input type="radio" name="q7" value="c"> <code>matriz[j * C + i]</code></label></li>
+                <li><label><input type="radio" name="q7" value="d"> <code>matriz[i][j]</code></label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>8.</strong> Em Java, o programador não precisa chamar nenhum equivalente a <code>free</code>. Por que isso é possível?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q8" value="a"> Porque Java não aloca memória no heap — tudo fica na stack</label></li>
+                <li><label><input type="radio" name="q8" value="b"> Porque o Garbage Collector detecta automaticamente objetos inacessíveis e libera sua memória, sem intervenção do programador</label></li>
+                <li><label><input type="radio" name="q8" value="c"> Porque objetos Java nunca ocupam mais de 64 bytes e o custo é desprezível</label></li>
+                <li><label><input type="radio" name="q8" value="d"> Porque Java usa apenas memória estática, de tamanho fixo definido em compilação</label></li>
+            </ul>
+        </div>
+
+        <button type="button" class="submit-btn" onclick="verificarRespostas()">Verificar Respostas</button>
+    </form>
+    <div id="quiz-results" style="display:none; margin-top:20px; padding:15px; background:#dff0d8; border-radius:5px;"></div>
+</div>
+
+<div class="navigation-buttons">
+    <a href="capitulo21.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">← Aula 21</a>
+    <a href="index.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">Índice</a>
+    <a href="capitulo23.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">Aula 23 →</a>
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align:center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education"
+                 style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+<script>
+function verificarRespostas() {
+    const gabarito = { q1:"b", q2:"c", q3:"b", q4:"b", q5:"c", q6:"b", q7:"b", q8:"b" };
+    const explicacoes = {
+        q1: "malloc aloca o bloco de memória solicitado mas não toca no conteúdo — os bytes podem ter qualquer valor (lixo). calloc aloca e zera todos os bytes antes de retornar, garantindo que todos os elementos comecem com zero. Ambos alocam no heap.",
+        q2: "Quando malloc não consegue alocar a memória solicitada (falta de memória disponível no heap), ele retorna NULL. Por isso é obrigatório verificar 'if (ptr == NULL)' imediatamente após toda chamada a malloc, calloc ou realloc.",
+        q3: "O tamanho de tipos como int e long pode variar entre plataformas (4 ou 8 bytes em algumas arquiteturas). sizeof(int) sempre retorna o tamanho correto para o compilador e plataforma atuais, tornando o código portável. Usar o literal 4 seria incorreto em sistemas onde int ocupa 8 bytes.",
+        q4: "Se realloc falhar, ele retorna NULL sem liberar o bloco original. Ao fazer 'p = realloc(p, ...)', se o retorno for NULL, p recebe NULL e você perde o único ponteiro para o bloco original — ele fica alocado e inacessível (memory leak). A solução correta é usar uma variável temporária: 'int *tmp = realloc(p, ...); if (tmp != NULL) p = tmp;'",
+        q5: "O padrão C garante que free(NULL) é uma operação segura que não faz nada. Porém, chamar free duas vezes no mesmo ponteiro não nulo (double free) é comportamento indefinido — pode corromper as estruturas internas do heap ou criar vulnerabilidades de segurança. Por isso atribuir NULL após free é tão importante.",
+        q6: "Dobrar a capacidade significa que o número de realocações necessárias para inserir N elementos é O(log N). Com incremento de 1, seriam N realocações — O(N). A estratégia de dobrar é usada por ArrayList em Java, vector em C++ e praticamente toda estrutura dinâmica de alto desempenho.",
+        q7: "Em um array unidimensional que simula uma matriz de C colunas, o elemento [i][j] está na posição i*C + j. Isso reflete o armazenamento em row-major order: cada linha ocupa C posições consecutivas, e linha i começa na posição i*C.",
+        q8: "O Garbage Collector (GC) da JVM monitora quais objetos ainda são referenciados pelo programa. Quando um objeto não tem mais nenhuma referência acessível, o GC o marca como coletável e libera sua memória em algum momento futuro. Isso elimina memory leaks e dangling pointers, ao custo de pausas ocasionais e menos controle sobre o timing da liberação."
+    };
+
+    let acertos = 0, html = "";
+    const total = Object.keys(gabarito).length;
+    for (const q in gabarito) {
+        const sel = document.querySelector(`input[name="${q}"]:checked`);
+        const num = q.replace("q","");
+        if (sel) {
+            if (sel.value === gabarito[q]) {
+                acertos++;
+                html += `<p>Questão ${num}: <span style="color:green;font-weight:bold;">✅ Correto!</span> — ${explicacoes[q]}</p>`;
+            } else {
+                html += `<p>Questão ${num}: <span style="color:red;font-weight:bold;">❌ Incorreto.</span> Gabarito: <strong>${gabarito[q].toUpperCase()}</strong> — ${explicacoes[q]}</p>`;
+            }
+        } else {
+            html += `<p>Questão ${num}: <span style="color:orange;font-weight:bold;">⚠ Não respondida.</span></p>`;
+        }
+    }
+    const r = document.getElementById("quiz-results");
+    r.innerHTML = `<h3>Sua pontuação: ${acertos} de ${total}</h3>${html}`;
+    r.style.display = "block";
+    r.scrollIntoView({ behavior: "smooth" });
+}
+</script>
+
+</body>
+</html>

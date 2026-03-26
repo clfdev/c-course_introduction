@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 05 – Operadores Lógicos: &&, || e !</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Aula 05 – Operadores Lógicos: &&, || e !</h1>
+    <p>Combinando condições, avaliação em curto-circuito e comparação com Java</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo04.html">← Aula 04</a>
+    <a href="capitulo06.html">Aula 06 →</a>
+</nav>
+
+<!-- ═══════════════════════════════════════ INTRODUÇÃO -->
+<div class="content-section">
+    <h2>O que são Operadores Lógicos?</h2>
+    <p>Os operadores lógicos são usados para <strong>combinar ou inverter condições</strong>, permitindo construir expressões mais complexas do que um simples operador relacional consegue expressar. Eles são a base de toda lógica de decisão em programas — aparecem constantemente em <code>if</code>, <code>while</code> e <code>for</code>.</p>
+
+    <div class="definicao">
+        Em C, o resultado de uma expressão lógica é sempre um <strong>inteiro</strong>: <code>0</code> representa falso e qualquer valor <strong>diferente de zero</strong> representa verdadeiro. Os três operadores lógicos primários são <code>&&</code> (AND), <code>||</code> (OR) e <code>!</code> (NOT).
+    </div>
+
+    <table>
+        <tr>
+            <th>Operador</th>
+            <th>Nome</th>
+            <th>Resultado verdadeiro quando...</th>
+            <th>Exemplo</th>
+        </tr>
+        <tr>
+            <td><code>&&</code></td>
+            <td>AND lógico</td>
+            <td><strong>Ambos</strong> os operandos são verdadeiros</td>
+            <td><code>idade >= 18 && temID</code></td>
+        </tr>
+        <tr>
+            <td><code>||</code></td>
+            <td>OR lógico</td>
+            <td><strong>Pelo menos um</strong> operando é verdadeiro</td>
+            <td><code>isStudent || idade &lt; 18</code></td>
+        </tr>
+        <tr>
+            <td><code>!</code></td>
+            <td>NOT lógico</td>
+            <td>O operando é <strong>falso</strong> (inverte o valor)</td>
+            <td><code>!isStudent</code></td>
+        </tr>
+    </table>
+</div>
+
+<!-- ═══════════════════════════════════════ AND -->
+<div class="content-section">
+    <h2>Operador AND: &&</h2>
+    <p>O operador <code>&&</code> retorna verdadeiro somente quando <strong>ambas</strong> as condições são verdadeiras. Se a primeira for falsa, o resultado já é falso — independentemente da segunda.</p>
+
+    <h3>Tabela verdade do AND</h3>
+    <table class="truth-table">
+        <tr>
+            <th>A</th><th>B</th><th>A && B</th>
+        </tr>
+        <tr><td>verdadeiro (1)</td><td>verdadeiro (1)</td><td>verdadeiro (1)</td></tr>
+        <tr><td>verdadeiro (1)</td><td>falso (0)</td><td>falso (0)</td></tr>
+        <tr><td>falso (0)</td><td>verdadeiro (1)</td><td>falso (0)</td></tr>
+        <tr><td>falso (0)</td><td>falso (0)</td><td>falso (0)</td></tr>
+    </table>
+
+    <pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int idade = 20;
+    int temID = 1;   <span class="code-comment">// 1 = verdadeiro (tem documento)</span>
+
+    <span class="code-comment">// Ambas as condições precisam ser verdadeiras</span>
+    if (idade >= 18 && temID) {
+        printf("Acesso liberado: maior de idade E tem documento.\n");
+    } else {
+        printf("Acesso negado.\n");
+    }
+
+    <span class="code-comment">// Combinando três condições com &&</span>
+    int nota = 75, faltas = 3, pagamento = 1;
+    if (nota >= 60 && faltas &lt;= 25 && pagamento) {
+        printf("Aluno aprovado em todos os critérios.\n");
+    }
+
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>Acesso liberado: maior de idade E tem documento.</p>
+        <p>Aluno aprovado em todos os critérios.</p>
+    </div>
+
+    <div class="tip-box">
+        <strong>DICA — usando inteiros como booleanos:</strong> Em C, qualquer variável <code>int</code> pode ser usada diretamente como condição: <code>if (temID)</code> é equivalente a <code>if (temID != 0)</code>. Isso torna o código mais conciso, especialmente com variáveis que funcionam como flags (ligado/desligado).
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ OR -->
+<div class="content-section">
+    <h2>Operador OR: ||</h2>
+    <p>O operador <code>||</code> retorna verdadeiro quando <strong>pelo menos uma</strong> das condições é verdadeira. Só retorna falso quando ambas são falsas.</p>
+
+    <h3>Tabela verdade do OR</h3>
+    <table class="truth-table">
+        <tr>
+            <th>A</th><th>B</th><th>A || B</th>
+        </tr>
+        <tr><td>verdadeiro (1)</td><td>verdadeiro (1)</td><td>verdadeiro (1)</td></tr>
+        <tr><td>verdadeiro (1)</td><td>falso (0)</td><td>verdadeiro (1)</td></tr>
+        <tr><td>falso (0)</td><td>verdadeiro (1)</td><td>verdadeiro (1)</td></tr>
+        <tr><td>falso (0)</td><td>falso (0)</td><td>falso (0)</td></tr>
+    </table>
+
+    <pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int isStudent = 0;   <span class="code-comment">// não é estudante</span>
+    int idade = 20;
+
+    <span class="code-comment">// Basta UMA das condições ser verdadeira</span>
+    if (isStudent || idade &lt; 18) {
+        printf("Desconto disponível: estudante OU menor de idade.\n");
+    } else {
+        printf("Sem desconto disponível.\n");   <span class="code-comment">// este executa</span>
+    }
+
+    <span class="code-comment">// Verificando faixa de validade</span>
+    int mes = 13;
+    if (mes &lt; 1 || mes > 12) {
+        printf("Mês inválido: %d\n", mes);
+    }
+
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>Sem desconto disponível.</p>
+        <p>Mês inválido: 13</p>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ NOT -->
+<div class="content-section">
+    <h2>Operador NOT: !</h2>
+    <p>O operador <code>!</code> é <strong>unário</strong> — age sobre um único operando — e inverte seu valor lógico: transforma verdadeiro em falso e vice-versa.</p>
+
+    <h3>Tabela verdade do NOT</h3>
+    <table class="truth-table">
+        <tr>
+            <th>A</th><th>!A</th>
+        </tr>
+        <tr><td>verdadeiro (1)</td><td>falso (0)</td></tr>
+        <tr><td>falso (0)</td><td>verdadeiro (1)</td></tr>
+    </table>
+
+    <pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int isStudent = 0;    <span class="code-comment">// falso</span>
+    int conectado = 1;    <span class="code-comment">// verdadeiro</span>
+
+    if (!isStudent) {
+        printf("Usuário NÃO é estudante.\n");   <span class="code-comment">// executa (inverte o 0)</span>
+    }
+
+    if (!conectado) {
+        printf("Sem conexão.\n");
+    } else {
+        printf("Conectado ao sistema.\n");       <span class="code-comment">// executa (inverte o 1 → falso → vai ao else)</span>
+    }
+
+    <span class="code-comment">// ! pode ser encadeado, mas evite excessos — prejudica a leitura</span>
+    int x = 5;
+    printf("!x:  %d\n", !x);    <span class="code-comment">// 0  (x é não-zero → verdadeiro → ! → falso)</span>
+    printf("!!x: %d\n", !!x);   <span class="code-comment">// 1  (dupla negação — converte qualquer não-zero para 1)</span>
+
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>Usuário NÃO é estudante.</p>
+        <p>Conectado ao sistema.</p>
+        <p>!x:  0</p>
+        <p>!!x: 1</p>
+    </div>
+
+    <div class="info-box">
+        <strong>Truque do <code>!!</code> (dupla negação):</strong> <code>!!x</code> converte qualquer inteiro não-zero em exatamente <code>1</code>, e zero permanece <code>0</code>. É uma forma idiomática em C de "normalizar" um valor para booleano puro — equivalente a <code>x != 0</code>.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ CURTO CIRCUITO -->
+<div class="content-section">
+    <h2>Avaliação em Curto-Circuito</h2>
+    <p>C — assim como Java — usa <strong>avaliação em curto-circuito</strong> (<em>short-circuit evaluation</em>) nos operadores <code>&&</code> e <code>||</code>. Isso significa que o segundo operando só é avaliado se for <em>necessário</em>:</p>
+
+    <div class="info-box">
+        <ul>
+            <li><strong><code>A && B</code></strong>: se <code>A</code> for falso, <code>B</code> <em>não é avaliado</em> — o resultado já é falso.</li>
+            <li><strong><code>A || B</code></strong>: se <code>A</code> for verdadeiro, <code>B</code> <em>não é avaliado</em> — o resultado já é verdadeiro.</li>
+        </ul>
+    </div>
+
+    <pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int a = 0, b = 10;
+
+    <span class="code-comment">// Curto-circuito com &&</span>
+    <span class="code-comment">// Como a == 0 (falso), b > 5 NUNCA é avaliado</span>
+    if (a != 0 && b > 5) {
+        printf("Ambos verdadeiros.\n");
+    } else {
+        printf("Curto-circuito: b não foi verificado.\n");  <span class="code-comment">// executa</span>
+    }
+
+    <span class="code-comment">// Curto-circuito com ||</span>
+    <span class="code-comment">// Como a == 0 é falso, b > 5 precisa ser avaliado</span>
+    if (a != 0 || b > 5) {
+        printf("Pelo menos um é verdadeiro.\n");  <span class="code-comment">// executa</span>
+    }
+
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>Curto-circuito: b não foi verificado.</p>
+        <p>Pelo menos um é verdadeiro.</p>
+    </div>
+
+    <div class="tip-box">
+        <strong>Por que isso importa na prática?</strong> O curto-circuito é muito útil para evitar operações perigosas. Por exemplo, ao trabalhar com ponteiros (que veremos mais à frente), podemos verificar se um ponteiro é válido <em>antes</em> de tentar acessar o que ele aponta:
+        <pre>if (ptr != NULL && ptr->valor > 0) { ... }
+<span class="code-comment">// Se ptr for NULL, a segunda condição nem é avaliada — sem crash.</span></pre>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ EXEMPLO DO DOCX -->
+<div class="content-section">
+    <h2>Exemplo do Material de Referência</h2>
+    <p>O programa abaixo, diretamente da seção 6 do livro de referência do curso, demonstra os três operadores aplicados a um cenário de controle de acesso:</p>
+
+    <pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int age = 20;
+    int hasID = 1;      <span class="code-comment">// 1 = tem documento</span>
+    int isStudent = 0;  <span class="code-comment">// 0 = não é estudante</span>
+
+    <span class="code-comment">// AND lógico: precisa ser maior de idade E ter documento</span>
+    if (age >= 18 && hasID) {
+        printf("Access granted: age >= 18 AND has ID.\n");
+    }
+
+    <span class="code-comment">// OR lógico: estudante OU menor de idade recebe desconto</span>
+    if (isStudent || age &lt; 18) {
+        printf("Access with discount: student OR underage.\n");
+    } else {
+        printf("No discount available.\n");
+    }
+
+    <span class="code-comment">// NOT lógico: inverte o valor de isStudent</span>
+    if (!isStudent) {
+        printf("User is not a student (NOT isStudent).\n");
+    }
+
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>Access granted: age >= 18 AND has ID.</p>
+        <p>No discount available.</p>
+        <p>User is not a student (NOT isStudent).</p>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ COMBINANDO OPERADORES -->
+<div class="content-section">
+    <h2>Combinando Operadores Lógicos</h2>
+    <p>É possível encadear múltiplos operadores lógicos em uma única expressão. A precedência dos operadores lógicos em C é: <code>!</code> (maior) → <code>&&</code> → <code>||</code> (menor). Use parênteses para deixar a intenção explícita:</p>
+
+    <pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int temperatura = 35;
+    int umidade = 80;
+    int chuva = 0;
+
+    <span class="code-comment">// Condição de alerta: calor extremo E alta umidade, SEM chuva</span>
+    if (temperatura > 30 && umidade > 70 && !chuva) {
+        printf("Alerta: risco de desidratação!\n");
+    }
+
+    <span class="code-comment">// Misturando && e || — parênteses tornam a leitura mais clara</span>
+    int vip = 0, convidado = 1, pagante = 0;
+    if (vip || (convidado && !pagante)) {
+        printf("Entrada liberada.\n");
+    }
+
+    <span class="code-comment">// Validação de intervalo: nota entre 0 e 100</span>
+    float nota = 85.5;
+    if (nota >= 0.0 && nota &lt;= 100.0) {
+        printf("Nota válida: %.1f\n", nota);
+    }
+
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>Alerta: risco de desidratação!</p>
+        <p>Entrada liberada.</p>
+        <p>Nota válida: 85.5</p>
+    </div>
+
+    <div class="warning-box">
+        <strong>Cuidado com a precedência entre && e ||:</strong> <code>a || b && c</code> é avaliado como <code>a || (b && c)</code>, pois <code>&&</code> tem maior precedência que <code>||</code>. Quando misturar os dois, use parênteses para evitar ambiguidade — tanto para o compilador quanto para o leitor.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ C VS JAVA -->
+<div class="content-section">
+    <h2>Operadores Lógicos em C versus Java</h2>
+    <p>Os operadores <code>&&</code>, <code>||</code> e <code>!</code> existem em ambas as linguagens com o mesmo símbolo e a mesma semântica geral. As diferenças estão no <em>sistema de tipos</em> e na <em>flexibilidade</em> que cada linguagem oferece:</p>
+
+    <table>
+        <tr>
+            <th>Aspecto</th>
+            <th>C</th>
+            <th>Java</th>
+        </tr>
+        <tr>
+            <td>Operadores disponíveis</td>
+            <td><code>&&</code>, <code>||</code>, <code>!</code></td>
+            <td><code>&&</code>, <code>||</code>, <code>!</code> (idênticos)</td>
+        </tr>
+        <tr>
+            <td>Tipo do resultado</td>
+            <td><code>int</code>: <code>0</code> (falso) ou <code>1</code> (verdadeiro)</td>
+            <td><code>boolean</code>: <code>false</code> ou <code>true</code></td>
+        </tr>
+        <tr>
+            <td>Operando de tipos numéricos</td>
+            <td>Válido — qualquer inteiro funciona como booleano</td>
+            <td>Inválido — o compilador exige <code>boolean</code> explícito</td>
+        </tr>
+        <tr>
+            <td>Curto-circuito</td>
+            <td>Sim, em <code>&&</code> e <code>||</code></td>
+            <td>Sim, em <code>&&</code> e <code>||</code> (idêntico)</td>
+        </tr>
+        <tr>
+            <td>Versões sem curto-circuito</td>
+            <td>Não há — em C usa-se operadores bit a bit <code>&</code> e <code>|</code></td>
+            <td><code>&</code> e <code>|</code> funcionam em <code>boolean</code> sem curto-circuito</td>
+        </tr>
+        <tr>
+            <td><code>if (x)</code> com inteiro</td>
+            <td>Válido — <code>0</code> é falso, qualquer outro valor é verdadeiro</td>
+            <td>Inválido — exige expressão booleana explícita</td>
+        </tr>
+        <tr>
+            <td>Risco de bug silencioso</td>
+            <td>Alto — um inteiro pode ser usado como booleano sem aviso</td>
+            <td>Baixo — o compilador rejeita tipos incompatíveis</td>
+        </tr>
+    </table>
+
+    <h3>Código equivalente nas duas linguagens</h3>
+    <table>
+        <tr>
+            <th style="width:50%">C</th>
+            <th style="width:50%">Java</th>
+        </tr>
+        <tr>
+            <td>
+<pre style="margin:0; font-size:0.85em;">
+int idade = 20, temID = 1;
+
+if (idade >= 18 && temID) {
+    printf("Liberado\n");
+}
+</pre>
+            </td>
+            <td>
+<pre style="margin:0; font-size:0.85em;">
+int idade = 20;
+boolean temID = true;
+
+if (idade >= 18 && temID) {
+    System.out.println("Liberado");
+}
+</pre>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<!-- ═══════════════════════════════════════ EXERCÍCIOS -->
+<div class="exercise-section">
+    <h2>Exercícios — Aula 05</h2>
+    <p>Teste seus conhecimentos sobre operadores lógicos em C:</p>
+
+    <form class="quiz-form" id="quiz-form">
+
+        <div class="quiz-question">
+            <p><strong>1. Dado <code>int a = 1, b = 0;</code>, qual é o valor de <code>a && b</code>?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q1" value="a"> 1</label></li>
+                <li><label><input type="radio" name="q1" value="b"> 0</label></li>
+                <li><label><input type="radio" name="q1" value="c"> -1</label></li>
+                <li><label><input type="radio" name="q1" value="d"> Erro de compilação</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>2. Qual será a saída do código abaixo?</strong></p>
+            <pre>int x = 5;
+printf("%d\n", !x);
+printf("%d\n", !!x);</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q2" value="a"> 5 e 5</label></li>
+                <li><label><input type="radio" name="q2" value="b"> 0 e 0</label></li>
+                <li><label><input type="radio" name="q2" value="c"> 0 e 1</label></li>
+                <li><label><input type="radio" name="q2" value="d"> 1 e 0</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>3. O que é avaliação em curto-circuito no operador <code>&&</code>?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q3" value="a"> O operador avalia apenas o lado direito da expressão</li></label>
+                <li><label><input type="radio" name="q3" value="b"> Se o lado esquerdo for falso, o lado direito não é avaliado — o resultado já é falso</label></li>
+                <li><label><input type="radio" name="q3" value="c"> O compilador elimina operações redundantes em tempo de compilação</label></li>
+                <li><label><input type="radio" name="q3" value="d"> A expressão é avaliada da direita para a esquerda para economizar memória</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>4. Analise o código. Qual a saída considerando <code>a = 0</code> e <code>b = 5</code>?</strong></p>
+            <pre>if (a != 0 && b > 3)
+    printf("A\n");
+else
+    printf("B\n");</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q4" value="a"> A</label></li>
+                <li><label><input type="radio" name="q4" value="b"> B</label></li>
+                <li><label><input type="radio" name="q4" value="c"> A e B</label></li>
+                <li><label><input type="radio" name="q4" value="d"> Nada — a condição gera erro por curto-circuito</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>5. Qual das expressões abaixo representa corretamente "x está entre 1 e 10 (inclusive)"?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q5" value="a"> <code>1 &lt;= x &lt;= 10</code></label></li>
+                <li><label><input type="radio" name="q5" value="b"> <code>x >= 1 && x &lt;= 10</code></label></li>
+                <li><label><input type="radio" name="q5" value="c"> <code>x >= 1 || x &lt;= 10</code></label></li>
+                <li><label><input type="radio" name="q5" value="d"> <code>x > 0 && x &lt; 11 || x == 1</code></label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>6. Em C, qual é a diferença no tratamento de operandos lógicos em relação ao Java?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q6" value="a"> Em C, os operadores && e || não existem — usa-se & e | no lugar</label></li>
+                <li><label><input type="radio" name="q6" value="b"> Em C, qualquer inteiro pode ser operando lógico (0 = falso, não-zero = verdadeiro); em Java, exige-se um tipo boolean explícito</label></li>
+                <li><label><input type="radio" name="q6" value="c"> Em Java, os operadores lógicos retornam inteiros; em C, retornam boolean</label></li>
+                <li><label><input type="radio" name="q6" value="d"> Não há diferença — as duas linguagens tratam os operandos de forma idêntica</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>7. Qual é a precedência correta entre os operadores lógicos (do maior para o menor)?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q7" value="a"> <code>||</code> → <code>&&</code> → <code>!</code></label></li>
+                <li><label><input type="radio" name="q7" value="b"> <code>&&</code> → <code>||</code> → <code>!</code></label></li>
+                <li><label><input type="radio" name="q7" value="c"> <code>!</code> → <code>&&</code> → <code>||</code></label></li>
+                <li><label><input type="radio" name="q7" value="d"> Todos têm a mesma precedência</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>8. Dado <code>int vip = 0, convidado = 1, pagante = 0;</code>, qual o resultado de <code>vip || (convidado && !pagante)</code>?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q8" value="a"> 0 (falso)</label></li>
+                <li><label><input type="radio" name="q8" value="b"> 1 (verdadeiro)</label></li>
+                <li><label><input type="radio" name="q8" value="c"> Erro: não é possível misturar && e || na mesma expressão</label></li>
+                <li><label><input type="radio" name="q8" value="d"> Depende do compilador</label></li>
+            </ul>
+        </div>
+
+        <button type="button" class="submit-btn" onclick="verificarRespostas()">Verificar Respostas</button>
+    </form>
+
+    <div id="quiz-results" style="display:none; margin-top:20px; padding:15px; background-color:#dff0d8; border-radius:5px;"></div>
+</div>
+
+<div class="navigation-buttons">
+    <a href="capitulo04.html">← Aula 04</a>
+    <a href="index.html">Índice</a>
+    <a href="capitulo06.html">Aula 06 →</a>
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align: center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education" style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+<script>
+    function verificarRespostas() {
+        const gabarito = {
+            q1: "b",
+            q2: "c",
+            q3: "b",
+            q4: "b",
+            q5: "b",
+            q6: "b",
+            q7: "c",
+            q8: "b"
+        };
+
+        const explicacoes = {
+            q1: "AND requer que AMBOS sejam verdadeiros. a = 1 (verdadeiro), mas b = 0 (falso). Como um é falso, o resultado é 0 (falso).",
+            q2: "!x inverte o valor: x = 5 é não-zero (verdadeiro), então !x = 0 (falso). !!x é a dupla negação: !(0) = 1. Resultado: 0 e 1.",
+            q3: "No operador &&, se o lado esquerdo for falso, o resultado já é determinado como falso — o lado direito não é avaliado. Isso evita trabalho desnecessário e previne efeitos colaterais indesejados.",
+            q4: "a = 0, então a != 0 é falso. Por curto-circuito, b > 3 nem é verificado. O resultado do && é falso, então o else executa e imprime B.",
+            q5: "A forma correta em C é x >= 1 && x <= 10. A expressão 1 <= x <= 10 é sintaticamente válida em C mas semanticamente errada: ela é avaliada como (1 <= x) <= 10, o que sempre dá verdadeiro.",
+            q6: "Em C, qualquer inteiro pode ser usado diretamente como booleano (0 = falso, não-zero = verdadeiro). Java é mais rígido: exige boolean explícito e recusa inteiros em contextos lógicos.",
+            q7: "A precedência correta dos operadores lógicos em C é: ! (maior), depois &&, e por último || (menor). Isso significa que && agrupa antes de ||, assim como * agrupa antes de + na aritmética.",
+            q8: "Avaliando: !pagante = !0 = 1 (verdadeiro). convidado && !pagante = 1 && 1 = 1 (verdadeiro). vip || 1 = 0 || 1 = 1 (verdadeiro). Resultado final: 1."
+        };
+
+        let acertos = 0;
+        let html = "";
+        const total = Object.keys(gabarito).length;
+
+        for (const q in gabarito) {
+            const selecionada = document.querySelector(`input[name="${q}"]:checked`);
+            const num = q.substring(1);
+            if (selecionada) {
+                if (selecionada.value === gabarito[q]) {
+                    acertos++;
+                    html += `<p>Questão ${num}: <span style="color:green; font-weight:bold;">✓ Correto!</span> — ${explicacoes[q]}</p>`;
+                } else {
+                    html += `<p>Questão ${num}: <span style="color:red; font-weight:bold;">✗ Incorreto.</span> — ${explicacoes[q]}</p>`;
+                }
+            } else {
+                html += `<p>Questão ${num}: <span style="color:orange; font-weight:bold;">⚠ Não respondida.</span></p>`;
+            }
+        }
+
+        const resultado = document.getElementById("quiz-results");
+        resultado.innerHTML = `<h3>Sua pontuação: ${acertos} de ${total}</h3>${html}`;
+        resultado.style.display = "block";
+        resultado.scrollIntoView({ behavior: "smooth" });
+    }
+</script>
+
+</body>
+</html>

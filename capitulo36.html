@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 36 – Revisão Completa: listaSequencial.c</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Aula 36 – Revisão Completa: <code style="color:#aad4ff">listaSequencial.c</code></h1>
+    <p>Percorrendo cada bloco do programa completo — do cabeçalho ao <code style="color:#aad4ff">main()</code>, função por função, linha por linha</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo35.html">← Aula 35</a>
+    <a href="index.html">Índice →</a>
+</nav>
+
+<!-- ═══════════════════════════════════════ VISÃO GERAL -->
+<div class="content-section">
+    <h2>Visão Geral do Programa</h2>
+    <p>Esta aula revisa o arquivo <strong>listaSequencial.c</strong> — o programa completo que implementa todos os conceitos das Aulas 29 a 35. Em vez de ver os conceitos isoladamente, aqui você lê o código como um todo e entende como cada parte se encaixa na outra.</p>
+
+    <div class="definicao">
+        Um programa de lista sequencial completo tem três camadas: a <strong>definição dos tipos</strong> (o que é uma lista), as <strong>funções de operação</strong> (o que podemos fazer com ela) e o <strong>programa principal</strong> (<code>main</code>) que orquestra tudo. Ler o código nessa ordem é a melhor forma de dominar o projeto.
+    </div>
+
+    <p>O programa implementa as seguintes operações, nesta ordem no arquivo:</p>
+
+    <table>
+        <tr><th>#</th><th>Função</th><th>O que faz</th></tr>
+        <tr><td>1</td><td><code>inicializarLista</code></td><td>Zera o contador — prepara a lista para uso</td></tr>
+        <tr><td>2</td><td><code>exibirLista</code></td><td>Imprime todos os elementos válidos</td></tr>
+        <tr><td>3</td><td><code>tamanho</code></td><td>Retorna quantos elementos estão na lista</td></tr>
+        <tr><td>4</td><td><code>tamanhoEmBytes</code></td><td>Retorna o tamanho físico da struct em bytes</td></tr>
+        <tr><td>5</td><td><code>primeiroElem</code></td><td>Retorna a chave do primeiro elemento</td></tr>
+        <tr><td>6</td><td><code>ultimoElem</code></td><td>Retorna a chave do último elemento</td></tr>
+        <tr><td>7</td><td><code>enesimoElem</code></td><td>Retorna a chave do elemento na posição n</td></tr>
+        <tr><td>8</td><td><code>reinicializarLista</code></td><td>Esvazia a lista sem liberar memória</td></tr>
+        <tr><td>9</td><td><code>inserirElemLista</code></td><td>Insere um registro na posição i com deslocamento</td></tr>
+        <tr><td>10</td><td><code>buscaSequencial</code></td><td>Busca linear sem sentinela — O(n)</td></tr>
+        <tr><td>11</td><td><code>excluirElemLista</code></td><td>Remove elemento por chave com deslocamento</td></tr>
+        <tr><td>12</td><td><code>buscaSentinela</code></td><td>Busca linear otimizada com sentinela — O(n)</td></tr>
+        <tr><td>13</td><td><code>main</code></td><td>Programa principal — exercita todas as funções</td></tr>
+    </table>
+</div>
+
+<!-- ═══════════════════════════════════════ BLOCO 1: CABEÇALHO -->
+<div class="content-section">
+    <h2>Bloco 1 — Cabeçalho, Includes e Defines</h2>
+    <p>As primeiras linhas do arquivo estabelecem o contexto e as dependências do programa:</p>
+
+    <pre>
+/******************************************************************************
+    listaSequencial.c
+  Este programa gerencia listas lineares sequenciais.
+  As listas gerenciadas podem ter MAX elementos (posicoes de 0 a MAX-1 no
+    arranjo A). Alocamos MAX+1 posicoes no arranjo para possibilitar a
+    criacao de um elemento sentinela.
+******************************************************************************/
+#include &lt;stdio.h&gt;
+#include &lt;stdbool.h&gt;
+#define MAX  50
+#define ERRO -1</pre>
+
+    <div class="info-box">
+        <strong><code>#include &lt;stdio.h&gt;</code></strong> — Biblioteca padrão de entrada e saída. Necessária para <code>printf</code> e <code>scanf</code>.<br><br>
+        <strong><code>#include &lt;stdbool.h&gt;</code></strong> — Disponível desde C99. Define o tipo <code>bool</code> e as constantes <code>true</code> (1) e <code>false</code> (0). Sem esse include, funções que retornam <code>bool</code> — como <code>inserirElemLista</code> e <code>excluirElemLista</code> — não compilariam.<br><br>
+        <strong><code>#define MAX 50</code></strong> — Capacidade máxima da lista. Uma constante simbólica: o pré-processador substitui toda ocorrência de <code>MAX</code> por <code>50</code> antes da compilação.<br><br>
+        <strong><code>#define ERRO -1</code></strong> — Código sentinela de erro. Quando uma função de busca não encontra o elemento, retorna <code>-1</code>. Usando o nome <code>ERRO</code> em vez do número, o código comunica a intenção claramente.
+    </div>
+
+    <div class="tip-box">
+        <strong>Por que -1 como código de erro?</strong> Índices válidos de array vão de 0 a MAX-1 — todos não-negativos. O valor -1 é impossível como índice, então funciona perfeitamente como "sentinela de erro" sem ambiguidade.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ BLOCO 2: TIPOS -->
+<div class="content-section">
+    <h2>Bloco 2 — Definição dos Tipos</h2>
+    <p>A fundação de tudo: os três <code>typedef</code>s que definem o que é uma lista neste programa.</p>
+
+    <pre>
+typedef int TIPOCHAVE;
+
+typedef struct {
+  TIPOCHAVE chave;
+  <span class="code-comment">// outros campos...</span>
+} REGISTRO;
+
+typedef struct {
+  REGISTRO A[MAX+1];
+  int nroElem;
+} LISTA;</pre>
+
+    <p>Leia de baixo para cima para entender a dependência entre os tipos:</p>
+
+    <table>
+        <tr><th>Tipo</th><th>O que é</th><th>Depende de</th></tr>
+        <tr>
+            <td><code>TIPOCHAVE</code></td>
+            <td>Apelido para <code>int</code>. Representa o identificador de um registro. Se a chave mudar de tipo (ex.: CPF como string), só esta linha precisa mudar.</td>
+            <td>—</td>
+        </tr>
+        <tr>
+            <td><code>REGISTRO</code></td>
+            <td>A unidade mínima de dados. Contém pelo menos uma <code>chave</code>. Outros campos de dados (nome, data, valor...) seriam adicionados aqui.</td>
+            <td><code>TIPOCHAVE</code></td>
+        </tr>
+        <tr>
+            <td><code>LISTA</code></td>
+            <td>O contêiner completo: um array de até <code>MAX+1</code> registros + um contador <code>nroElem</code> de quantos estão em uso.</td>
+            <td><code>REGISTRO</code>, <code>MAX</code></td>
+        </tr>
+    </table>
+
+    <div class="warning-box">
+        <strong>Por que <code>A[MAX+1]</code> e não <code>A[MAX]</code>?</strong> A posição extra <code>A[MAX]</code> é reservada exclusivamente para a técnica de <strong>busca com sentinela</strong> (função <code>buscaSentinela</code>): colocamos a chave procurada nessa posição para garantir que o loop sempre termine sem precisar checar o limite. Sem o <code>+1</code>, esse acesso seria fora dos limites do array — comportamento indefinido em C.
+    </div>
+
+    <div class="dica">
+        O campo <code>nroElem</code> na <code>LISTA</code> é o equivalente ao <code>size()</code> de um ArrayList em Java. A capacidade física é sempre <code>MAX</code>; o tamanho lógico (em uso) é <code>nroElem</code>, que varia de 0 a MAX conforme inserções e exclusões.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ BLOCO 3: INICIALIZAR -->
+<div class="content-section">
+    <h2>Bloco 3 — <code>inicializarLista</code></h2>
+
+    <pre>
+<span class="code-comment">/* Inicialização da lista sequencial (a lista já está criada e é apontada
+   pelo endereço em l) */</span>
+void inicializarLista(LISTA* l) {
+  l-&gt;nroElem = 0;
+} <span class="code-comment">/* inicializarLista */</span></pre>
+
+    <div class="info-box">
+        <strong>A função mais simples — e a mais importante.</strong> Em C, variáveis locais não são zeradas automaticamente — elas contêm o "lixo" que estava naquele endereço de memória antes. Uma <code>LISTA</code> declarada com <code>LISTA lista;</code> terá <code>nroElem</code> com valor imprevisível. Esta função corrige isso, zerando o contador antes de qualquer uso.
+    </div>
+
+    <p>Três pontos para fixar sobre esta função:</p>
+
+    <div class="grid-container">
+        <div class="grid-item">
+            <strong>1. Parâmetro <code>LISTA* l</code></strong><br><br>
+            Recebe o <em>endereço</em> da lista, não uma cópia. Sem o <code>*</code>, a função zeraria uma cópia local e a lista original permaneceria com lixo.
+        </div>
+        <div class="grid-item">
+            <strong>2. Operador <code>-&gt;</code></strong><br><br>
+            Como <code>l</code> é um ponteiro, acessamos campos com <code>-&gt;</code> em vez de <code>.</code>. <code>l-&gt;nroElem</code> é idêntico a <code>(*l).nroElem</code>.
+        </div>
+        <div class="grid-item">
+            <strong>3. Array não é zerado</strong><br><br>
+            Só <code>nroElem</code> recebe 0. O array <code>A</code> ainda contém lixo — mas as funções ignoram qualquer posição além de <code>nroElem</code>, então isso não causa problema.
+        </div>
+    </div>
+
+    <div class="exemplo">
+        Chamada correta no <code>main</code>: <code>inicializarLista(&amp;lista);</code> — o <code>&amp;</code> obtém o endereço de <code>lista</code> e o passa para o ponteiro <code>l</code>.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ BLOCO 4: EXIBIR -->
+<div class="content-section">
+    <h2>Bloco 4 — <code>exibirLista</code></h2>
+
+    <pre>
+<span class="code-comment">/* Exibição da lista sequencial */</span>
+void exibirLista(LISTA* l) {
+  int i;
+  printf("Lista: \" ");
+  for (i = 0; i &lt; l-&gt;nroElem; i++)
+    printf("%i ", l-&gt;A[i].chave); <span class="code-comment">// só lembrando TIPOCHAVE = int</span>
+  printf("\"\n");
+} <span class="code-comment">/* exibirLista */</span></pre>
+
+    <p>O <code>for</code> percorre exatamente os <code>nroElem</code> primeiros índices do array — de <code>0</code> até <code>nroElem - 1</code>. A condição <code>i &lt; l-&gt;nroElem</code> garante que nunca acessamos posições além dos elementos válidos.</p>
+
+    <div class="tip-box">
+        <strong>Formato da saída:</strong> A função imprime <code>Lista: " 9 3 12 4 1 "</code> — as aspas fazem parte da saída formatada com <code>\"</code> (aspas escapadas dentro de string). O especificador <code>%i</code> é equivalente a <code>%d</code> para inteiros.
+    </div>
+
+    <div class="info-box">
+        <strong>Acesso a <code>l-&gt;A[i].chave</code>:</strong> Esta expressão percorre dois níveis de acesso. Primeiro <code>l-&gt;A[i]</code> obtém o <code>REGISTRO</code> na posição <code>i</code>. Depois <code>.chave</code> acessa o campo <code>chave</code> desse registro. O <code>-&gt;</code> é usado porque <code>l</code> é ponteiro; o <code>.</code> é usado porque <code>A[i]</code> é um valor (não um ponteiro).
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ BLOCO 5: TAMANHO -->
+<div class="content-section">
+    <h2>Bloco 5 — <code>tamanho</code> e <code>tamanhoEmBytes</code></h2>
+
+    <pre>
+<span class="code-comment">/* Retornar o tamanho da lista (numero de elementos "validos") */</span>
+int tamanho(LISTA* l) {
+  return l-&gt;nroElem;
+} <span class="code-comment">/* tamanho */</span>
+
+<span class="code-comment">/* Retornar o tamanho em bytes da lista. Neste caso, isto nao depende do numero
+   de elementos que estao sendo usados, pois a alocacao de memoria eh estatica.
+   A priori, nao precisariamos do ponteiro para a lista, vamos utiliza-lo apenas
+   porque teremos as mesmas funcoes para listas ligadas. */</span>
+int tamanhoEmBytes(LISTA* l) {
+  return sizeof(LISTA);
+} <span class="code-comment">/* tamanhoEmBytes */</span></pre>
+
+    <table>
+        <tr><th>Função</th><th>O que mede</th><th>Varia com inserções?</th><th>Equivalente Java</th></tr>
+        <tr>
+            <td><code>tamanho()</code></td>
+            <td>Elementos em uso (<code>nroElem</code>)</td>
+            <td>✅ Sim — cresce e decresce</td>
+            <td><code>arrayList.size()</code></td>
+        </tr>
+        <tr>
+            <td><code>tamanhoEmBytes()</code></td>
+            <td>Bytes ocupados pela struct <code>LISTA</code> na memória</td>
+            <td>❌ Não — alocação estática fixa</td>
+            <td>Sem equivalente direto</td>
+        </tr>
+    </table>
+
+    <div class="warning-box">
+        <strong>Por que <code>tamanhoEmBytes</code> recebe <code>LISTA* l</code> se não usa <code>l</code>?</strong> O comentário original explica: "A priori, não precisaríamos do ponteiro para a lista, vamos utilizá-lo apenas porque teremos as mesmas funções para listas ligadas." É uma decisão de design para manter a assinatura consistente entre os dois tipos de lista. <code>sizeof(LISTA)</code> é avaliado em tempo de compilação — não depende de <code>l</code>.
+    </div>
+
+    <div class="info-box">
+        <strong>Saída real do programa:</strong> <code>Tamanho da lista (em bytes): 208.</code> — com <code>MAX=50</code> e <code>REGISTRO</code> contendo apenas um <code>int</code> (4 bytes), temos <code>51 × 4 + 4 = 208 bytes</code>: 51 registros (MAX+1) × 4 bytes cada, mais 4 bytes do campo <code>nroElem</code>.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ BLOCO 6: ACESSO A ELEMENTOS -->
+<div class="content-section">
+    <h2>Bloco 6 — <code>primeiroElem</code>, <code>ultimoElem</code> e <code>enesimoElem</code></h2>
+
+    <pre>
+<span class="code-comment">/* Retornar a chave do primeiro elemento (caso haja) e ERRO caso vazia */</span>
+TIPOCHAVE primeiroElem(LISTA* l) {
+  if (l-&gt;nroElem &gt; 0) return l-&gt;A[0].chave;
+  else return ERRO; <span class="code-comment">// lista vazia</span>
+} <span class="code-comment">/* primeiroElem */</span>
+
+<span class="code-comment">/* Retornar a chave do ultimo elemento (caso haja) e ERRO caso vazia */</span>
+TIPOCHAVE ultimoElem(LISTA* l) {
+  if (l-&gt;nroElem &gt; 0) return l-&gt;A[l-&gt;nroElem - 1].chave;
+  else return ERRO; <span class="code-comment">// lista vazia</span>
+} <span class="code-comment">/* ultimoElem */</span>
+
+<span class="code-comment">/* Retornar a chave do elemento na posição n (0 a MAX-1) */</span>
+TIPOCHAVE enesimoElem(LISTA* l, int n) {
+  if ((n &gt;= 0) &amp;&amp; (n &lt; l-&gt;nroElem)) return l-&gt;A[n].chave;
+  else return ERRO;
+} <span class="code-comment">/* enesimoElem */</span></pre>
+
+    <p>As três funções seguem o mesmo padrão de proteção: verificam se o acesso é válido antes de acessar o array. Compare os três casos de acesso:</p>
+
+    <table>
+        <tr><th>Função</th><th>Índice acessado</th><th>Condição de validade</th></tr>
+        <tr><td><code>primeiroElem</code></td><td><code>A[0]</code></td><td><code>nroElem &gt; 0</code> (lista não vazia)</td></tr>
+        <tr><td><code>ultimoElem</code></td><td><code>A[nroElem - 1]</code></td><td><code>nroElem &gt; 0</code> (lista não vazia)</td></tr>
+        <tr><td><code>enesimoElem</code></td><td><code>A[n]</code></td><td><code>n &gt;= 0</code> e <code>n &lt; nroElem</code></td></tr>
+    </table>
+
+    <div class="tip-box">
+        <strong>Por que <code>nroElem - 1</code> em <code>ultimoElem</code>?</strong> Com 5 elementos, eles ocupam os índices 0, 1, 2, 3 e 4. O último está em <code>nroElem - 1 = 4</code>. Usar <code>A[nroElem]</code> acessaria a posição da sentinela — fora dos elementos válidos.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ BLOCO 7: REINICIALIZAR -->
+<div class="content-section">
+    <h2>Bloco 7 — <code>reinicializarLista</code></h2>
+
+    <pre>
+<span class="code-comment">/* Reinicializar a estrutura */</span>
+void reinicializarLista(LISTA* l) {
+  l-&gt;nroElem = 0;
+} <span class="code-comment">/* reinicializarLista */</span></pre>
+
+    <p>O código é idêntico ao de <code>inicializarLista</code>. A diferença está na <strong>intenção semântica</strong>: <code>inicializarLista</code> é chamada na primeira vez, quando a lista acaba de ser criada; <code>reinicializarLista</code> é chamada para esvaziar uma lista que já estava em uso.</p>
+
+    <div class="info-box">
+        <strong>Nenhum dado é apagado de verdade.</strong> Os elementos ainda existem no array <code>A</code>, mas como <code>nroElem</code> voltou a 0, todas as funções os ignoram completamente. Na próxima inserção, a posição 0 será sobrescrita — os dados antigos desaparecem naturalmente. Em Java, <code>arrayList.clear()</code> faz o equivalente (e adicionalmente permite que o garbage collector libere os objetos).
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ BLOCO 8: INSERIR -->
+<div class="content-section">
+    <h2>Bloco 8 — <code>inserirElemLista</code></h2>
+
+    <pre>
+<span class="code-comment">/* Inserção "direta" na iésima posição (posicao i do arranjo A).
+   Funciona da mesma maneira de um insertionSort: deve-se deslocar todos os
+   elementos a partir da iesima posicao e entao se insere o novo elemento. */</span>
+bool inserirElemLista(LISTA* l, REGISTRO reg, int i) {
+  int j;
+  if ((l-&gt;nroElem &gt;= MAX) || (i &lt; 0) || (i &gt; l-&gt;nroElem))
+    return false; <span class="code-comment">// lista cheia ou índice inválido</span>
+  for (j = l-&gt;nroElem; j &gt; i; j--) l-&gt;A[j] = l-&gt;A[j-1];
+  l-&gt;A[i] = reg;
+  l-&gt;nroElem++;
+  return true;
+} <span class="code-comment">/* inserirElemLista */</span></pre>
+
+    <p>Esta é a função mais complexa do programa. Disseque cada parte:</p>
+
+    <div class="grid-container">
+        <div class="grid-item">
+            <strong>Guarda de entrada (linha 3)</strong><br><br>
+            Três condições combinadas com <code>||</code>:<br>
+            • <code>nroElem &gt;= MAX</code> → lista cheia<br>
+            • <code>i &lt; 0</code> → índice negativo inválido<br>
+            • <code>i &gt; nroElem</code> → índice além do último elemento+1<br><br>
+            Se qualquer uma for verdadeira, retorna <code>false</code> imediatamente.
+        </div>
+        <div class="grid-item">
+            <strong>Loop de deslocamento (linha 4)</strong><br><br>
+            <code>for (j = nroElem; j &gt; i; j--)</code><br>
+            Começa no fim e anda para a esquerda. Cada iteração copia <code>A[j-1]</code> para <code>A[j]</code> — abrindo espaço na posição <code>i</code>. Obrigatoriamente da direita para a esquerda para não sobrescrever dados antes de copiá-los.
+        </div>
+        <div class="grid-item">
+            <strong>Inserção e incremento (linhas 5–6)</strong><br><br>
+            <code>A[i] = reg</code> — coloca o novo registro na posição liberada.<br>
+            <code>nroElem++</code> — atualiza o contador. Sem isso, a lista "não saberia" que ganhou um elemento.
+        </div>
+    </div>
+
+    <p>Passo a passo para inserir chave <code>12</code> na posição <code>i=2</code> da lista <code>[9, 3, 4, 1]</code> (<code>nroElem=4</code>):</p>
+
+    <table>
+        <tr><th>j</th><th>Operação</th><th>A[0]</th><th>A[1]</th><th>A[2]</th><th>A[3]</th><th>A[4]</th></tr>
+        <tr><td>—</td><td>Estado inicial</td><td>9</td><td>3</td><td>4</td><td>1</td><td>—</td></tr>
+        <tr><td>4</td><td>A[4] ← A[3]</td><td>9</td><td>3</td><td>4</td><td>1</td><td>1</td></tr>
+        <tr><td>3</td><td>A[3] ← A[2]</td><td>9</td><td>3</td><td>4</td><td>4</td><td>1</td></tr>
+        <tr><td>2</td><td>j &gt; i falso — para</td><td>9</td><td>3</td><td>4</td><td>4</td><td>1</td></tr>
+        <tr style="background-color:#d4edda"><td>—</td><td>A[2] = 12, nroElem=5</td><td>9</td><td>3</td><td><strong>12</strong></td><td>4</td><td>1</td></tr>
+    </table>
+</div>
+
+<!-- ═══════════════════════════════════════ BLOCO 9: BUSCA SEQUENCIAL -->
+<div class="content-section">
+    <h2>Bloco 9 — <code>buscaSequencial</code></h2>
+
+    <pre>
+<span class="code-comment">/* Busca sequencial em lista ordenada ou não SEM SENTINELA */</span>
+int buscaSequencial(LISTA* l, TIPOCHAVE ch) {
+  int i = 0;
+  while (i &lt; l-&gt;nroElem) {
+    if (ch == l-&gt;A[i].chave) return i; <span class="code-comment">// achou</span>
+    else i++;
+  }
+  return ERRO; <span class="code-comment">// não achou</span>
+} <span class="code-comment">/* buscaSequencial */</span></pre>
+
+    <p>A lógica é direta: percorre do índice 0 ao <code>nroElem-1</code>, comparando a chave procurada <code>ch</code> com a chave de cada elemento. Dois caminhos de saída:</p>
+
+    <div class="grid-container">
+        <div class="grid-item">
+            <strong>✅ Encontrou</strong><br><br>
+            <code>return i</code> — retorna imediatamente o índice onde a chave foi encontrada, sem continuar percorrendo o restante da lista.
+        </div>
+        <div class="grid-item">
+            <strong>❌ Não encontrou</strong><br><br>
+            O <code>while</code> termina quando <code>i == nroElem</code>. A execução sai do loop e cai no <code>return ERRO</code>, que vale -1.
+        </div>
+    </div>
+
+    <div class="warning-box">
+        <strong>Duas verificações por iteração:</strong> O <code>while</code> checa <code>i &lt; nroElem</code> (limite) e o <code>if</code> checa a igualdade da chave. Para n elementos não encontrados, são feitas 2n comparações no total. A <code>buscaSentinela</code> reduz isso a n+1.
+    </div>
+
+    <div class="info-box">
+        <strong>Parâmetro <code>TIPOCHAVE ch</code>:</strong> <code>ch</code> é o valor que se quer encontrar — a "chave alvo". Dentro do <code>while</code>, <code>l-&gt;A[i].chave</code> é a chave do elemento na posição <code>i</code>. A comparação <code>ch == l-&gt;A[i].chave</code> verifica se são iguais.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ BLOCO 10: EXCLUIR -->
+<div class="content-section">
+    <h2>Bloco 10 — <code>excluirElemLista</code></h2>
+
+    <pre>
+<span class="code-comment">/* Exclusão do elemento cuja chave seja igual a ch */</span>
+bool excluirElemLista(LISTA* l, TIPOCHAVE ch) {
+  int pos, j;
+  pos = buscaSequencial(l, ch);
+  if (pos == ERRO) return false; <span class="code-comment">// não existe</span>
+  for (j = pos; j &lt; l-&gt;nroElem - 1; j++) l-&gt;A[j] = l-&gt;A[j+1];
+  l-&gt;nroElem--;
+  return true;
+} <span class="code-comment">/* excluirElemLista */</span></pre>
+
+    <p>A função tem três etapas encadeadas:</p>
+
+    <div class="grid-container">
+        <div class="grid-item">
+            <strong>Etapa 1 — Localizar</strong><br><br>
+            Reutiliza <code>buscaSequencial</code> para encontrar a posição do elemento. Se retornar <code>ERRO</code>, o elemento não existe e a função retorna <code>false</code> sem modificar nada.
+        </div>
+        <div class="grid-item">
+            <strong>Etapa 2 — Deslocar para a esquerda</strong><br><br>
+            <code>for (j = pos; j &lt; nroElem-1; j++) A[j] = A[j+1]</code><br>
+            O oposto da inserção: agora deslocamos da posição removida até o final, copiando cada elemento uma casa para a esquerda. Isso "fecha o buraco".
+        </div>
+        <div class="grid-item">
+            <strong>Etapa 3 — Decrementar</strong><br><br>
+            <code>nroElem--</code> — reduz o contador. O dado ainda existe no array mas é ignorado pelas funções a partir de agora.
+        </div>
+    </div>
+
+    <p>Visualizando a exclusão do elemento com chave <code>4</code> (posição 3) da lista <code>[9, 3, 12, 4, 1]</code>:</p>
+
+    <table>
+        <tr><th>j</th><th>Operação</th><th>A[0]</th><th>A[1]</th><th>A[2]</th><th>A[3]</th><th>A[4]</th></tr>
+        <tr><td>—</td><td>Estado inicial</td><td>9</td><td>3</td><td>12</td><td>4</td><td>1</td></tr>
+        <tr><td>3</td><td>A[3] ← A[4]</td><td>9</td><td>3</td><td>12</td><td>1</td><td>1</td></tr>
+        <tr><td>4</td><td>j &lt; nroElem-1 falso — para</td><td>9</td><td>3</td><td>12</td><td>1</td><td>1</td></tr>
+        <tr style="background-color:#d4edda"><td>—</td><td>nroElem-- (4)</td><td>9</td><td>3</td><td>12</td><td>1</td><td><em>ignorado</em></td></tr>
+    </table>
+
+    <div class="tip-box">
+        <strong>Reutilização de código:</strong> <code>excluirElemLista</code> não reimplementa a busca — ela chama <code>buscaSequencial</code>. Esse é um princípio importante de programação: funções devem se construir sobre funções já existentes. O resultado é código mais curto, mais legível e mais fácil de corrigir.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ BLOCO 11: SENTINELA -->
+<div class="content-section">
+    <h2>Bloco 11 — <code>buscaSentinela</code></h2>
+
+    <pre>
+<span class="code-comment">/* Busca sequencial em lista COM SENTINELA (vetor criado com MAX+1 posições) */</span>
+int buscaSentinela(LISTA* l, TIPOCHAVE ch) {
+  int i = 0;
+  l-&gt;A[l-&gt;nroElem].chave = ch; <span class="code-comment">// sentinela</span>
+  while (l-&gt;A[i].chave != ch) i++;
+  if (i &gt; l-&gt;nroElem - 1) return ERRO; <span class="code-comment">// não achou</span>
+  else return i;
+} <span class="code-comment">/* buscaSentinela */</span></pre>
+
+    <p>Compare com a <code>buscaSequencial</code>: o <code>while</code> original tinha <strong>duas condições</strong>. Esta versão tem apenas <strong>uma</strong>:</p>
+
+    <table>
+        <tr><th></th><th>Sem sentinela</th><th>Com sentinela</th></tr>
+        <tr><td>Condição do loop</td><td><code>i &lt; nroElem &amp;&amp; A[i] != ch</code></td><td><code>A[i].chave != ch</code></td></tr>
+        <tr><td>Verificações/iteração</td><td>2</td><td>1</td></tr>
+        <tr><td>Como termina</td><td>Limite atingido ou chave encontrada</td><td>Sempre encontra (real ou sentinela)</td></tr>
+        <tr><td>Confirmação final</td><td>Não precisa</td><td><code>if (i &gt; nroElem-1)</code> — parou na sentinela?</td></tr>
+    </table>
+
+    <div class="info-box">
+        <strong>O truque da sentinela passo a passo:</strong><br><br>
+        1. <code>l-&gt;A[l-&gt;nroElem].chave = ch</code> — coloca a chave procurada na posição <code>A[MAX]</code> (a posição extra reservada).<br>
+        2. O <code>while</code> avança até encontrar <code>ch</code>. Como a sentinela garante que <code>ch</code> existe em algum ponto, o loop <em>sempre para</em> — sem risco de ultrapassar os limites.<br>
+        3. Após o loop, verificamos se parou numa posição válida (<code>i &lt;= nroElem-1</code>) ou na sentinela (<code>i == nroElem</code>).
+    </div>
+
+    <div class="warning-box">
+        <strong>Sentinela modifica a lista!</strong> A linha <code>l-&gt;A[l-&gt;nroElem].chave = ch</code> escreve na posição <code>A[nroElem]</code> — que existe graças ao <code>MAX+1</code>, mas está além dos elementos válidos. Isso é intencional e seguro, pois nunca sobrescreve dados reais. Porém é uma <em>escrita</em> na memória da lista, não apenas uma leitura.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ BLOCO 12: MAIN -->
+<div class="content-section">
+    <h2>Bloco 12 — <code>main()</code>: o Programa em Ação</h2>
+    <p>O <code>main</code> exercita todas as funções em sequência. Vamos percorrê-lo em seções:</p>
+
+    <h3>Seção A — Inicialização e estado inicial</h3>
+    <pre>
+LISTA lista;
+inicializarLista(&amp;lista);
+exibirLista(&amp;lista);
+printf("Numero de elementos na lista: %i.\n", tamanho(&amp;lista));
+printf("Tamanho da lista (em bytes): %i.\n",  tamanhoEmBytes(&amp;lista));</pre>
+
+    <div class="terminal-output">
+        <p>Lista: " "</p>
+        <p>Numero de elementos na lista: 0.</p>
+        <p>Tamanho da lista (em bytes): 208.</p>
+    </div>
+
+    <p><code>LISTA lista;</code> declara a struct na stack. <code>inicializarLista(&amp;lista)</code> zera <code>nroElem</code>. A lista exibida está vazia e já ocupa 208 bytes — a memória é reservada integralmente desde a declaração.</p>
+
+    <h3>Seção B — Inserções</h3>
+    <pre>
+REGISTRO reg;
+reg.chave = 9;
+inserirElemLista(&amp;lista, reg, 0);  <span class="code-comment">// lista: [9]</span>
+exibirLista(&amp;lista);
+
+reg.chave = 3;  inserirElemLista(&amp;lista, reg, 1);  <span class="code-comment">// [9, 3]</span>
+reg.chave = 4;  inserirElemLista(&amp;lista, reg, 2);  <span class="code-comment">// [9, 3, 4]</span>
+reg.chave = 1;  inserirElemLista(&amp;lista, reg, 3);  <span class="code-comment">// [9, 3, 4, 1]</span>
+reg.chave = 12; inserirElemLista(&amp;lista, reg, 2);  <span class="code-comment">// [9, 3, 12, 4, 1] ← inserção no meio!</span>
+exibirLista(&amp;lista);
+printf("Numero de elementos na lista: %i.\n", tamanho(&amp;lista));
+printf("Tamanho da lista (em bytes): %i.\n",  tamanhoEmBytes(&amp;lista));</pre>
+
+    <div class="terminal-output">
+        <p>Lista: " 9 "</p>
+        <p>Lista: " 9 3 12 4 1 "</p>
+        <p>Numero de elementos na lista: 5.</p>
+        <p>Tamanho da lista (em bytes): 208.</p>
+    </div>
+
+    <div class="tip-box">
+        <strong>Atenção à inserção do 12 na posição 2:</strong> Nesse ponto a lista era <code>[9, 3, 4, 1]</code>. Inserir 12 na posição 2 desloca 4 e 1 para a direita, resultando em <code>[9, 3, 12, 4, 1]</code>. Note que o tamanho em bytes continua 208 — a alocação nunca muda.
+    </div>
+
+    <h3>Seção C — Buscas</h3>
+    <pre>
+printf("Chave 4 encontrada na posicao: %i do arranjo A.\n", buscaSequencial(&amp;lista, 4));
+printf("Chave 4 encontrada na posicao: %i do arranjo A.\n", buscaSentinela(&amp;lista, 4));</pre>
+
+    <div class="terminal-output">
+        <p>Chave 4 encontrada na posicao: 3 do arranjo A.</p>
+        <p>Chave 4 encontrada na posicao: 3 do arranjo A.</p>
+    </div>
+
+    <p>Ambas as funções encontram o mesmo elemento e retornam o mesmo índice (3). A lista nesse ponto é <code>[9, 3, 12, 4, 1]</code> — o elemento 4 está no índice 3.</p>
+
+    <h3>Seção D — Exclusões</h3>
+    <pre>
+if (excluirElemLista(&amp;lista, 4)) printf("Exclusao bem sucedida: 4.\n");
+if (excluirElemLista(&amp;lista, 8)) printf("Exclusao bem sucedida: 8.\n"); <span class="code-comment">// 8 não existe!</span>
+if (excluirElemLista(&amp;lista, 9)) printf("Exclusao bem sucedida: 9.\n");
+exibirLista(&amp;lista);
+printf("Numero de elementos na lista: %i.\n", tamanho(&amp;lista));
+printf("Tamanho da lista (em bytes): %i.\n",  tamanhoEmBytes(&amp;lista));</pre>
+
+    <div class="terminal-output">
+        <p>Exclusao bem sucedida: 4.</p>
+        <p>Exclusao bem sucedida: 9.</p>
+        <p>Lista: " 3 12 1 "</p>
+        <p>Numero de elementos na lista: 3.</p>
+        <p>Tamanho da lista (em bytes): 208.</p>
+    </div>
+
+    <div class="info-box">
+        <strong>A exclusão de 8 não gera saída</strong> porque <code>excluirElemLista</code> retorna <code>false</code> quando o elemento não existe. O <code>if</code> avalia <code>false</code> e a mensagem não é impressa. Esse é o uso inteligente do valor de retorno <code>bool</code> — o chamador pode tomar decisões baseado no sucesso ou falha da operação.
+    </div>
+
+    <h3>Seção E — Reinicialização</h3>
+    <pre>
+reinicializarLista(&amp;lista);
+exibirLista(&amp;lista);
+printf("Numero de elementos na lista: %i.\n", tamanho(&amp;lista));
+printf("Tamanho da lista (em bytes): %i.\n",  tamanhoEmBytes(&amp;lista));
+return 0;</pre>
+
+    <div class="terminal-output">
+        <p>Lista: " "</p>
+        <p>Numero de elementos na lista: 0.</p>
+        <p>Tamanho da lista (em bytes): 208.</p>
+    </div>
+
+    <p>A lista volta ao estado inicial. Os dados <code>[3, 12, 1]</code> ainda existem fisicamente no array, mas <code>nroElem = 0</code> faz com que todas as funções os ignorem completamente.</p>
+</div>
+
+<!-- ═══════════════════════════════════════ SAÍDA COMPLETA -->
+<div class="content-section">
+    <h2>Saída Completa do Programa</h2>
+    <p>O comentário ao final do arquivo registra a saída real de uma execução:</p>
+
+    <div class="terminal-output">
+        <p>Lista: " "</p>
+        <p>Numero de elementos na lista: 0.</p>
+        <p>Tamanho da lista (em bytes): 208.</p>
+        <p>Lista: " 9 "</p>
+        <p>Lista: " 9 3 12 4 1 "</p>
+        <p>Numero de elementos na lista: 5.</p>
+        <p>Tamanho da lista (em bytes): 208.</p>
+        <p>Chave 4 encontrada na posicao: 3 do arranjo A.</p>
+        <p>Chave 4 encontrada na posicao: 3 do arranjo A.</p>
+        <p>Exclusao bem sucedida: 4.</p>
+        <p>Exclusao bem sucedida: 9.</p>
+        <p>Lista: " 3 12 1 "</p>
+        <p>Numero de elementos na lista: 3.</p>
+        <p>Tamanho da lista (em bytes): 208.</p>
+        <p>Lista: " "</p>
+        <p>Numero de elementos na lista: 0.</p>
+        <p>Tamanho da lista (em bytes): 208.</p>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ EXERCÍCIOS -->
+<div class="exercise-section">
+    <h2>Exercícios — Aula 36</h2>
+    <p>Questões sobre o programa completo <code>listaSequencial.c</code>:</p>
+
+    <form class="quiz-form" id="quiz-form">
+
+        <div class="quiz-question">
+            <p><strong>1. Por que o programa inclui <code>&lt;stdbool.h&gt;</code>?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q1" value="a"> Para usar a função <code>printf</code></label></li>
+                <li><label><input type="radio" name="q1" value="b"> Para que funções como <code>inserirElemLista</code> possam retornar <code>true</code> ou <code>false</code></label></li>
+                <li><label><input type="radio" name="q1" value="c"> Para definir o tipo <code>TIPOCHAVE</code></label></li>
+                <li><label><input type="radio" name="q1" value="d"> Para usar <code>sizeof</code></label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>2. O programa registra: <code>Tamanho da lista (em bytes): 208.</code> Com MAX=50 e REGISTRO contendo apenas um int (4 bytes), como esse valor é calculado?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q2" value="a"> 50 × 4 = 200 bytes</label></li>
+                <li><label><input type="radio" name="q2" value="b"> (50 + 1) × 4 + 4 = 208 bytes — 51 registros × 4 bytes + 4 bytes do nroElem</label></li>
+                <li><label><input type="radio" name="q2" value="c"> 52 × 4 = 208 bytes — MAX+2 posições por segurança</label></li>
+                <li><label><input type="radio" name="q2" value="d"> O valor depende do sistema operacional</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>3. No <code>main</code>, a exclusão do elemento 8 não imprime mensagem. Por quê?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q3" value="a"> Porque <code>printf</code> suprime mensagens para elementos inexistentes</label></li>
+                <li><label><input type="radio" name="q3" value="b"> Porque <code>excluirElemLista</code> retorna <code>false</code> quando o elemento não existe, e o <code>if</code> não executa o <code>printf</code></label></li>
+                <li><label><input type="radio" name="q3" value="c"> Porque o número 8 é maior que MAX</label></li>
+                <li><label><input type="radio" name="q3" value="d"> Porque a lista está vazia nesse ponto</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>4. Qual é o estado da lista após as 5 inserções do <code>main</code> e por que o 12 está na posição 2?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q4" value="a"> <code>[9, 3, 4, 1, 12]</code> — 12 foi inserido no final</label></li>
+                <li><label><input type="radio" name="q4" value="b"> <code>[9, 3, 12, 4, 1]</code> — 12 foi inserido na posição 2, deslocando 4 e 1 para a direita</label></li>
+                <li><label><input type="radio" name="q4" value="c"> <code>[12, 9, 3, 4, 1]</code> — 12 foi inserido no início</label></li>
+                <li><label><input type="radio" name="q4" value="d"> <code>[9, 12, 3, 4, 1]</code> — 12 substituiu o elemento na posição 2</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>5. Por que <code>tamanhoEmBytes</code> recebe <code>LISTA* l</code> se não usa o ponteiro internamente?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q5" value="a"> É um erro de programação — o parâmetro poderia ser removido</label></li>
+                <li><label><input type="radio" name="q5" value="b"> Para manter a assinatura consistente com as futuras funções de listas ligadas</label></li>
+                <li><label><input type="radio" name="q5" value="c"> Porque <code>sizeof</code> precisa de um ponteiro para funcionar</label></li>
+                <li><label><input type="radio" name="q5" value="d"> Para evitar que o compilador otimize a função</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>6. Em <code>buscaSentinela</code>, o que acontece se a chave procurada já existir na lista?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q6" value="a"> A sentinela sobrescreve o elemento original</label></li>
+                <li><label><input type="radio" name="q6" value="b"> O <code>while</code> para na primeira ocorrência real da chave, antes de chegar à sentinela</label></li>
+                <li><label><input type="radio" name="q6" value="c"> A função retorna ERRO porque há duplicata</label></li>
+                <li><label><input type="radio" name="q6" value="d"> A sentinela e o elemento original causam conflito</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>7. Por que o loop de deslocamento em <code>inserirElemLista</code> percorre de <code>j = nroElem</code> até <code>j = i+1</code> (direita para esquerda), e não ao contrário?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q7" value="a"> Para ser mais eficiente em processadores modernos</label></li>
+                <li><label><input type="radio" name="q7" value="b"> Se fosse da esquerda para a direita, cada elemento sobrescreveria o próximo antes de copiá-lo, perdendo dados</label></li>
+                <li><label><input type="radio" name="q7" value="c"> Porque arrays em C só podem ser percorridos de trás para frente</label></li>
+                <li><label><input type="radio" name="q7" value="d"> Para que o sentinela possa ser posicionado corretamente</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>8. Após <code>reinicializarLista(&amp;lista)</code>, o que acontece com os dados <code>[3, 12, 1]</code> que estavam no array?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q8" value="a"> São apagados imediatamente — os bytes são zerados</label></li>
+                <li><label><input type="radio" name="q8" value="b"> Continuam no array mas são completamente ignorados pelas funções porque nroElem voltou a 0</label></li>
+                <li><label><input type="radio" name="q8" value="c"> São movidos para um buffer temporário</label></li>
+                <li><label><input type="radio" name="q8" value="d"> São liberados pelo garbage collector</label></li>
+            </ul>
+        </div>
+
+        <button type="button" class="submit-btn" onclick="verificarRespostas()">Verificar Respostas</button>
+    </form>
+
+    <div id="quiz-results" style="display:none; margin-top:20px; padding:15px; background-color:#dff0d8; border-radius:5px;"></div>
+</div>
+
+<div class="navigation-buttons">
+    <a href="capitulo35.html">← Aula 35</a>
+    <a href="index.html">Índice</a>
+    <a href="index.html">Índice →</a>
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align: center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education" style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+<script>
+    function verificarRespostas() {
+        const gabarito = { q1:"b", q2:"b", q3:"b", q4:"b", q5:"b", q6:"b", q7:"b", q8:"b" };
+        const explicacoes = {
+            q1: "stdbool.h define o tipo bool e as constantes true e false (disponível desde C99). Sem ele, o compilador não reconhece 'bool', 'true' e 'false' usados nas funções inserirElemLista e excluirElemLista.",
+            q2: "LISTA contém REGISTRO A[MAX+1] + int nroElem. Com MAX=50: 51 posições × sizeof(REGISTRO) + sizeof(int) = 51×4 + 4 = 204 + 4 = 208 bytes. O +1 no array vem da posição extra para a sentinela.",
+            q3: "excluirElemLista chama buscaSequencial internamente. Como o 8 não existe, a busca retorna ERRO (-1). A função detecta isso com 'if (pos == ERRO) return false'. O if no main avalia false e não executa o printf.",
+            q4: "As quatro primeiras inserções constroem [9, 3, 4, 1]. A quinta inserção (12 na posição 2) desloca 4 e 1 uma posição para a direita, abrindo espaço na posição 2, resultando em [9, 3, 12, 4, 1].",
+            q5: "O comentário original explica: a assinatura com LISTA* l é mantida por consistência com as funções de listas ligadas — que terão a mesma interface. sizeof(LISTA) é avaliado em tempo de compilação e não depende do ponteiro.",
+            q6: "O while avança enquanto A[i].chave != ch. Se a chave existe na lista, ele para no índice onde ela está (antes de nroElem). A sentinela em A[nroElem] só é atingida se a chave não existir nos elementos válidos.",
+            q7: "Se fosse da esquerda para a direita: A[i] = A[i+1] sobrescreveria A[i] antes de copiá-lo para A[i-1]. Todos os elementos seriam substituídos pelo valor de A[nroElem-1]. Começar pelo final garante que cada elemento é copiado antes de ser sobrescrito.",
+            q8: "reinicializarLista apenas faz nroElem = 0. Os bytes do array não são alterados — os dados [3, 12, 1] continuam fisicamente na memória. Porém, como todas as funções respeitam nroElem como limite, esses dados são completamente inacessíveis e serão sobrescritos pelas próximas inserções."
+        };
+
+        let acertos = 0, html = "";
+        const total = Object.keys(gabarito).length;
+        for (const q in gabarito) {
+            const sel = document.querySelector(`input[name="${q}"]:checked`);
+            const num = q.substring(1);
+            if (sel) {
+                if (sel.value === gabarito[q]) {
+                    acertos++;
+                    html += `<p>Questão ${num}: <span style="color:green;font-weight:bold;">✓ Correto!</span> — ${explicacoes[q]}</p>`;
+                } else {
+                    html += `<p>Questão ${num}: <span style="color:red;font-weight:bold;">✗ Incorreto.</span> — ${explicacoes[q]}</p>`;
+                }
+            } else {
+                html += `<p>Questão ${num}: <span style="color:orange;font-weight:bold;">⚠ Não respondida.</span></p>`;
+            }
+        }
+        const r = document.getElementById("quiz-results");
+        r.innerHTML = `<h3>Sua pontuação: ${acertos} de ${total}</h3>${html}`;
+        r.style.display = "block";
+        r.scrollIntoView({ behavior:"smooth" });
+    }
+</script>
+
+</body>
+</html>

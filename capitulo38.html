@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 38 - Lista Ligada com Implementação Dinâmica</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <style>
+        /* ── nodo encadeado ── */
+        .node-chain {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0;
+            margin: 16px 0 8px;
+        }
+        .node-box {
+            border: 2px solid #3047bb;
+            border-radius: 6px;
+            overflow: hidden;
+            min-width: 118px;
+        }
+        .node-box.new-node  { border-color: #43a047; }
+        .node-box.del-node  { border-color: #dc3545; opacity: 0.6; }
+        .node-addr {
+            background: #3047bb;
+            color: white;
+            padding: 4px 8px;
+            font-size: 0.76em;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+        }
+        .node-addr.new-node { background: #43a047; }
+        .node-addr.del-node { background: #dc3545; }
+        .node-key {
+            padding: 8px 10px;
+            background: #e8eaf6;
+            color: #1a237e;
+            font-weight: bold;
+            border-bottom: 1px solid #c5cae9;
+            font-family: 'Courier New', monospace;
+            font-size: 0.90em;
+        }
+        .node-key.new-node { background: #e8f5e9; color: #1b5e20; border-color: #a5d6a7; }
+        .node-key.del-node { background: #f8d7da; color: #721c24; border-color: #f5c6cb;
+                             text-decoration: line-through; }
+        .node-next {
+            padding: 8px 10px;
+            background: #fff8e1;
+            color: #e65100;
+            font-size: 0.84em;
+            font-family: 'Courier New', monospace;
+        }
+        .node-next.null-ptr { background: #f5f5f5; color: #9e9e9e; }
+        .node-next.new-node { background: #f1f8e9; color: #33691e; }
+        .chain-arrow { font-size: 1.8em; color: #3047bb; padding: 0 6px; align-self: center; }
+        .chain-end   { color: #9e9e9e; font-size: 0.9em; font-style: italic; padding-left: 4px; align-self: center; }
+
+        /* ── caixa de estado (inicio) ── */
+        .state-box {
+            display: inline-flex; flex-direction: column; gap: 3px;
+            margin-right: 12px; vertical-align: top; margin-top: 4px;
+        }
+        .state-cell { display: flex; align-items: center; gap: 6px;
+                      font-family: 'Courier New', monospace; font-size: 0.84em; }
+        .state-label { color: #555; min-width: 48px; }
+        .state-val {
+            border: 2px solid #3047bb; border-radius: 3px;
+            padding: 4px 10px; background: #e8eaf6; color: #1a237e;
+            font-weight: bold; min-width: 50px; text-align: center;
+        }
+        .state-val.null { background: #f5f5f5; color: #9e9e9e; border-color: #bbb; }
+
+        /* ── diagrama wrapper ── */
+        .diag-wrap {
+            font-family: 'Courier New', monospace;
+            background: #f5f5f5;
+            border-left: 4px solid #1149c3;
+            border-radius: 5px;
+            padding: 20px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+        .diag-label { color: #555; font-size: 0.82em; margin-bottom: 10px; line-height: 1.7; }
+        .chain-txt  { font-family: 'Courier New', monospace; font-size: 0.88em; color: #333;
+                      margin: 10px 0 0 0; line-height: 1.9; }
+        .c-use  { color: #1a237e; font-weight: bold; }
+        .c-new  { color: #1b5e20; font-weight: bold; }
+        .c-del  { color: #b71c1c; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Aula 38 — Lista Ligada com Implementação Dinâmica</h1>
+        <p style="margin:0; font-size:0.9em; opacity:0.85;">
+            Alocação e desalocação de memória sob demanda com <code style="color:#ffe082;">malloc</code>
+            e <code style="color:#ffe082;">free</code>
+        </p>
+    </header>
+
+    <nav>
+        <a href="index.html">Voltar ao Índice</a>
+        <a href="capitulo37.html">Aula Anterior</a>
+        <a href="capitulo39.html">Próxima Aula</a>
+    </nav>
+
+
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- 1. MOTIVAÇÃO — ESTÁTICA VS DINÂMICA                           -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <div class="content-section">
+        <h2>De estática para dinâmica</h2>
+        <p>
+            Na Aula 37 aprendemos a modelar e gerenciar listas ligadas usando a
+            <strong>implementação estática</strong>: um array de tamanho fixo <code>MAX</code>
+            armazenava todos os registros, e duas cadeias de cursores controlavam quais
+            posições estavam em uso e quais estavam disponíveis.
+        </p>
+        <p>
+            Hoje aprenderemos a <strong>implementação dinâmica</strong>: alocaremos e
+            desalocaremos a memória para cada elemento <em>sob demanda</em>, usando
+            <code>malloc</code> e <code>free</code>.
+        </p>
+
+        <table class="comparison-table">
+            <tr>
+                <th>Aspecto</th>
+                <th>Estática (Aula 37)</th>
+                <th>Dinâmica (esta aula)</th>
+            </tr>
+            <tr>
+                <td><strong>Armazenamento</strong></td>
+                <td>Array fixo <code>A[MAX]</code> — sempre na memória</td>
+                <td>Nodo alocado individualmente com <code>malloc</code></td>
+            </tr>
+            <tr>
+                <td><strong>Tamanho máximo</strong></td>
+                <td class="bad">Fixo em tempo de compilação (<code>#define MAX</code>)</td>
+                <td class="good">Limitado apenas pela memória disponível do sistema</td>
+            </tr>
+            <tr>
+                <td><strong>Memória gasta</strong></td>
+                <td class="bad">MAX registros — mesmo que a lista esteja quase vazia</td>
+                <td class="good">Exatamente o necessário — 0 nodos extras</td>
+            </tr>
+            <tr>
+                <td><strong>Cadeia de disponíveis</strong></td>
+                <td class="bad">Necessária — gerenciada manualmente com <code>dispo</code></td>
+                <td class="good">Desnecessária — o sistema operacional gerencia o heap</td>
+            </tr>
+            <tr>
+                <td><strong>Campo de ligação</strong></td>
+                <td>Cursor inteiro (<code>int prox</code> — índice)</td>
+                <td>Ponteiro (<code>struct aux* prox</code> — endereço de memória)</td>
+            </tr>
+            <tr>
+                <td><strong>Liberação de nodo</strong></td>
+                <td><code>devolverNo</code> — devolve à cadeia de disponíveis</td>
+                <td><code>free(p)</code> — devolve ao sistema operacional</td>
+            </tr>
+        </table>
+
+        <div class="info-box">
+            <strong>Vantagens da implementação dinâmica:</strong> não gastamos memória que não
+            estamos usando, e não precisamos gerenciar uma lista de elementos disponíveis —
+            a complexidade do código diminui consideravelmente.
+        </div>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- 2. IDEIA GERAL — PONTEIROS COMO ENDEREÇOS REAIS               -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <div class="content-section">
+        <h2>Ideia geral: ponteiros como endereços reais</h2>
+        <p>
+            Na implementação estática, o campo <code>prox</code> guardava um <em>índice</em>
+            (número inteiro). Na dinâmica, ele guarda um <em>endereço de memória</em> real —
+            que é exatamente o que um ponteiro armazena.
+        </p>
+        <p>
+            O marcador de fim de lista deixa de ser <code>INVALIDO = −1</code> e passa a ser
+            <code>NULL</code> — o endereço nulo, universalmente reconhecido em C.
+        </p>
+
+        <div class="diag-wrap">
+            <div class="diag-label">Lista dinâmica com 4 nodos — ordem lógica: 5 → 7 → 8 → 9</div>
+            <div style="display:flex; align-items:flex-start; gap:10px; flex-wrap:wrap; margin-bottom:8px;">
+                <div class="state-box">
+                    <div class="state-cell">
+                        <span class="state-label">inicio</span>
+                        <span class="state-val">2010</span>
+                    </div>
+                </div>
+                <div class="node-chain">
+                    <div class="node-box">
+                        <div class="node-addr">end: 2010</div>
+                        <div class="node-key">chave = 5</div>
+                        <div class="node-next">prox → 2310</div>
+                    </div>
+                    <div class="chain-arrow">→</div>
+                    <div class="node-box">
+                        <div class="node-addr">end: 2310</div>
+                        <div class="node-key">chave = 7</div>
+                        <div class="node-next">prox → 2180</div>
+                    </div>
+                    <div class="chain-arrow">→</div>
+                    <div class="node-box">
+                        <div class="node-addr">end: 2180</div>
+                        <div class="node-key">chave = 8</div>
+                        <div class="node-next">prox → 2050</div>
+                    </div>
+                    <div class="chain-arrow">→</div>
+                    <div class="node-box">
+                        <div class="node-addr">end: 2050</div>
+                        <div class="node-key">chave = 9</div>
+                        <div class="node-next null-ptr">prox = NULL</div>
+                    </div>
+                    <div class="chain-arrow" style="color:#9e9e9e;">✕</div>
+                    <div class="chain-end">fim</div>
+                </div>
+            </div>
+            <div class="chain-txt">
+                <span class="c-use">Temos um ponteiro para o primeiro elemento</span> (<code>inicio = 2010</code>)<br>
+                <span class="c-use">Cada elemento indica seu sucessor</span> via campo <code>prox</code><br>
+                Os endereços 2010, 2310, 2180, 2050 são arbitrários — o sistema aloca onde houver espaço livre
+            </div>
+        </div>
+
+        <div class="tip-box">
+            <strong>A ordem lógica não precisa refletir a ordem de alocação.</strong>
+            O nodo com chave=7 está no endereço 2310 e o nodo com chave=8 está em 2180 — mesmo
+            assim a lista está ordenada porque o campo <code>prox</code> de 7 aponta para 8
+            (endereço 2180). A ordem é definida pelos ponteiros, não pelos endereços.
+        </div>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- 3. MODELAGEM / ESTRUTURA DE DADOS                             -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <div class="content-section">
+        <h2>Modelagem: as estruturas de dados</h2>
+        <p>
+            A struct do nodo agora contém um <strong>ponteiro para o próprio tipo</strong>
+            — a struct auto-referenciada. O nome-tag <code>aux</code> é necessário porque
+            o <code>typedef</code> ainda não está completo quando o campo <code>prox</code>
+            é declarado.
+        </p>
+
+        <pre>
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;    <span class="code-comment">/* malloc e free */</span>
+#include &lt;stdbool.h&gt;
+
+#define ERRO -1
+
+typedef int TIPOCHAVE;
+
+typedef struct {
+    TIPOCHAVE chave;
+    <span class="code-comment">// outros campos do registro...</span>
+} REGISTRO;
+
+<span class="code-comment">/* Nodo: dado + ponteiro para o próximo nodo */</span>
+typedef struct aux {
+    REGISTRO    reg;
+    struct aux* prox;   <span class="code-comment">/* struct auto-referenciada */</span>
+} ELEMENTO;
+
+<span class="code-comment">/* Apelido de tipo: PONT é um ponteiro para ELEMENTO */</span>
+typedef ELEMENTO* PONT;
+
+<span class="code-comment">/* Cabeça da lista: apenas o ponteiro para o 1º nodo */</span>
+typedef struct {
+    PONT inicio;   <span class="code-comment">/* NULL = lista vazia */</span>
+} LISTA;</pre>
+
+        <div class="info-box">
+            <strong>Compare com a Aula 37:</strong>
+            <ul style="margin:8px 0 0 0;">
+                <li>O campo <code>prox</code> era <code>int</code> (índice); agora é <code>struct aux*</code> (endereço).</li>
+                <li>A struct <code>LISTA</code> tinha <code>inicio</code> e <code>dispo</code>; agora tem só <code>inicio</code>.</li>
+                <li>O apelido <code>PONT</code> (ponteiro para nodo) substitui o papel dos índices.</li>
+            </ul>
+        </div>
+
+        <div class="tip-box">
+            <strong>Por que <code>typedef ELEMENTO* PONT</code>?</strong>
+            É um apelido de conveniência: em vez de escrever <code>ELEMENTO* p</code>
+            em toda função, escrevemos apenas <code>PONT p</code>. O significado é idêntico.
+        </div>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- 4. INICIALIZAÇÃO                                              -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <div class="content-section">
+        <h2>Inicialização</h2>
+        <p>
+            Inicializar a lista dinâmica é muito mais simples do que na versão estática:
+            basta apontar <code>inicio</code> para <code>NULL</code>. Não há array a
+            preparar, nem cadeia de disponíveis a montar.
+        </p>
+
+        <pre>
+void inicializarLista(LISTA* l) {
+    l->inicio = NULL;   <span class="code-comment">/* lista vazia — nenhum nodo alocado ainda */</span>
+}</pre>
+
+        <div class="diag-wrap">
+            <div class="diag-label">Estado após <code>inicializarLista</code></div>
+            <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+                <div class="state-box">
+                    <div class="state-cell">
+                        <span class="state-label">inicio</span>
+                        <span class="state-val null">NULL</span>
+                    </div>
+                </div>
+                <div style="color:#888; font-style:italic; font-size:0.9em;">
+                    Nenhum nodo existe na memória heap.<br>
+                    A lista ocupa apenas 8 bytes (o ponteiro <code>inicio</code>).
+                </div>
+            </div>
+        </div>
+
+        <div class="tip-box">
+            <strong>Compare com a Aula 37:</strong> lá, a inicialização percorria o array
+            inteiro (<code>for i = 0..MAX−1</code>) para montar a cadeia de disponíveis.
+            Aqui, uma linha única basta.
+        </div>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- 5. TAMANHO                                                    -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <div class="content-section">
+        <h2>Retornar o número de elementos</h2>
+        <p>
+            Não há campo <code>nroElem</code>. Para contar os nodos, percorremos a cadeia
+            a partir de <code>inicio</code> até encontrar <code>NULL</code>:
+        </p>
+
+        <pre>
+int tamanho(LISTA* l) {
+    PONT p   = l->inicio;
+    int  tam = 0;
+    while (p != NULL) {
+        tam++;
+        p = p->prox;   <span class="code-comment">/* avança para o próximo nodo */</span>
+    }
+    return tam;
+}</pre>
+
+        <div class="tip-box">
+            <strong>Padrão de travessia:</strong> <code>PONT p = l->inicio</code> — nunca
+            modifique <code>l->inicio</code> diretamente para percorrer a lista. O ponteiro
+            local <code>p</code> é uma cópia que avança livremente sem perder a referência
+            ao início.
+        </div>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- 6. EXIBIÇÃO / IMPRESSÃO                                       -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <div class="content-section">
+        <h2>Exibição / Impressão</h2>
+        <p>
+            O padrão de travessia é idêntico ao de <code>tamanho</code>: ponteiro auxiliar
+            <code>p</code> percorre a cadeia até <code>NULL</code>, imprimindo a chave de
+            cada nodo:
+        </p>
+
+        <pre>
+void exibirLista(LISTA* l) {
+    PONT p = l->inicio;
+    printf("Lista: \" ");
+    while (p != NULL) {
+        printf("%i ", p->reg.chave);
+        p = p->prox;
+    }
+    printf("\"\n");
+}</pre>
+
+        <div class="exemplo">
+            Para a lista 5 → 7 → 8 → 9 → NULL:<br><br>
+            <code>p = inicio = 2010</code> → chave=5 → imprime 5 → <code>p = p->prox = 2310</code><br>
+            <code>p = 2310</code> → chave=7 → imprime 7 → <code>p = p->prox = 2180</code><br>
+            <code>p = 2180</code> → chave=8 → imprime 8 → <code>p = p->prox = 2050</code><br>
+            <code>p = 2050</code> → chave=9 → imprime 9 → <code>p = p->prox = NULL</code><br>
+            <code>p = NULL</code> → loop encerra<br><br>
+            Saída: <code>Lista: " 5 7 8 9 "</code>
+        </div>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- 7. BUSCA AUXILIAR — buscaSequencialExc                        -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <div class="content-section">
+        <h2>Busca auxiliar: <code>buscaSequencialExc</code></h2>
+        <p>
+            Tanto a inserção quanto a exclusão precisam de <strong>dois endereços</strong>
+            ao mesmo tempo:
+        </p>
+        <ul>
+            <li>O <strong>endereço do elemento</strong> com a chave buscada (se ele existir).</li>
+            <li>O <strong>endereço do predecessor</strong> desse elemento — independentemente
+                de ele existir ou não na lista.</li>
+        </ul>
+        <p>
+            Uma única função pode resolver as duas perguntas de uma vez.
+            Mas como retornar <em>dois</em> endereços diferentes? Em C, uma função tem
+            apenas um valor de retorno. A solução é passar um <strong>ponteiro para
+            ponteiro</strong> (<code>PONT* ant</code>) como parâmetro de saída:
+            a função escreve o predecessor em <code>*ant</code> e retorna o elemento
+            encontrado (ou <code>NULL</code>).
+        </p>
+
+        <pre>
+<span class="code-comment">/* Busca auxiliar: retorna o nodo com chave ch (ou NULL se não existir)
+   e escreve em *ant o endereço do predecessor (NULL se for o 1º).
+   Usada como base de inserção e exclusão.                           */</span>
+PONT buscaSequencialExc(LISTA* l, TIPOCHAVE ch, PONT* ant) {
+    *ant  = NULL;
+    PONT atual = l->inicio;
+    while ((atual != NULL) && (atual->reg.chave &lt; ch)) {
+        *ant  = atual;
+        atual = atual->prox;
+    }
+    if ((atual != NULL) && (atual->reg.chave == ch))
+        return atual;
+    return NULL;
+}</pre>
+
+        <div class="info-box">
+            <strong>O que <code>PONT* ant</code> significa:</strong>
+            <code>PONT</code> é <code>ELEMENTO*</code>, então <code>PONT*</code> é
+            <code>ELEMENTO**</code> — um ponteiro para um ponteiro para nodo.
+            Dentro da função, <code>*ant = atual</code> escreve o endereço do predecessor
+            diretamente na variável do chamador. Ao sair da função, o chamador lê
+            o predecessor em sua própria variável local.
+        </div>
+
+        <div class="exemplo">
+            Buscando a chave 7 na lista 5 → 7 → 8 → 9:<br><br>
+            <code>*ant = NULL, atual = 2010 (chave=5)</code> → 5 &lt; 7 → <code>*ant = 2010, atual = 2310</code><br>
+            <code>atual = 2310 (chave=7)</code> → 7 não é &lt; 7 → sai do while<br>
+            <code>atual != NULL &amp;&amp; chave == 7</code> → retorna <code>2310</code><br><br>
+            Resultado: retorno = <code>2310</code> (nodo 7) &nbsp;|&nbsp; <code>*ant = 2010</code> (nodo 5, predecessor)
+        </div>
+
+        <div class="exemplo">
+            Buscando a chave 6 na lista 5 → 7 → 8 → 9 (elemento <em>não existe</em>):<br><br>
+            <code>*ant = NULL, atual = 2010 (chave=5)</code> → 5 &lt; 6 → <code>*ant = 2010, atual = 2310</code><br>
+            <code>atual = 2310 (chave=7)</code> → 7 não é &lt; 6 → sai do while<br>
+            <code>chave 7 ≠ 6</code> → retorna <code>NULL</code><br><br>
+            Resultado: retorno = <code>NULL</code> (não existe) &nbsp;|&nbsp; <code>*ant = 2010</code> (predecessor <em>que seria</em> de 6)
+        </div>
+
+        <div class="tip-box">
+            <strong>O predecessor é retornado mesmo quando o elemento não existe.</strong>
+            Isso é exatamente o que a inserção precisa: saber <em>onde encaixar</em> o novo
+            nodo mesmo quando ele ainda não está na lista.
+        </div>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- 8. INSERÇÃO — usando buscaSequencialExc + malloc              -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <div class="content-section">
+        <h2>Inserção de um elemento</h2>
+        <p>
+            Com <code>buscaSequencialExc</code> disponível, a inserção fica limpa:
+            chamamos a auxiliar para obter simultaneamente se o elemento já existe
+            (duplicata) e quem seria seu predecessor. Depois alocamos o nodo e
+            ajustamos dois ponteiros.
+        </p>
+
+        <pre>
+bool inserirElemListaOrd(LISTA* l, REGISTRO reg) {
+    PONT ant;
+    PONT p = buscaSequencialExc(l, reg.chave, &amp;ant);
+
+    <span class="code-comment">/* duplicata: rejeita */</span>
+    if (p != NULL) return false;
+
+    <span class="code-comment">/* ── aloca o novo nodo ── */</span>
+    PONT novo = (PONT) malloc(sizeof(ELEMENTO));
+    if (novo == NULL) return false;   <span class="code-comment">/* sem memória disponível */</span>
+
+    novo->reg  = reg;
+    novo->prox = p;   <span class="code-comment">/* p == NULL aqui, mas aponta para quem virá depois */</span>
+
+    <span class="code-comment">/* ── encadeia o novo nodo ── */</span>
+    if (ant == NULL)
+        l->inicio = novo;   <span class="code-comment">/* inserção no início (lista vazia ou menor elemento) */</span>
+    else
+        ant->prox = novo;   <span class="code-comment">/* inserção no meio ou no final */</span>
+
+    return true;
+}</pre>
+
+        <div class="warning-box">
+            <strong>Atenção:</strong> após <code>buscaSequencialExc</code> retornar
+            <code>NULL</code> (elemento não existe), o ponteiro <code>p</code> aponta
+            para o primeiro nodo cuja chave é <em>maior</em> que a nova — ou é
+            <code>NULL</code> se o novo vai para o final. Por isso <code>novo->prox = p</code>
+            encaixa o novo nodo corretamente antes do seu sucessor em qualquer caso.
+        </div>
+
+        <h3>O papel do <code>malloc</code></h3>
+        <p>
+            <code>malloc(sizeof(ELEMENTO))</code> solicita ao sistema operacional exatamente
+            o número de bytes necessários para um <code>ELEMENTO</code> e retorna o endereço
+            do bloco alocado. Se não houver memória disponível, retorna <code>NULL</code> —
+            sempre verifique esse retorno antes de usar o ponteiro.
+        </p>
+
+        <div class="diag-wrap">
+            <div class="diag-label"><strong>Inserindo o 6</strong> na lista 5 → 7 → 8 → 9</div>
+            <div style="margin-bottom:12px;">
+                <div class="diag-label">buscaSequencialExc retorna: p = NULL (6 não existe) | *ant = 2010 (nodo 5)</div>
+                <div style="display:flex; align-items:flex-start; gap:10px; flex-wrap:wrap; margin-bottom:6px;">
+                    <div class="state-box">
+                        <div class="state-cell"><span class="state-label">inicio</span><span class="state-val">2010</span></div>
+                        <div class="state-cell"><span class="state-label">ant</span><span class="state-val">2010</span></div>
+                        <div class="state-cell"><span class="state-label">p</span><span class="state-val null">NULL→2310</span></div>
+                    </div>
+                    <div class="node-chain">
+                        <div class="node-box">
+                            <div class="node-addr">end: 2010</div>
+                            <div class="node-key">chave = 5</div>
+                            <div class="node-next">prox → 2310</div>
+                        </div>
+                        <div class="chain-arrow">→</div>
+                        <div class="node-box" style="border-color:#f9a825;">
+                            <div class="node-addr" style="background:#f9a825;">end: 2310</div>
+                            <div class="node-key" style="background:#fff9c4;color:#f57f17;">chave = 7 ← p</div>
+                            <div class="node-next">prox → 2180</div>
+                        </div>
+                        <div class="chain-arrow">→</div>
+                        <div class="node-box">
+                            <div class="node-addr">end: 2180</div>
+                            <div class="node-key">chave = 8</div>
+                            <div class="node-next">prox → 2050</div>
+                        </div>
+                        <div class="chain-arrow">→</div>
+                        <div class="node-box">
+                            <div class="node-addr">end: 2050</div>
+                            <div class="node-key">chave = 9</div>
+                            <div class="node-next null-ptr">prox = NULL</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="chain-txt">malloc aloca novo nodo → supondo end: 5500</div>
+            </div>
+
+            <div style="margin-top:14px;">
+                <div class="diag-label">Depois:</div>
+                <div style="display:flex; align-items:flex-start; gap:10px; flex-wrap:wrap; margin-bottom:6px;">
+                    <div class="state-box">
+                        <div class="state-cell"><span class="state-label">inicio</span><span class="state-val">2010</span></div>
+                    </div>
+                    <div class="node-chain">
+                        <div class="node-box">
+                            <div class="node-addr">end: 2010</div>
+                            <div class="node-key">chave = 5</div>
+                            <div class="node-next new-node">prox → 5500 ←</div>
+                        </div>
+                        <div class="chain-arrow">→</div>
+                        <div class="node-box new-node">
+                            <div class="node-addr new-node">end: 5500 NOVO</div>
+                            <div class="node-key new-node">chave = 6</div>
+                            <div class="node-next new-node">prox → 2310</div>
+                        </div>
+                        <div class="chain-arrow">→</div>
+                        <div class="node-box">
+                            <div class="node-addr">end: 2310</div>
+                            <div class="node-key">chave = 7</div>
+                            <div class="node-next">prox → 2180</div>
+                        </div>
+                        <div class="chain-arrow">→</div>
+                        <div class="node-box">
+                            <div class="node-addr">end: 2050</div>
+                            <div class="node-key">chave = 9</div>
+                            <div class="node-next null-ptr">prox = NULL</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="chain-txt">
+                <span class="c-new">novo->prox = p (2310)</span> — novo aponta para o antigo sucessor de 5<br>
+                <span class="c-new">ant->prox = novo (5500)</span> — nodo 5 passa a apontar para o novo<br>
+                <strong>Apenas 2 ponteiros alterados. Nenhum dado movido.</strong>
+            </div>
+        </div>
+
+        <div class="warning-box">
+            <strong>A ordem das duas atribuições importa:</strong> primeiro <code>novo->prox = p</code>
+            (o novo guarda para onde vai), depois <code>ant->prox = novo</code> (o antecessor
+            aponta para o novo). Se invertidas, <code>ant->prox</code> seria sobrescrito antes de
+            ser copiado para <code>novo->prox</code>, e perderíamos o restante da lista.
+        </div>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- 9. EXCLUSÃO — usando buscaSequencialExc + free               -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <div class="content-section">
+        <h2>Exclusão de um elemento</h2>
+        <p>
+            Assim como na inserção, a exclusão usa <code>buscaSequencialExc</code>
+            para obter simultaneamente o nodo a remover e seu predecessor.
+            Se o nodo existir, desligamos da cadeia e chamamos <code>free</code>:
+        </p>
+
+        <pre>
+bool excluirElemLista(LISTA* l, TIPOCHAVE ch) {
+    PONT ant;
+    PONT p = buscaSequencialExc(l, ch, &amp;ant);
+
+    <span class="code-comment">/* não encontrou */</span>
+    if (p == NULL) return false;
+
+    <span class="code-comment">/* desliga o nodo da cadeia */</span>
+    if (ant == NULL)
+        l->inicio = p->prox;    <span class="code-comment">/* era o primeiro elemento */</span>
+    else
+        ant->prox = p->prox;    <span class="code-comment">/* meio ou final */</span>
+
+    free(p);    <span class="code-comment">/* devolve a memória ao sistema operacional */</span>
+    return true;
+}</pre>
+
+        <div class="info-box">
+            <strong>Compare inserção e exclusão lado a lado:</strong> ambas chamam
+            <code>buscaSequencialExc</code> e depois verificam <code>ant == NULL</code>
+            para decidir se atualizam <code>l->inicio</code> ou <code>ant->prox</code>.
+            A diferença é que a inserção adiciona um nodo (com <code>malloc</code>)
+            e a exclusão remove (com <code>free</code>).
+        </div>
+
+        <div class="diag-wrap">
+            <div class="diag-label"><strong>Excluindo o 7</strong> — lista 5 → 7 → 8 → 9</div>
+            <div style="display:flex; gap:24px; flex-wrap:wrap; margin-bottom:8px;">
+
+                <div>
+                    <div class="diag-label" style="font-weight:bold; color:#1a237e;">Antes — buscaSequencialExc(l, 7, &amp;ant)</div>
+                    <div style="display:flex; align-items:flex-start; gap:10px; flex-wrap:wrap;">
+                        <div class="state-box">
+                            <div class="state-cell"><span class="state-label">inicio</span><span class="state-val">2010</span></div>
+                            <div class="state-cell"><span class="state-label">ant</span><span class="state-val">2010</span></div>
+                            <div class="state-cell"><span class="state-label">p</span><span class="state-val">2310</span></div>
+                        </div>
+                        <div class="node-chain" style="flex-wrap:wrap; max-width:440px;">
+                            <div class="node-box">
+                                <div class="node-addr">2010</div>
+                                <div class="node-key">chave = 5</div>
+                                <div class="node-next">prox → 2310</div>
+                            </div>
+                            <div class="chain-arrow">→</div>
+                            <div class="node-box del-node">
+                                <div class="node-addr del-node">2310 ← p</div>
+                                <div class="node-key del-node">chave = 7</div>
+                                <div class="node-next">prox → 2180</div>
+                            </div>
+                            <div class="chain-arrow">→</div>
+                            <div class="node-box">
+                                <div class="node-addr">2180</div>
+                                <div class="node-key">chave = 8</div>
+                                <div class="node-next">prox → 2050</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="diag-label" style="font-weight:bold; color:#155724;">Depois — ant->prox = p->prox; free(p)</div>
+                    <div style="display:flex; align-items:flex-start; gap:10px; flex-wrap:wrap;">
+                        <div class="state-box">
+                            <div class="state-cell"><span class="state-label">inicio</span><span class="state-val">2010</span></div>
+                        </div>
+                        <div class="node-chain" style="flex-wrap:wrap; max-width:380px;">
+                            <div class="node-box">
+                                <div class="node-addr">2010</div>
+                                <div class="node-key">chave = 5</div>
+                                <div class="node-next new-node">prox → 2180 ←</div>
+                            </div>
+                            <div class="chain-arrow">→</div>
+                            <div class="node-box">
+                                <div class="node-addr">2180</div>
+                                <div class="node-key">chave = 8</div>
+                                <div class="node-next">prox → 2050</div>
+                            </div>
+                            <div class="chain-arrow">→</div>
+                            <div class="node-box">
+                                <div class="node-addr">2050</div>
+                                <div class="node-key">chave = 9</div>
+                                <div class="node-next null-ptr">prox = NULL</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="chain-txt">
+                <span class="c-del">ant->prox = p->prox</span>: nodo 5 salta o nodo 7, apontando direto para 8<br>
+                <span class="c-del">free(p)</span>: memória do endereço 2310 devolvida ao sistema — não existe mais no heap
+            </div>
+        </div>
+
+        <div class="warning-box">
+            <strong>Use o ponteiro antes de liberá-lo.</strong> A linha <code>ant->prox = p->prox</code>
+            deve vir <em>antes</em> de <code>free(p)</code>. Após o <code>free</code>, o conteúdo do
+            bloco liberado é indefinido — acessar <code>p->prox</code> depois seria comportamento
+            indefinido.
+        </div>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- 10. REINICIALIZAÇÃO                                           -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <div class="content-section">
+        <h2>Reinicializar a lista</h2>
+        <p>
+            Na versão estática, reinicializar era simples: bastava ajustar <code>inicio</code>
+            e <code>dispo</code> porque a memória do array pertencia à struct e seria
+            liberada quando o escopo terminasse.
+        </p>
+        <p>
+            Na versão dinâmica, cada nodo foi alocado individualmente com <code>malloc</code>
+            e precisa ser liberado individualmente com <code>free</code> — caso contrário,
+            ocorre <strong>vazamento de memória</strong> (<em>memory leak</em>):
+        </p>
+
+        <pre>
+void reinicializarLista(LISTA* l) {
+    PONT p = l->inicio;
+    while (p != NULL) {
+        PONT aux = p->prox;   <span class="code-comment">/* salva o próximo ANTES de liberar p */</span>
+        free(p);
+        p = aux;              <span class="code-comment">/* avança com o ponteiro salvo        */</span>
+    }
+    l->inicio = NULL;
+}</pre>
+
+        <div class="definicao">
+            <strong>Vazamento de memória (memory leak)</strong> ocorre quando um bloco alocado
+            com <code>malloc</code> não é jamais liberado com <code>free</code>. Em programas
+            de longa execução, vazamentos acumulam-se e eventualmente esgotam a memória disponível.
+        </div>
+
+        <div class="warning-box">
+            <strong>Por que salvar <code>p->prox</code> antes do <code>free</code>?</strong>
+            Após <code>free(p)</code>, a memória apontada por <code>p</code> é liberada
+            e seu conteúdo torna-se indefinido. Se tentarmos ler <code>p->prox</code>
+            depois do <code>free</code>, o comportamento é indefinido — o programa
+            pode travar ou produzir resultados incorretos.
+        </div>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- 11. COMPARAÇÃO ESTÁTICA VS DINÂMICA — CÓDIGO                  -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <div class="content-section">
+        <h2>Comparação lado a lado: estática × dinâmica</h2>
+        <p>
+            As operações são estruturalmente idênticas — o que muda é apenas
+            o mecanismo de gerenciamento de memória:
+        </p>
+
+        <table class="comparison-table">
+            <tr>
+                <th>Operação</th>
+                <th>Estática (Aula 37)</th>
+                <th>Dinâmica (esta aula)</th>
+            </tr>
+            <tr>
+                <td><strong>Inicializar</strong></td>
+                <td><code>for</code> monta cadeia de disponíveis; <code>inicio=INVALIDO; dispo=0</code></td>
+                <td><code>l->inicio = NULL</code></td>
+            </tr>
+            <tr>
+                <td><strong>Reservar nodo</strong></td>
+                <td><code>obterNo(l)</code> — retira índice da cadeia de disponíveis</td>
+                <td><code>malloc(sizeof(ELEMENTO))</code> — aloca no heap</td>
+            </tr>
+            <tr>
+                <td><strong>Liberar nodo</strong></td>
+                <td><code>devolverNo(l, i)</code> — devolve índice à cadeia de disponíveis</td>
+                <td><code>free(p)</code> — devolve memória ao sistema</td>
+            </tr>
+            <tr>
+                <td><strong>Lista vazia?</strong></td>
+                <td><code>l->inicio == INVALIDO</code></td>
+                <td><code>l->inicio == NULL</code></td>
+            </tr>
+            <tr>
+                <td><strong>Avançar na cadeia</strong></td>
+                <td><code>i = l->A[i].prox</code></td>
+                <td><code>p = p->prox</code></td>
+            </tr>
+            <tr>
+                <td><strong>Reinicializar</strong></td>
+                <td><code>inicio=INVALIDO; dispo=0</code> (memória não é liberada)</td>
+                <td>Loop com <code>free</code> em cada nodo, depois <code>inicio=NULL</code></td>
+            </tr>
+        </table>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- 12. EXEMPLO COMPLETO                                          -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <div class="content-section">
+        <h2>Exemplo completo com todas as operações</h2>
+
+        <pre>
+int main() {
+    LISTA l;
+    REGISTRO r;
+
+    inicializarLista(&l);
+    exibirLista(&l);
+    printf("Tamanho: %d\n\n", tamanho(&l));
+
+    <span class="code-comment">/* Inserções fora de ordem — a lista se auto-ordena */</span>
+    r.chave = 7; inserirElemListaOrd(&l, r);
+    r.chave = 3; inserirElemListaOrd(&l, r);
+    r.chave = 9; inserirElemListaOrd(&l, r);
+    r.chave = 1; inserirElemListaOrd(&l, r);
+    r.chave = 5; inserirElemListaOrd(&l, r);
+    exibirLista(&l);
+    printf("Tamanho: %d\n\n", tamanho(&l));
+
+    <span class="code-comment">/* Inserção de duplicata */</span>
+    r.chave = 3;
+    if (!inserirElemListaOrd(&l, r))
+        printf("Inserção de 3 recusada: elemento já existe\n\n");
+
+    <span class="code-comment">/* Busca */</span>
+    PONT ant_busca;
+    PONT pos = buscaSequencialExc(&l, 9, &ant_busca);
+    if (pos != NULL)
+        printf("Chave 9 encontrada (endereço %p)\n", (void*)pos);
+    pos = buscaSequencialExc(&l, 4, &ant_busca);
+    if (pos == NULL)
+        printf("Chave 4 não encontrada\n\n");
+
+    <span class="code-comment">/* Exclusões */</span>
+    if (excluirElemLista(&l, 3)) printf("Chave 3 excluída\n");
+    if (excluirElemLista(&l, 1)) printf("Chave 1 excluída\n");
+    if (!excluirElemLista(&l, 8)) printf("Chave 8 não encontrada\n\n");
+
+    exibirLista(&l);
+    printf("Tamanho: %d\n\n", tamanho(&l));
+
+    <span class="code-comment">/* Libera toda a memória antes de encerrar */</span>
+    reinicializarLista(&l);
+    exibirLista(&l);
+    printf("Tamanho: %d\n", tamanho(&l));
+
+    return 0;
+}</pre>
+
+        <div class="terminal-output">
+            <p>Lista: " "</p>
+            <p>Tamanho: 0</p>
+            <p>&nbsp;</p>
+            <p>Lista: " 1 3 5 7 9 "</p>
+            <p>Tamanho: 5</p>
+            <p>&nbsp;</p>
+            <p>Inserção de 3 recusada: elemento já existe</p>
+            <p>&nbsp;</p>
+            <p>Chave 9 encontrada (endereço 0x...)</p>
+            <p>Chave 4 não encontrada</p>
+            <p>&nbsp;</p>
+            <p>Chave 3 excluída</p>
+            <p>Chave 1 excluída</p>
+            <p>Chave 8 não encontrada</p>
+            <p>&nbsp;</p>
+            <p>Lista: " 5 7 9 "</p>
+            <p>Tamanho: 3</p>
+            <p>&nbsp;</p>
+            <p>Lista: " "</p>
+            <p>Tamanho: 0</p>
+        </div>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- 13. CÓDIGO-FONTE COMPLETO                                     -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <div class="content-section">
+        <h2>Código-fonte completo</h2>
+
+        <pre>
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;stdbool.h&gt;
+
+#define ERRO -1
+typedef int TIPOCHAVE;
+typedef struct { TIPOCHAVE chave; } REGISTRO;
+
+typedef struct aux { REGISTRO reg; struct aux* prox; } ELEMENTO;
+typedef ELEMENTO* PONT;
+typedef struct { PONT inicio; } LISTA;
+
+<span class="code-comment">/* ── Inicialização ── */</span>
+void inicializarLista(LISTA* l) { l->inicio = NULL; }
+
+<span class="code-comment">/* ── Tamanho ── */</span>
+int tamanho(LISTA* l) {
+    PONT p = l->inicio; int tam = 0;
+    while (p != NULL) { tam++; p = p->prox; }
+    return tam;
+}
+
+<span class="code-comment">/* ── Exibição ── */</span>
+void exibirLista(LISTA* l) {
+    PONT p = l->inicio;
+    printf("Lista: \" ");
+    while (p != NULL) { printf("%i ", p->reg.chave); p = p->prox; }
+    printf("\"\n");
+}
+
+<span class="code-comment">/* ── Busca auxiliar ── */</span>
+PONT buscaSequencialExc(LISTA* l, TIPOCHAVE ch, PONT* ant) {
+    *ant = NULL;
+    PONT atual = l->inicio;
+    while ((atual != NULL) && (atual->reg.chave &lt; ch)) { *ant = atual; atual = atual->prox; }
+    if ((atual != NULL) && (atual->reg.chave == ch)) return atual;
+    return NULL;
+}
+
+<span class="code-comment">/* ── Inserção ── */</span>
+bool inserirElemListaOrd(LISTA* l, REGISTRO reg) {
+    PONT ant;
+    PONT p = buscaSequencialExc(l, reg.chave, &ant);
+    if (p != NULL) return false;
+    PONT novo = (PONT) malloc(sizeof(ELEMENTO));
+    if (novo == NULL) return false;
+    novo->reg = reg; novo->prox = p;
+    if (ant == NULL) l->inicio = novo;
+    else ant->prox = novo;
+    return true;
+}
+
+<span class="code-comment">/* ── Exclusão ── */</span>
+bool excluirElemLista(LISTA* l, TIPOCHAVE ch) {
+    PONT ant;
+    PONT p = buscaSequencialExc(l, ch, &ant);
+    if (p == NULL) return false;
+    if (ant == NULL) l->inicio = p->prox;
+    else ant->prox = p->prox;
+    free(p);
+    return true;
+}
+
+<span class="code-comment">/* ── Reinicialização ── */</span>
+void reinicializarLista(LISTA* l) {
+    PONT p = l->inicio;
+    while (p != NULL) { PONT aux = p->prox; free(p); p = aux; }
+    l->inicio = NULL;
+}</pre>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- 14. RESUMO                                                    -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <div class="content-section">
+        <h2>Resumo: o que você precisa saber desta aula</h2>
+
+        <div class="summary-box">
+            <ol style="margin:0; padding-left:1.4em; line-height:2.2;">
+                <li>A implementação dinâmica aloca cada nodo <strong>sob demanda</strong> com <code>malloc</code>
+                    — não há tamanho máximo fixo nem cadeia de disponíveis para gerenciar.</li>
+                <li>A struct usa <code>struct aux* prox</code> (ponteiro para o próprio tipo)
+                    em vez de <code>int prox</code> (índice).</li>
+                <li>O apelido <code>PONT = ELEMENTO*</code> simplifica as assinaturas das funções.</li>
+                <li><strong>Inicialização:</strong> <code>l->inicio = NULL</code> — uma única linha.</li>
+                <li><strong>Tamanho e exibição:</strong> percorrem com <code>while (p != NULL)</code>,
+                    usando ponteiro auxiliar local <code>PONT p</code>.</li>
+                <li><strong>Busca:</strong> retorna <code>PONT</code> (ou <code>NULL</code>) em vez de índice.</li>
+                <li><strong>Inserção:</strong> <code>malloc</code> substitui <code>obterNo</code>;
+                    a lógica de encadeamento (<code>ant</code> / <code>p</code>) é idêntica à Aula 37.</li>
+                <li><strong>Exclusão:</strong> <code>free(p)</code> substitui <code>devolverNo</code>;
+                    salve <code>p->prox</code> antes de liberar.</li>
+                <li><strong>Reinicialização:</strong> percorre toda a cadeia chamando <code>free</code>
+                    em cada nodo — obrigatório para evitar vazamento de memória.</li>
+            </ol>
+        </div>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- 15. EXERCÍCIOS                                                -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <div class="exercise-section">
+        <h2>Exercícios</h2>
+        <p>Teste sua compreensão sobre a lista ligada com implementação dinâmica:</p>
+
+        <form class="quiz-form" id="quiz-form">
+
+            <div class="quiz-question">
+                <p><strong>1. Qual é a principal vantagem da implementação dinâmica sobre a estática?</strong></p>
+                <ul class="options-list">
+                    <li><label><input type="radio" name="q1" value="a"> A busca é mais rápida porque os nodos estão em endereços consecutivos.</label></li>
+                    <li><label><input type="radio" name="q1" value="b"> Não há tamanho máximo fixo e não é necessária uma cadeia de disponíveis — a memória é alocada exatamente quando necessária.</label></li>
+                    <li><label><input type="radio" name="q1" value="c"> A inserção não precisa localizar a posição correta na ordem.</label></li>
+                    <li><label><input type="radio" name="q1" value="d"> O campo <code>prox</code> ocupa menos memória que um índice inteiro.</label></li>
+                </ul>
+            </div>
+
+            <div class="quiz-question">
+                <p><strong>2. Em <code>inserirElemListaOrd</code>, por que é importante fazer <code>novo->prox = p</code> antes de <code>ant->prox = novo</code>?</strong></p>
+                <ul class="options-list">
+                    <li><label><input type="radio" name="q2" value="a"> Para que <code>novo</code> aponte para seu sucessor antes que o antecessor o encadeie — caso contrário o restante da lista seria perdido.</label></li>
+                    <li><label><input type="radio" name="q2" value="b"> Para evitar que <code>malloc</code> aloque memória em posição já ocupada.</label></li>
+                    <li><label><input type="radio" name="q2" value="c"> Para garantir que <code>ant</code> não seja sobrescrito antes de ser usado.</label></li>
+                    <li><label><input type="radio" name="q2" value="d"> A ordem não importa — as duas atribuições são independentes.</label></li>
+                </ul>
+            </div>
+
+            <div class="quiz-question">
+                <p><strong>3. Em <code>excluirElemLista</code>, por que salvamos <code>p->prox</code> indiretamente via <code>ant->prox = p->prox</code> antes de chamar <code>free(p)</code>?</strong></p>
+                <ul class="options-list">
+                    <li><label><input type="radio" name="q3" value="a"> Para reutilizar o espaço liberado na próxima inserção.</label></li>
+                    <li><label><input type="radio" name="q3" value="b"> Porque após <code>free(p)</code> o conteúdo do bloco liberado é indefinido — ler <code>p->prox</code> depois seria comportamento indefinido.</label></li>
+                    <li><label><input type="radio" name="q3" value="c"> Para que o sistema operacional saiba qual nodo deve ser liberado a seguir.</label></li>
+                    <li><label><input type="radio" name="q3" value="d"> Porque <code>free</code> zera automaticamente todos os campos da struct.</label></li>
+                </ul>
+            </div>
+
+            <div class="quiz-question">
+                <p><strong>4. O que acontece se omitirmos <code>reinicializarLista</code> ao final do programa?</strong></p>
+                <ul class="options-list">
+                    <li><label><input type="radio" name="q4" value="a"> O programa não compila — <code>free</code> é obrigatório por sintaxe.</label></li>
+                    <li><label><input type="radio" name="q4" value="b"> A memória dos nodos não é liberada (vazamento de memória); em um programa de longa execução isso pode esgotar a memória disponível.</label></li>
+                    <li><label><input type="radio" name="q4" value="c"> O campo <code>inicio</code> fica com valor indefinido e causa erro na próxima chamada.</label></li>
+                    <li><label><input type="radio" name="q4" value="d"> Nada — o sistema operacional libera toda a memória quando o processo encerra.</label></li>
+                </ul>
+            </div>
+
+            <div class="quiz-question">
+                <p><strong>5. Qual é o papel do apelido <code>typedef ELEMENTO* PONT</code>?</strong></p>
+                <ul class="options-list">
+                    <li><label><input type="radio" name="q5" value="a"> Cria um novo tipo de dado diferente de ponteiro, mais seguro que <code>ELEMENTO*</code>.</label></li>
+                    <li><label><input type="radio" name="q5" value="b"> É apenas um apelido de conveniência: <code>PONT p</code> é exatamente equivalente a <code>ELEMENTO* p</code>, facilitando a leitura do código.</label></li>
+                    <li><label><input type="radio" name="q5" value="c"> Faz com que <code>malloc</code> aloque automaticamente o tamanho correto sem precisar de <code>sizeof</code>.</label></li>
+                    <li><label><input type="radio" name="q5" value="d"> Permite que <code>PONT</code> seja usado como índice inteiro ou como ponteiro, dependendo do contexto.</label></li>
+                </ul>
+            </div>
+
+            <button type="button" class="submit-btn" onclick="checkAnswers()">Verificar Respostas</button>
+        </form>
+
+        <div id="quiz-results" style="display:none; margin-top:20px; padding:15px;
+             background-color:#dff0d8; border-radius:5px;"></div>
+    </div>
+
+    <div class="navigation-buttons">
+        <a href="capitulo37.html" class="nav a">Aula Anterior</a>
+        <a href="index.html" class="nav a">Voltar ao Índice</a>
+        <a href="capitulo39.html" class="nav a">Próxima Aula</a>
+    </div>
+
+    <footer>
+        <div class="container">
+            <div style="text-align:center;">
+                <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education"
+                     style="width:100%; max-height:50px; display:inline-block;" />
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function checkAnswers() {
+            const correctAnswers = { q1:"b", q2:"a", q3:"b", q4:"b", q5:"b" };
+
+            const explanations = {
+                q1: "A implementação dinâmica não reserva espaço máximo antecipadamente e não precisa de cadeia de disponíveis — cada nodo é alocado exatamente quando necessário e liberado quando excluído.",
+                q2: "Se fizéssemos <code>ant->prox = novo</code> primeiro, perderíamos o endereço de <code>p</code> (o sucessor de <code>ant</code>). Após essa atribuição, <code>ant->prox</code> já aponta para <code>novo</code> e não há como recuperar o restante da lista.",
+                q3: "Após <code>free(p)</code>, o bloco de memória é devolvido ao sistema e seu conteúdo torna-se indefinido. Tentar ler <code>p->prox</code> depois é comportamento indefinido — pode travar o programa ou produzir lixo.",
+                q4: "Tecnicamente o sistema operacional libera toda a memória quando o processo termina, então no contexto desta resposta a alternativa D não está errada. Porém, a alternativa B descreve o risco real em programas de longa duração: vazamentos acumulam-se e podem esgotar o heap.",
+                q5: "<code>typedef ELEMENTO* PONT</code> é puro açúcar sintático. <code>PONT p</code> e <code>ELEMENTO* p</code> são exatamente a mesma declaração para o compilador — o apelido existe apenas para melhorar a legibilidade."
+            };
+
+            let score = 0;
+            let feedback = "";
+
+            for (const question in correctAnswers) {
+                const selected = document.querySelector(`input[name="${question}"]:checked`);
+                const num = question.substring(1);
+                if (selected) {
+                    if (selected.value === correctAnswers[question]) {
+                        score++;
+                        feedback += `<p>Questão ${num}: <span style="color:green;font-weight:bold;">✔ Correto!</span> — ${explanations[question]}</p>`;
+                    } else {
+                        feedback += `<p>Questão ${num}: <span style="color:red;font-weight:bold;">✘ Incorreto.</span> — ${explanations[question]}</p>`;
+                    }
+                } else {
+                    feedback += `<p>Questão ${num}: <span style="color:orange;font-weight:bold;">— Não respondida.</span></p>`;
+                }
+            }
+
+            const div = document.getElementById("quiz-results");
+            div.innerHTML = `<h3>Sua pontuação: ${score} de 5</h3>${feedback}`;
+            div.style.display = "block";
+            div.scrollIntoView({ behavior: "smooth" });
+        }
+    </script>
+</body>
+</html>

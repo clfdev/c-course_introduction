@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 08 – Estrutura if e if-else</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Aula 08 – Estrutura if e if-else</h1>
+    <p>Tomando decisões em C — condições simples, duplas e fluxo de controle</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo07.html">← Aula 07</a>
+    <a href="capitulo09.html">Aula 09 →</a>
+</nav>
+
+<!-- ═══════════════════════════════════════ O QUE SÃO ESTRUTURAS DE DECISÃO -->
+<div class="content-section">
+    <h2>O que são Estruturas de Decisão?</h2>
+    <p>Programas raramente executam sempre o mesmo caminho. A maioria das situações reais exige que o código <strong>tome decisões</strong>: verificar se uma senha está correta, determinar se um número é positivo ou negativo, ou escolher qual mensagem exibir ao usuário. Para isso existem as <strong>estruturas de decisão</strong>.</p>
+
+    <div class="definicao">
+        Uma estrutura de decisão avalia uma <strong>condição</strong> (expressão que resulta em verdadeiro ou falso) e direciona o fluxo de execução para blocos de código diferentes dependendo do resultado. Em C, a condição é qualquer expressão cujo resultado seja um inteiro: <code>0</code> é falso e qualquer valor diferente de zero é verdadeiro.
+    </div>
+
+    <div class="info-box">
+        <strong>Estruturas de decisão em C — visão geral:</strong>
+        <ul>
+            <li><code>if</code> — executa um bloco se a condição for verdadeira</li>
+            <li><code>if-else</code> — escolhe entre dois blocos (verdadeiro ou falso)</li>
+            <li><code>if-else if-else</code> — cadeia de condições múltiplas (Aula 09)</li>
+            <li><code>switch-case</code> — seleção por valor discreto (Aula 09)</li>
+            <li>Operador ternário <code>?:</code> — decisão compacta em uma linha (Aula 09)</li>
+        </ul>
+        Nesta aula focaremos nas duas primeiras formas: <code>if</code> e <code>if-else</code>.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ IF SIMPLES -->
+<div class="content-section">
+    <h2>Estrutura if — Decisão Simples</h2>
+    <p>A estrutura <code>if</code> executa um bloco de código <strong>somente se</strong> a condição for verdadeira. Se a condição for falsa, o bloco é simplesmente pulado.</p>
+
+    <div class="definicao">
+<pre style="background:none; border:none; padding:0; margin:0; font-size:1em;">if (condição) {
+    // bloco executado apenas se condição for verdadeira
+}</pre>
+    </div>
+
+    <div class="flow-diagram">
+        <div class="flow-condition">condição</div>
+        <div style="display:flex; justify-content:space-around; margin-top:8px;">
+            <div>
+                <div class="flow-arrow">↓ verdadeiro</div>
+                <div class="flow-block">bloco if</div>
+                <div class="flow-arrow">↓</div>
+            </div>
+            <div>
+                <div class="flow-arrow">↓ falso</div>
+                <div class="flow-block" style="background:#f9f9f9; color:#999;">(pula)</div>
+                <div class="flow-arrow">↓</div>
+            </div>
+        </div>
+        <div class="flow-block">continua o programa</div>
+    </div>
+
+    <pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int isStudent = 1;   <span class="code-comment">// 1 = verdadeiro</span>
+    int temperatura = 38;
+
+    <span class="code-comment">// if simples: só executa se isStudent for não-zero</span>
+    if (isStudent) {
+        printf("Você é estudante.\n");
+    }
+
+    <span class="code-comment">// if com operador relacional</span>
+    if (temperatura > 37.5) {
+        printf("Atenção: temperatura elevada (%.1f°C).\n", (float)temperatura);
+    }
+
+    printf("Fim do programa.\n");  <span class="code-comment">// sempre executado</span>
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>Você é estudante.</p>
+        <p>Atenção: temperatura elevada (38.0°C).</p>
+        <p>Fim do programa.</p>
+    </div>
+
+    <h3>if sem chaves — cuidado!</h3>
+    <p>Quando o bloco do <code>if</code> tem <strong>apenas uma instrução</strong>, as chaves são opcionais em C. Porém, omiti-las é uma fonte frequente de bugs:</p>
+
+    <pre>
+<span class="code-comment">// Válido — mas arriscado</span>
+if (temperatura > 37.5)
+    printf("Febre!\n");   <span class="code-comment">// única instrução: pertence ao if</span>
+printf("Consulte um médico.\n"); <span class="code-comment">// SEMPRE executa — fora do if!</span>
+
+<span class="code-comment">// Seguro — sempre use chaves</span>
+if (temperatura > 37.5) {
+    printf("Febre!\n");
+    printf("Consulte um médico.\n");  <span class="code-comment">// agora pertence ao bloco do if</span>
+}</pre>
+
+    <div class="warning-box">
+        <strong>Boa prática:</strong> Sempre use chaves <code>{ }</code> em blocos <code>if</code>, mesmo quando há apenas uma instrução. Isso evita o bug clássico de adicionar uma segunda linha acreditando que ela também faz parte do <code>if</code> — quando na realidade está fora dele.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ IF-ELSE -->
+<div class="content-section">
+    <h2>Estrutura if-else — Decisão Dupla</h2>
+    <p>A estrutura <code>if-else</code> permite escolher entre <strong>dois caminhos</strong>: um executado quando a condição é verdadeira e outro quando é falsa. Exatamente um dos dois blocos sempre será executado.</p>
+
+    <div class="definicao">
+<pre style="background:none; border:none; padding:0; margin:0; font-size:1em;">if (condição) {
+    // bloco executado se condição for VERDADEIRA
+} else {
+    // bloco executado se condição for FALSA
+}</pre>
+    </div>
+
+    <div class="flow-diagram">
+        <div class="flow-condition">condição</div>
+        <div class="flow-arrow">↙ verdadeiro &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; falso ↘</div>
+        <div style="display:flex; justify-content:space-around; margin:4px 0;">
+            <div class="flow-block" style="width:40%">bloco if</div>
+            <div class="flow-block" style="width:40%">bloco else</div>
+        </div>
+        <div class="flow-arrow">↓&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↓</div>
+        <div class="flow-block">continua o programa</div>
+    </div>
+
+    <pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int age = 20;
+
+    <span class="code-comment">// if-else: exatamente um dos blocos será executado</span>
+    if (age &lt; 18) {
+        printf("Menor de idade.\n");
+    } else {
+        printf("Maior de idade.\n");   <span class="code-comment">// este executa (20 >= 18)</span>
+    }
+
+    <span class="code-comment">// Verificando par ou ímpar</span>
+    int numero = 7;
+    if (numero % 2 == 0) {
+        printf("%d é par.\n", numero);
+    } else {
+        printf("%d é ímpar.\n", numero);  <span class="code-comment">// este executa</span>
+    }
+
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>Maior de idade.</p>
+        <p>7 é ímpar.</p>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ IF-ELSE ANINHADO -->
+<div class="content-section">
+    <h2>if-else Aninhado</h2>
+    <p>Estruturas <code>if-else</code> podem ser colocadas dentro de outras — chamamos isso de <strong>aninhamento</strong>. Isso permite verificar condições progressivamente mais específicas.</p>
+
+    <pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int nota = 75;
+    int faltas = 5;
+
+    if (nota >= 60) {
+        <span class="code-comment">// nota suficiente — mas e as faltas?</span>
+        if (faltas &lt;= 25) {
+            printf("Aprovado: nota %.0d e frequência suficiente.\n", nota);
+        } else {
+            printf("Reprovado por falta, apesar da nota %d.\n", nota);
+        }
+    } else {
+        printf("Reprovado por nota insuficiente: %d.\n", nota);
+    }
+
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>Aprovado: nota 75 e frequência suficiente.</p>
+    </div>
+
+    <div class="tip-box">
+        <strong>DICA — o problema do "else solto" (<em>dangling else</em>):</strong> Em C, um <code>else</code> sempre se associa ao <code>if</code> mais próximo acima dele. Se as chaves forem omitidas em aninhamentos, o compilador pode interpretar o código de forma diferente da intenção do programador. Use sempre chaves para deixar o agrupamento explícito.
+        <pre>
+<span class="code-comment">// Ambíguo sem chaves — a qual if pertence o else?</span>
+if (a > 0)
+    if (b > 0)
+        printf("ambos positivos\n");
+else                   <span class="code-comment">// associa ao "if (b > 0)", não ao "if (a > 0)"!</span>
+    printf("b não é positivo\n");
+
+<span class="code-comment">// Claro com chaves</span>
+if (a > 0) {
+    if (b > 0) {
+        printf("ambos positivos\n");
+    }
+} else {               <span class="code-comment">// agora claramente pertence ao "if (a > 0)"</span>
+    printf("a não é positivo\n");
+}</pre>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ CONDIÇÕES COMPOSTAS -->
+<div class="content-section">
+    <h2>Condições Compostas no if</h2>
+    <p>A condição de um <code>if</code> pode combinar múltiplos operadores relacionais e lógicos para expressar critérios mais complexos:</p>
+
+    <pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int idade = 22;
+    float salario = 3500.0;
+    int temCPF = 1;
+
+    <span class="code-comment">// Aprovação de crédito: múltiplas condições com && e ||</span>
+    if (idade >= 18 && salario >= 2000.0 && temCPF) {
+        printf("Crédito aprovado.\n");
+    } else {
+        printf("Crédito negado.\n");
+    }
+
+    <span class="code-comment">// Verificação de faixa de temperatura</span>
+    float temp = 36.8;
+    if (temp >= 36.0 && temp &lt;= 37.5) {
+        printf("Temperatura normal: %.1f°C\n", temp);
+    } else {
+        printf("Temperatura fora do normal: %.1f°C\n", temp);
+    }
+
+    <span class="code-comment">// Acesso por categoria</span>
+    int vip = 0, convidado = 1;
+    if (vip || convidado) {
+        printf("Acesso liberado ao evento.\n");
+    }
+
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>Crédito aprovado.</p>
+        <p>Temperatura normal: 36.8°C</p>
+        <p>Acesso liberado ao evento.</p>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ EXEMPLO DO DOCX -->
+<div class="content-section">
+    <h2>Exemplo do Material de Referência</h2>
+    <p>O trecho abaixo, extraído diretamente da seção 5 do livro de referência do curso, demonstra o <code>if</code> simples e o <code>if-else</code> aplicados a um cenário de controle de acesso:</p>
+
+    <pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int age = 25;
+    int isStudent = 1;
+
+    <span class="code-comment">// if simples: executa apenas se isStudent for verdadeiro</span>
+    if (isStudent) {
+        printf("You are a student.\n");
+    }
+
+    <span class="code-comment">// if-else: escolhe entre dois caminhos</span>
+    if (age &lt; 18) {
+        printf("Underage.\n");
+    } else {
+        printf("Of legal age.\n");
+    }
+
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>You are a student.</p>
+        <p>Of legal age.</p>
+    </div>
+
+    <div class="info-box">
+        <strong>Observe:</strong> <code>if (isStudent)</code> é equivalente a <code>if (isStudent != 0)</code>. Como <code>isStudent = 1</code> (não-zero), a condição é verdadeira. Essa forma concisa é idiomática em C e amplamente usada com variáveis que funcionam como flags (ligado/desligado).
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ EXEMPLO CIENTÍFICO -->
+<div class="content-section">
+    <h2>Exemplo Prático: Classificação de Energia Molecular</h2>
+    <p>Aplicando <code>if-else</code> a um contexto do curso — análise do sinal de energia calculada:</p>
+
+    <pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    double energia = -74.96;   <span class="code-comment">// energia em Hartree (valor típico do H₂O)</span>
+
+    printf("Energia calculada: %.4f Hartree\n", energia);
+
+    if (energia &lt; 0) {
+        printf("Sistema estável: energia negativa indica estado ligado.\n");
+    } else {
+        printf("Sistema instável: energia positiva indica estado não ligado.\n");
+    }
+
+    <span class="code-comment">// Verificando convergência do cálculo</span>
+    double delta = 0.000003;   <span class="code-comment">// diferença entre iterações</span>
+    double tolerancia = 1e-5;  <span class="code-comment">// critério de convergência</span>
+
+    if (delta &lt;= tolerancia) {
+        printf("Cálculo convergido (delta = %.2e).\n", delta);
+    } else {
+        printf("Cálculo ainda não convergiu (delta = %.2e).\n", delta);
+    }
+
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>Energia calculada: -74.9600 Hartree</p>
+        <p>Sistema estável: energia negativa indica estado ligado.</p>
+        <p>Cálculo convergido (delta = 3.00e-06).</p>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ C VS JAVA -->
+<div class="content-section">
+    <h2>if e if-else em C versus Java</h2>
+    <p>A sintaxe de <code>if</code> e <code>if-else</code> é praticamente idêntica nas duas linguagens. As diferenças estão no sistema de tipos e no que é aceito como condição:</p>
+
+    <table>
+        <tr>
+            <th>Aspecto</th>
+            <th>C</th>
+            <th>Java</th>
+        </tr>
+        <tr>
+            <td>Sintaxe do <code>if</code></td>
+            <td><code>if (condição) { }</code></td>
+            <td><code>if (condição) { }</code> (idêntica)</td>
+        </tr>
+        <tr>
+            <td>Sintaxe do <code>if-else</code></td>
+            <td><code>if (...) { } else { }</code></td>
+            <td><code>if (...) { } else { }</code> (idêntica)</td>
+        </tr>
+        <tr>
+            <td>Tipo da condição</td>
+            <td>Qualquer <strong>inteiro</strong> — 0 é falso, não-zero é verdadeiro</td>
+            <td>Deve ser <strong>boolean</strong> — <code>true</code> ou <code>false</code></td>
+        </tr>
+        <tr>
+            <td><code>if (x)</code> com inteiro</td>
+            <td>Válido — compila sem erro</td>
+            <td>Inválido — erro de compilação</td>
+        </tr>
+        <tr>
+            <td><code>if (x = 5)</code> (atribuição)</td>
+            <td>Compila sem erro — bug silencioso</td>
+            <td>Erro de compilação (tipo incompatível)</td>
+        </tr>
+        <tr>
+            <td>Chaves opcionais (bloco único)</td>
+            <td>Sim — mas não recomendado</td>
+            <td>Sim — mas não recomendado</td>
+        </tr>
+        <tr>
+            <td><em>Dangling else</em></td>
+            <td>Ocorre sem chaves — else ao if mais próximo</td>
+            <td>Mesma regra — idêntico ao C</td>
+        </tr>
+    </table>
+
+    <h3>Código equivalente nas duas linguagens</h3>
+    <table>
+        <tr>
+            <th style="width:50%">C</th>
+            <th style="width:50%">Java</th>
+        </tr>
+        <tr>
+            <td>
+<pre style="margin:0; font-size:0.85em;">
+int age = 20;
+int isStudent = 1;
+
+if (isStudent) {
+    printf("Estudante.\n");
+}
+
+if (age < 18) {
+    printf("Menor.\n");
+} else {
+    printf("Maior.\n");
+}
+</pre>
+            </td>
+            <td>
+<pre style="margin:0; font-size:0.85em;">
+int age = 20;
+boolean isStudent = true;
+
+if (isStudent) {
+    System.out.println("Estudante.");
+}
+
+if (age < 18) {
+    System.out.println("Menor.");
+} else {
+    System.out.println("Maior.");
+}
+</pre>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<!-- ═══════════════════════════════════════ EXERCÍCIOS -->
+<div class="exercise-section">
+    <h2>Exercícios — Aula 08</h2>
+    <p>Teste seus conhecimentos sobre estruturas <code>if</code> e <code>if-else</code> em C:</p>
+
+    <form class="quiz-form" id="quiz-form">
+
+        <div class="quiz-question">
+            <p><strong>1. Qual será a saída do código abaixo?</strong></p>
+            <pre>int x = 0;
+if (x)
+    printf("verdadeiro\n");
+printf("sempre\n");</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q1" value="a"> verdadeiro<br>sempre</label></li>
+                <li><label><input type="radio" name="q1" value="b"> sempre</label></li>
+                <li><label><input type="radio" name="q1" value="c"> verdadeiro</label></li>
+                <li><label><input type="radio" name="q1" value="d"> Nada — o programa não compila</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>2. Analise o código. Qual será a saída?</strong></p>
+            <pre>int a = 10, b = 20;
+if (a > b) {
+    printf("A\n");
+} else {
+    printf("B\n");
+}
+printf("C\n");</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q2" value="a"> A<br>C</label></li>
+                <li><label><input type="radio" name="q2" value="b"> B<br>C</label></li>
+                <li><label><input type="radio" name="q2" value="c"> A<br>B<br>C</label></li>
+                <li><label><input type="radio" name="q2" value="d"> C</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>3. Por que é recomendado usar chaves <code>{ }</code> mesmo quando o bloco do <code>if</code> tem apenas uma instrução?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q3" value="a"> Porque o compilador C exige chaves em todos os casos</label></li>
+                <li><label><input type="radio" name="q3" value="b"> Para evitar o bug de adicionar linhas acreditando que pertencem ao bloco, quando na verdade estão fora dele</label></li>
+                <li><label><input type="radio" name="q3" value="c"> Para melhorar o desempenho do programa em tempo de execução</label></li>
+                <li><label><input type="radio" name="q3" value="d"> Porque sem chaves o <code>else</code> não é reconhecido pelo compilador</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>4. O código abaixo tem um bug clássico. O que ele imprime quando <code>a = -3</code>?</strong></p>
+            <pre>int a = -3;
+if (a > 0)
+    printf("positivo\n");
+    printf("nao negativo\n");</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q4" value="a"> positivo<br>nao negativo</label></li>
+                <li><label><input type="radio" name="q4" value="b"> positivo</label></li>
+                <li><label><input type="radio" name="q4" value="c"> nao negativo</label></li>
+                <li><label><input type="radio" name="q4" value="d"> Nada</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>5. Qual das condições abaixo é válida diretamente em um <code>if</code> em C, mas inválida em Java?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q5" value="a"> <code>if (x > 0)</code></label></li>
+                <li><label><input type="radio" name="q5" value="b"> <code>if (x == y)</code></label></li>
+                <li><label><input type="radio" name="q5" value="c"> <code>if (x)</code> onde <code>x</code> é um <code>int</code></label></li>
+                <li><label><input type="radio" name="q5" value="d"> <code>if (x != 0)</code></label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>6. Analise o código. A qual <code>if</code> o <code>else</code> se associa?</strong></p>
+            <pre>if (a > 0)
+    if (b > 0)
+        printf("X\n");
+else
+    printf("Y\n");</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q6" value="a"> Ao primeiro <code>if (a > 0)</code></label></li>
+                <li><label><input type="radio" name="q6" value="b"> Ao segundo <code>if (b > 0)</code>, por ser o mais próximo</label></li>
+                <li><label><input type="radio" name="q6" value="c"> A nenhum — o compilador gera erro com <code>else</code> sem chaves</label></li>
+                <li><label><input type="radio" name="q6" value="d"> Depende da versão do compilador</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>7. Qual será a saída do código abaixo?</strong></p>
+            <pre>int nota = 55;
+int faltas = 30;
+
+if (nota >= 60) {
+    if (faltas <= 25) {
+        printf("Aprovado\n");
+    } else {
+        printf("Reprovado por falta\n");
+    }
+} else {
+    printf("Reprovado por nota\n");
+}</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q7" value="a"> Aprovado</label></li>
+                <li><label><input type="radio" name="q7" value="b"> Reprovado por falta</label></li>
+                <li><label><input type="radio" name="q7" value="c"> Reprovado por nota</label></li>
+                <li><label><input type="radio" name="q7" value="d"> Aprovado<br>Reprovado por nota</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>8. Qual é a diferença fundamental entre o tipo da condição em um <code>if</code> em C e em Java?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q8" value="a"> Em C, a condição deve ser um <code>boolean</code>; em Java, pode ser qualquer inteiro</label></li>
+                <li><label><input type="radio" name="q8" value="b"> Em C, a condição pode ser qualquer inteiro (0=falso, não-zero=verdadeiro); em Java, deve ser estritamente do tipo <code>boolean</code></label></li>
+                <li><label><input type="radio" name="q8" value="c"> Não há diferença — ambas aceitam inteiros e booleanos</label></li>
+                <li><label><input type="radio" name="q8" value="d"> Em C, a condição precisa estar entre parênteses duplos; em Java, parênteses simples são suficientes</label></li>
+            </ul>
+        </div>
+
+        <button type="button" class="submit-btn" onclick="verificarRespostas()">Verificar Respostas</button>
+    </form>
+
+    <div id="quiz-results" style="display:none; margin-top:20px; padding:15px; background-color:#dff0d8; border-radius:5px;"></div>
+</div>
+
+<div class="navigation-buttons">
+    <a href="capitulo07.html">← Aula 07</a>
+    <a href="index.html">Índice</a>
+    <a href="capitulo09.html">Aula 09 →</a>
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align: center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education" style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+<script>
+    function verificarRespostas() {
+        const gabarito = {
+            q1: "b",
+            q2: "b",
+            q3: "b",
+            q4: "c",
+            q5: "c",
+            q6: "b",
+            q7: "c",
+            q8: "b"
+        };
+
+        const explicacoes = {
+            q1: "x = 0 é falso em C, então o bloco do if é pulado e 'verdadeiro' não é impresso. O segundo printf está fora do if (sem chaves), então 'sempre' é impresso independentemente.",
+            q2: "a = 10 e b = 20, então a > b é falso. O else executa e imprime 'B'. O printf('C') está fora do if-else e sempre executa. Saída: B e C.",
+            q3: "Sem chaves, apenas a linha imediatamente seguinte ao if pertence ao bloco condicional. Ao adicionar uma segunda linha pensando que ela faz parte do if, ela na verdade executa sempre — um bug silencioso muito comum.",
+            q4: "Sem chaves, apenas o primeiro printf pertence ao if. Como a = -3 não é > 0, 'positivo' não é impresso. Mas o segundo printf está fora do if e sempre executa — imprime 'nao negativo'.",
+            q5: "Em C, if (x) onde x é int é válido: 0 é falso, qualquer outro valor é verdadeiro. Em Java, o compilador exige uma expressão boolean explícita — if (x) com int gera erro de compilação.",
+            q6: "Em C, o else sempre se associa ao if mais próximo que ainda não foi fechado. Sem chaves delimitando o bloco do if (a > 0), o else pertence ao if (b > 0). É o problema clássico do 'dangling else'.",
+            q7: "nota = 55 não satisfaz nota >= 60, então o fluxo vai direto para o else externo e imprime 'Reprovado por nota'. O if interno (faltas) nunca é avaliado.",
+            q8: "Em C, qualquer expressão inteira serve como condição: 0 é falso, qualquer outro valor é verdadeiro. Java é estrito: a condição deve ser do tipo boolean — usar um int diretamente no if gera erro de compilação."
+        };
+
+        let acertos = 0;
+        let html = "";
+        const total = Object.keys(gabarito).length;
+
+        for (const q in gabarito) {
+            const selecionada = document.querySelector(`input[name="${q}"]:checked`);
+            const num = q.substring(1);
+            if (selecionada) {
+                if (selecionada.value === gabarito[q]) {
+                    acertos++;
+                    html += `<p>Questão ${num}: <span style="color:green; font-weight:bold;">✓ Correto!</span> — ${explicacoes[q]}</p>`;
+                } else {
+                    html += `<p>Questão ${num}: <span style="color:red; font-weight:bold;">✗ Incorreto.</span> — ${explicacoes[q]}</p>`;
+                }
+            } else {
+                html += `<p>Questão ${num}: <span style="color:orange; font-weight:bold;">⚠ Não respondida.</span></p>`;
+            }
+        }
+
+        const resultado = document.getElementById("quiz-results");
+        resultado.innerHTML = `<h3>Sua pontuação: ${acertos} de ${total}</h3>${html}`;
+        resultado.style.display = "block";
+        resultado.scrollIntoView({ behavior: "smooth" });
+    }
+</script>
+
+</body>
+</html>

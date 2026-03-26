@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 33 – Inserção na Lista Sequencial</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Aula 33 – Inserção na Lista Sequencial</h1>
+    <p>Como inserir um elemento em qualquer posição — e por que os elementos precisam ser deslocados</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo32.html">← Aula 32</a>
+    <a href="capitulo34.html">Aula 34 →</a>
+</nav>
+
+<!-- ═══════════════════════════════════════ O PROBLEMA -->
+<div class="content-section">
+    <h2>O Desafio de Inserir no Meio</h2>
+    <p>Inserir no <strong>final</strong> de uma lista sequencial é simples: coloca na próxima posição livre e incrementa o contador. Mas e se precisarmos inserir no <strong>meio</strong>?</p>
+
+    <p>Imagine a lista <code>[9, 3, 4, 1]</code> e queremos inserir o elemento <code>12</code> na posição 2 (entre o 3 e o 4). O resultado esperado é <code>[9, 3, 12, 4, 1]</code>.</p>
+
+    <div class="warning-box">
+        <strong>Problema:</strong> A posição 2 já está ocupada pelo elemento 4. Não podemos simplesmente sobrescrever — precisamos primeiro <em>abrir espaço</em> deslocando todos os elementos a partir da posição 2 uma casa para a direita.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ O ALGORITMO -->
+<div class="content-section">
+    <h2>O Algoritmo: Deslocar para a Direita</h2>
+    <p>O algoritmo tem 3 etapas:</p>
+
+    <div class="grid-container">
+        <div class="grid-item">
+            <strong>Etapa 1 — Verificar validade</strong><br><br>
+            A lista está cheia? O índice <code>i</code> é válido (entre 0 e nroElem)?
+        </div>
+        <div class="grid-item">
+            <strong>Etapa 2 — Deslocar para a direita</strong><br><br>
+            Do último elemento até a posição <code>i</code>, mover cada elemento uma posição para frente.
+        </div>
+        <div class="grid-item">
+            <strong>Etapa 3 — Inserir e incrementar</strong><br><br>
+            Colocar o novo registro em <code>A[i]</code> e incrementar <code>nroElem</code>.
+        </div>
+    </div>
+
+    <p>Visualizando para inserir <code>12</code> na posição <code>i=2</code> na lista <code>[9, 3, 4, 1]</code>:</p>
+
+    <table>
+        <tr>
+            <th>Passo</th>
+            <th>Índice 0</th>
+            <th>Índice 1</th>
+            <th>Índice 2</th>
+            <th>Índice 3</th>
+            <th>Índice 4</th>
+        </tr>
+        <tr>
+            <td>Lista inicial</td>
+            <td>9</td><td>3</td><td>4</td><td>1</td><td>—</td>
+        </tr>
+        <tr>
+            <td>j=4: A[4] ← A[3]</td>
+            <td>9</td><td>3</td><td>4</td><td>1</td><td>1</td>
+        </tr>
+        <tr>
+            <td>j=3: A[3] ← A[2]</td>
+            <td>9</td><td>3</td><td>4</td><td>4</td><td>1</td>
+        </tr>
+        <tr>
+            <td>j=2: condição j>i falsa — para</td>
+            <td>9</td><td>3</td><td>4</td><td>4</td><td>1</td>
+        </tr>
+        <tr style="background-color:#d4edda">
+            <td>A[2] = 12, nroElem++</td>
+            <td>9</td><td>3</td><td><strong>12</strong></td><td>4</td><td>1</td>
+        </tr>
+    </table>
+</div>
+
+<!-- ═══════════════════════════════════════ O CÓDIGO -->
+<div class="content-section">
+    <h2>A Função <code>inserirElemLista</code></h2>
+
+    <pre>
+bool inserirElemLista(LISTA* l, REGISTRO reg, int i) {
+    int j;
+
+    <span class="code-comment">// Verifica: lista cheia OU índice fora do intervalo válido [0, nroElem]</span>
+    if ((l-&gt;nroElem &gt;= MAX) || (i &lt; 0) || (i &gt; l-&gt;nroElem))
+        return false;
+
+    <span class="code-comment">// Desloca elementos da posição nroElem até i+1 uma casa para a direita</span>
+    for (j = l-&gt;nroElem; j &gt; i; j--)
+        l-&gt;A[j] = l-&gt;A[j - 1];
+
+    <span class="code-comment">// Insere o novo registro na posição i</span>
+    l-&gt;A[i] = reg;
+    l-&gt;nroElem++;
+    return true;
+} <span class="code-comment">/* inserirElemLista */</span></pre>
+
+    <div class="tip-box">
+        <strong>Por que o <code>for</code> começa em <code>j = nroElem</code>?</strong> O último elemento válido está em <code>nroElem - 1</code>, então ele precisa ir para <code>nroElem</code>. Começar em <code>nroElem</code> e fazer <code>A[j] = A[j-1]</code> realiza exatamente esse movimento.
+    </div>
+
+    <div class="warning-box">
+        <strong>Porque deslocar da direita para a esquerda?</strong> Se deslocássemos da esquerda para a direita (de <code>i</code> até <code>nroElem</code>), sobrescreveríamos cada elemento antes de movê-lo. O deslocamento <em>deve</em> começar pelo final para preservar todos os valores.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ COMPARAÇÃO JAVA -->
+<div class="content-section">
+    <h2>Comparação com Java</h2>
+    <p>Em Java, o <code>ArrayList</code> faz exatamente o mesmo deslocamento internamente — mas esconde toda essa complexidade:</p>
+
+    <div class="grid-container">
+        <div class="grid-item">
+            <strong>☕ Java</strong>
+            <pre style="margin-top:10px">
+ArrayList&lt;Integer&gt; lista =
+    new ArrayList&lt;&gt;();
+lista.add(9);
+lista.add(3);
+lista.add(4);
+lista.add(1);
+
+<span class="code-comment">// Inserir 12 na posição 2:</span>
+lista.add(2, 12);
+
+<span class="code-comment">// Java faz o deslocamento</span>
+<span class="code-comment">// internamente — você não vê</span>
+System.out.println(lista);
+<span class="code-comment">// [9, 3, 12, 4, 1]</span></pre>
+        </div>
+        <div class="grid-item">
+            <strong>⚙️ C</strong>
+            <pre style="margin-top:10px">
+LISTA lista;
+inicializarLista(&amp;lista);
+REGISTRO reg;
+reg.chave=9; inserirElemLista(&amp;lista,reg,0);
+reg.chave=3; inserirElemLista(&amp;lista,reg,1);
+reg.chave=4; inserirElemLista(&amp;lista,reg,2);
+reg.chave=1; inserirElemLista(&amp;lista,reg,3);
+
+<span class="code-comment">// Inserir 12 na posição 2:</span>
+reg.chave = 12;
+inserirElemLista(&amp;lista, reg, 2);
+
+exibirLista(&amp;lista);
+<span class="code-comment">// Lista: " 9 3 12 4 1 "</span></pre>
+        </div>
+    </div>
+
+    <div class="info-box">
+        <strong>O ArrayList é mais poderoso:</strong> Além do deslocamento, o ArrayList do Java também <em>redimensiona automaticamente</em> quando fica cheio (cria um array maior internamente). Nossa lista em C tem capacidade fixa — ao atingir MAX elementos, <code>inserirElemLista</code> retorna <code>false</code>.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ COMPLEXIDADE -->
+<div class="content-section">
+    <h2>Custo da Operação: Por que Listas Sequenciais São Lentas para Inserção</h2>
+    <p>No pior caso (inserir na posição 0), precisamos deslocar <strong>todos</strong> os <code>nroElem</code> elementos. Isso torna a inserção uma operação O(n) — linear em relação ao tamanho da lista.</p>
+
+    <table>
+        <tr><th>Onde inserir</th><th>Deslocamentos</th><th>Caso</th></tr>
+        <tr><td>Posição final (<code>i = nroElem</code>)</td><td>0</td><td>Melhor caso — O(1)</td></tr>
+        <tr><td>Posição do meio</td><td>nroElem/2</td><td>Caso médio — O(n/2)</td></tr>
+        <tr><td>Posição inicial (<code>i = 0</code>)</td><td>nroElem</td><td>Pior caso — O(n)</td></tr>
+    </table>
+
+    <div class="dica">
+        Em Java, <code>ArrayList.add(index, value)</code> tem o mesmo custo O(n) para inserções no meio ou no início. Se você precisa de inserções frequentes no início ou no meio, o <code>LinkedList</code> do Java (ou a lista ligada em C) é mais eficiente — mas perde no acesso aleatório.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ EXERCÍCIOS -->
+<div class="exercise-section">
+    <h2>Exercícios — Aula 33</h2>
+
+    <form class="quiz-form" id="quiz-form">
+
+        <div class="quiz-question">
+            <p><strong>1. Por que o <code>for</code> de deslocamento começa em <code>j = nroElem</code> e não em <code>j = nroElem - 1</code>?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q1" value="a"> Por convenção de estilo</label></li>
+                <li><label><input type="radio" name="q1" value="b"> Porque o último elemento válido (posição nroElem-1) precisa ser copiado para a posição nroElem</label></li>
+                <li><label><input type="radio" name="q1" value="c"> Para evitar acessar A[0] antes de A[1]</label></li>
+                <li><label><input type="radio" name="q1" value="d"> Porque arrays em C têm índice extra alocado automaticamente</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>2. Por que o deslocamento deve ocorrer da direita para a esquerda (de nroElem até i) e não ao contrário?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q2" value="a"> Por eficiência — loops reversos são mais rápidos</label></li>
+                <li><label><input type="radio" name="q2" value="b"> Se fosse da esquerda para direita, cada elemento seria sobrescrito antes de ser copiado, perdendo dados</label></li>
+                <li><label><input type="radio" name="q2" value="c"> Porque o índice i sempre é maior que nroElem</label></li>
+                <li><label><input type="radio" name="q2" value="d"> Para que o sentinela funcione corretamente</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>3. Uma lista com MAX=5 e nroElem=5. O que <code>inserirElemLista(&amp;l, reg, 2)</code> retorna?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q3" value="a"> <code>true</code> — insere na posição 2 normalmente</label></li>
+                <li><label><input type="radio" name="q3" value="b"> <code>false</code> — a lista está cheia (nroElem >= MAX)</label></li>
+                <li><label><input type="radio" name="q3" value="c"> <code>ERRO</code> (-1)</label></li>
+                <li><label><input type="radio" name="q3" value="d"> Erro de segmentação (acesso inválido à memória)</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>4. Em qual situação a inserção em lista sequencial tem custo mínimo (O(1))?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q4" value="a"> Inserção na posição 0 (início)</label></li>
+                <li><label><input type="radio" name="q4" value="b"> Inserção na posição nroElem/2 (meio)</label></li>
+                <li><label><input type="radio" name="q4" value="c"> Inserção na posição nroElem (final) — nenhum deslocamento necessário</label></li>
+                <li><label><input type="radio" name="q4" value="d"> Inserção sempre tem O(n), independente da posição</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>5. Qual é o equivalente em Java de <code>inserirElemLista(&amp;lista, reg, 2)</code>?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q5" value="a"> <code>lista.add(reg)</code></label></li>
+                <li><label><input type="radio" name="q5" value="b"> <code>lista.set(2, reg)</code></label></li>
+                <li><label><input type="radio" name="q5" value="c"> <code>lista.add(2, reg)</code></label></li>
+                <li><label><input type="radio" name="q5" value="d"> <code>lista.insert(reg, 2)</code></label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>6. Qual condição torna o índice <code>i</code> inválido para inserção numa lista com <code>nroElem=4</code>?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q6" value="a"> <code>i == 3</code></label></li>
+                <li><label><input type="radio" name="q6" value="b"> <code>i == 4</code></label></li>
+                <li><label><input type="radio" name="q6" value="c"> <code>i == 5</code> (ou maior) ou <code>i &lt; 0</code></label></li>
+                <li><label><input type="radio" name="q6" value="d"> <code>i == 0</code></label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>7. Após inserir com sucesso, o que a função faz com <code>nroElem</code>?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q7" value="a"> Deixa inalterado — o chamador é responsável por atualizar</label></li>
+                <li><label><input type="radio" name="q7" value="b"> Decrementa em 1</label></li>
+                <li><label><input type="radio" name="q7" value="c"> Incrementa em 1</label></li>
+                <li><label><input type="radio" name="q7" value="d"> Reseta para 0</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>8. Por que o ArrayList do Java é mais conveniente que nossa lista em C para inserções?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q8" value="a"> ArrayList não precisa deslocar elementos — é mais eficiente algoritmicamente</label></li>
+                <li><label><input type="radio" name="q8" value="b"> ArrayList redimensiona automaticamente quando fica cheio; nossa lista retorna false</label></li>
+                <li><label><input type="radio" name="q8" value="c"> ArrayList usa ponteiros internamente, o que é mais rápido</label></li>
+                <li><label><input type="radio" name="q8" value="d"> ArrayList tem capacidade ilimitada por padrão</label></li>
+            </ul>
+        </div>
+
+        <button type="button" class="submit-btn" onclick="verificarRespostas()">Verificar Respostas</button>
+    </form>
+
+    <div id="quiz-results" style="display:none; margin-top:20px; padding:15px; background-color:#dff0d8; border-radius:5px;"></div>
+</div>
+
+<div class="navigation-buttons">
+    <a href="capitulo32.html">← Aula 32</a>
+    <a href="index.html">Índice</a>
+    <a href="capitulo34.html">Aula 34 →</a>
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align: center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education" style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+<script>
+    function verificarRespostas() {
+        const gabarito = { q1:"b", q2:"b", q3:"b", q4:"c", q5:"c", q6:"c", q7:"c", q8:"b" };
+        const explicacoes = {
+            q1: "O último elemento válido está em A[nroElem-1]. Para movê-lo, fazemos A[nroElem] = A[nroElem-1]. Por isso o loop começa com j=nroElem e faz A[j] = A[j-1].",
+            q2: "Se deslocássemos da esquerda para direita: A[i] = A[i+1] sobrescreveria o elemento em i antes de copiá-lo para i+1. Começando pela direita, sempre copiamos antes de sobrescrever.",
+            q3: "A primeira condição verificada é 'l->nroElem >= MAX'. Com nroElem=5 e MAX=5, a condição é verdadeira e a função retorna false imediatamente, sem realizar nenhum deslocamento.",
+            q4: "Inserir na posição nroElem (ao final) não exige nenhum deslocamento — o loop 'for (j=nroElem; j>i; j--)' não executa nenhuma iteração quando j=i desde o início. Custo O(1).",
+            q5: "lista.add(2, reg) em Java insere o elemento na posição de índice 2, deslocando os demais para a direita — exatamente o que inserirElemLista faz. lista.set(2, reg) substitui sem deslocar.",
+            q6: "O índice válido para inserção vai de 0 até nroElem (inclusive o final). Com nroElem=4, índices válidos são 0,1,2,3,4. Índice 5 ou maior, ou índice negativo, são inválidos.",
+            q7: "A função atualiza l->nroElem++ após a inserção. Ela trabalha com ponteiro (LISTA*), então a modificação afeta a lista original — não uma cópia.",
+            q8: "ArrayList.add() nunca falha por falta de espaço — ele cria internamente um array maior quando necessário. Nossa lista em C tem capacidade fixa (MAX) e retorna false quando cheia."
+        };
+
+        let acertos = 0, html = "";
+        const total = Object.keys(gabarito).length;
+        for (const q in gabarito) {
+            const sel = document.querySelector(`input[name="${q}"]:checked`);
+            const num = q.substring(1);
+            if (sel) {
+                if (sel.value === gabarito[q]) {
+                    acertos++;
+                    html += `<p>Questão ${num}: <span style="color:green;font-weight:bold;">✓ Correto!</span> — ${explicacoes[q]}</p>`;
+                } else {
+                    html += `<p>Questão ${num}: <span style="color:red;font-weight:bold;">✗ Incorreto.</span> — ${explicacoes[q]}</p>`;
+                }
+            } else {
+                html += `<p>Questão ${num}: <span style="color:orange;font-weight:bold;">⚠ Não respondida.</span></p>`;
+            }
+        }
+        const r = document.getElementById("quiz-results");
+        r.innerHTML = `<h3>Sua pontuação: ${acertos} de ${total}</h3>${html}`;
+        r.style.display = "block";
+        r.scrollIntoView({ behavior:"smooth" });
+    }
+</script>
+
+</body>
+</html>

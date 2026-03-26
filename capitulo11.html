@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 11 - Loops while e do-while em C</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Aula 11 — Loops <code style="color:#aad4ff">while</code> e <code style="color:#aad4ff">do-while</code></h1>
+    <p>Repita enquanto a condição for verdadeira — e saiba quando garantir pelo menos uma execução</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo10.html">← Aula Anterior</a>
+    <a href="capitulo12.html">Próxima Aula →</a>
+</nav>
+
+<!-- ============================================================ -->
+<!-- 1. REVISÃO: OS TRÊS LOOPS -->
+<!-- ============================================================ -->
+<div class="content-section">
+    <h2>1. Os Três Loops de C — Onde Estamos</h2>
+    <p>Na <strong>Aula 10</strong> estudamos o <code>for</code>, que é ideal quando sabemos de antemão quantas repetições serão feitas. Agora vamos conhecer os outros dois:</p>
+
+    <table>
+        <tr>
+            <th>Loop</th>
+            <th>Quando usar</th>
+            <th>Testa a condição</th>
+            <th>Garante pelo menos 1 execução?</th>
+        </tr>
+        <tr>
+            <td><code>for</code></td>
+            <td>Número de repetições conhecido</td>
+            <td>Antes de cada iteração</td>
+            <td>Não</td>
+        </tr>
+        <tr>
+            <td><code>while</code></td>
+            <td>Número de repetições desconhecido</td>
+            <td>Antes de cada iteração</td>
+            <td>Não</td>
+        </tr>
+        <tr>
+            <td><code>do-while</code></td>
+            <td>Bloco deve rodar ao menos uma vez</td>
+            <td><strong>Depois</strong> de cada iteração</td>
+            <td><strong>Sim</strong></td>
+        </tr>
+    </table>
+
+    <div class="info-box">
+        <strong>Regra prática:</strong> Se você sabe o número de iterações → <code>for</code>.
+        Se não sabe, mas a condição pode ser falsa logo de início → <code>while</code>.
+        Se o bloco <em>precisa</em> rodar ao menos uma vez (ex.: menu de opções) → <code>do-while</code>.
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 2. WHILE -->
+<!-- ============================================================ -->
+<div class="content-section">
+    <h2>2. O Loop <code>while</code></h2>
+
+    <div class="definicao">
+        O <code>while</code> repete um bloco de instruções <strong>enquanto</strong> uma expressão booleana for verdadeira (diferente de zero em C). A condição é avaliada <em>antes</em> de cada iteração; se for falsa desde o início, o bloco nunca é executado.
+    </div>
+
+    <h3>Sintaxe</h3>
+<pre>
+while (condição) {
+    <span class="code-comment">/* bloco executado enquanto condição != 0 */</span>
+    instrução1;
+    instrução2;
+    <span class="code-comment">/* atenção: algo aqui deve tornar a condição falsa
+       em algum momento, senão → loop infinito!     */</span>
+}
+</pre>
+
+    <div class="flow-diagram">
+        <div class="flow-condition">Avalia condição</div>
+        <div class="flow-arrow">↓ verdadeira</div>
+        <div class="flow-block">Executa bloco</div>
+        <div class="flow-arrow">↑ volta para testar</div>
+        <div style="margin-top:8px; color:#888;">↓ falsa → sai do loop</div>
+    </div>
+
+    <h3>Exemplo 1 — Contagem de 1 a 5</h3>
+<pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int i = 1;                   <span class="code-comment">// inicialização FORA do while</span>
+    while (i &lt;= 5) {
+        printf("%d ", i);        <span class="code-comment">// imprime o valor atual</span>
+        i++;                     <span class="code-comment">// incremento DENTRO do while</span>
+    }
+    printf("\n");
+    return 0;
+}
+</pre>
+    <div class="terminal-output">1 2 3 4 5</div>
+
+    <h3>Passo a passo da execução</h3>
+    <table>
+        <tr>
+            <th>Iteração</th>
+            <th>i antes do teste</th>
+            <th>i &lt;= 5 ?</th>
+            <th>Ação</th>
+            <th>i depois do bloco</th>
+        </tr>
+        <tr><td>1ª</td><td>1</td><td>✅ verdadeiro</td><td>imprime 1</td><td>2</td></tr>
+        <tr><td>2ª</td><td>2</td><td>✅ verdadeiro</td><td>imprime 2</td><td>3</td></tr>
+        <tr><td>3ª</td><td>3</td><td>✅ verdadeiro</td><td>imprime 3</td><td>4</td></tr>
+        <tr><td>4ª</td><td>4</td><td>✅ verdadeiro</td><td>imprime 4</td><td>5</td></tr>
+        <tr><td>5ª</td><td>5</td><td>✅ verdadeiro</td><td>imprime 5</td><td>6</td></tr>
+        <tr><td>6ª</td><td>6</td><td>❌ falso</td><td>sai do loop</td><td>—</td></tr>
+    </table>
+
+    <h3>Exemplo 2 — Leitura até o usuário acertar a senha</h3>
+<pre>
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+int main() {
+    char senha[20];
+    printf("Digite a senha: ");
+    scanf("%s", senha);
+
+    while (strcmp(senha, "abc123") != 0) {   <span class="code-comment">// strcmp retorna 0 se iguais</span>
+        printf("Senha errada! Tente novamente: ");
+        scanf("%s", senha);
+    }
+    printf("Acesso liberado!\n");
+    return 0;
+}
+</pre>
+    <div class="tip-box">
+        <strong>Por que <code>while</code> aqui e não <code>for</code>?</strong>
+        Porque não sabemos quantas tentativas o usuário vai fazer. O número de iterações é desconhecido — cenário clássico para <code>while</code>.
+    </div>
+
+    <h3>🔍 Entendendo a linha em detalhes: <code>strcmp(senha, "abc123") != 0</code></h3>
+
+    <div class="definicao">
+        <code>strcmp</code> é uma função da biblioteca padrão <code>&lt;string.h&gt;</code> que <strong>compara duas cadeias de caracteres (strings)</strong> letra por letra. Ela retorna um número inteiro cujo valor indica o resultado da comparação.
+    </div>
+
+    <h4>Por que não podemos usar <code>==</code> para comparar strings em C?</h4>
+    <p>
+        Em C, uma string como <code>senha</code> ou <code>"abc123"</code> é na verdade um <strong>endereço de memória</strong> — um ponteiro para o primeiro caractere do vetor. Ao escrever <code>senha == "abc123"</code>, você estaria comparando dois <em>endereços</em>, não o conteúdo em si. Isso quase nunca produz o resultado esperado. A função <code>strcmp</code> existe exatamente para fazer a comparação do <em>conteúdo</em>, caractere por caractere.
+    </p>
+
+    <div class="warning-box">
+        <strong>Nunca compare strings com <code>==</code> em C!</strong><br>
+        <code>if (senha == "abc123")</code> → compara endereços de memória → quase sempre <strong>falso</strong>, mesmo que o conteúdo seja idêntico.<br>
+        <code>if (strcmp(senha, "abc123") == 0)</code> → compara o conteúdo → <strong>correto</strong>.
+    </div>
+
+    <h4>O que <code>strcmp</code> retorna?</h4>
+    <table>
+        <tr>
+            <th>Valor retornado</th>
+            <th>Significado</th>
+            <th>Exemplo</th>
+        </tr>
+        <tr>
+            <td><code>0</code></td>
+            <td>As strings são <strong>iguais</strong> (mesmo conteúdo, mesma capitalização)</td>
+            <td><code>strcmp("abc123", "abc123")</code> → 0</td>
+        </tr>
+        <tr>
+            <td>Valor <strong>negativo</strong></td>
+            <td>A 1ª string vem <strong>antes</strong> da 2ª em ordem alfabética (ASCII)</td>
+            <td><code>strcmp("abc", "abd")</code> → negativo (c &lt; d)</td>
+        </tr>
+        <tr>
+            <td>Valor <strong>positivo</strong></td>
+            <td>A 1ª string vem <strong>depois</strong> da 2ª em ordem alfabética (ASCII)</td>
+            <td><code>strcmp("abd", "abc")</code> → positivo (d &gt; c)</td>
+        </tr>
+    </table>
+
+    <h4>Como <code>strcmp</code> funciona internamente?</h4>
+    <p>A função percorre as duas strings caractere por caractere, comparando o valor numérico (código ASCII) de cada posição, até encontrar uma diferença ou o caractere nulo <code>'\0'</code> que marca o fim da string:</p>
+
+    <table>
+        <tr>
+            <th>Posição</th>
+            <th><code>senha</code> (digitada)</th>
+            <th><code>"abc123"</code> (esperada)</th>
+            <th>Iguais?</th>
+        </tr>
+        <tr><td>0</td><td>'a' (97)</td><td>'a' (97)</td><td>✅</td></tr>
+        <tr><td>1</td><td>'b' (98)</td><td>'b' (98)</td><td>✅</td></tr>
+        <tr><td>2</td><td>'c' (99)</td><td>'c' (99)</td><td>✅</td></tr>
+        <tr><td>3</td><td>'1' (49)</td><td>'1' (49)</td><td>✅</td></tr>
+        <tr><td>4</td><td>'2' (50)</td><td>'2' (50)</td><td>✅</td></tr>
+        <tr><td>5</td><td>'3' (51)</td><td>'3' (51)</td><td>✅</td></tr>
+        <tr><td>6</td><td>'\0'</td><td>'\0'</td><td>✅ → retorna <strong>0</strong></td></tr>
+    </table>
+
+    <p>Se o usuário tivesse digitado <code>"abc124"</code>, a comparação pararia na posição 5: '4' (52) ≠ '3' (51) → retorna 52 − 51 = <strong>1</strong> (positivo), confirmando que as strings são diferentes.</p>
+
+    <h4>Desmontando a condição completa</h4>
+    <div class="exemplo">
+        <code>while ( strcmp(senha, "abc123") != 0 )</code><br><br>
+        Leia em voz alta: <em>"enquanto o resultado da comparação entre senha e 'abc123' for diferente de zero"</em><br><br>
+        → <strong>diferente de zero</strong> = strings <strong>diferentes</strong> = senha <strong>errada</strong> → continua pedindo<br>
+        → <strong>igual a zero</strong> = strings <strong>iguais</strong> = senha <strong>correta</strong> → sai do loop
+    </div>
+
+    <h4>Atenção: <code>strcmp</code> é sensível a maiúsculas/minúsculas</h4>
+    <p>
+        <code>strcmp("ABC123", "abc123")</code> retorna um valor <strong>diferente de zero</strong> — as strings são consideradas diferentes porque 'A' (65) ≠ 'a' (97) em ASCII.
+        Para comparação sem distinção de caixa, existe a função <code>strcasecmp</code> (em sistemas Unix/Linux) ou <code>_stricmp</code> (no Windows com MSVC).
+    </p>
+
+    <h4>Sobre a senha <code>"abc123"</code></h4>
+    <div class="tip-box">
+        A senha <code>"abc123"</code> foi escolhida de forma <strong>arbitrária</strong> apenas para fins didáticos — é um valor fixo escrito diretamente no código (<em>hardcoded</em>). Em aplicações reais, senhas <strong>nunca</strong> são armazenadas em texto puro dentro do código-fonte. O correto é usar arquivos de configuração protegidos, bancos de dados com hashes criptográficos (como bcrypt ou SHA-256) e variáveis de ambiente. Aqui, o objetivo é apenas ilustrar o uso do <code>while</code> com <code>strcmp</code>.
+    </div>
+
+    <h4>Resumo visual da linha</h4>
+<pre>
+while ( strcmp( senha , "abc123" ) != 0 ) {
+  │       │       │         │        │
+  │       │       │         │        └─ se NÃO for zero (strings diferentes) → repete
+  │       │       │         └─ string de referência (senha correta, hardcoded)
+  │       │       └─ string digitada pelo usuário (array de char)
+  │       └─ função de &lt;string.h&gt; que compara conteúdo letra por letra
+  └─ enquanto...
+</pre>
+
+    <h3>Exemplo 3 — Somatório com condição de parada</h3>
+<pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int n, soma = 0;
+    printf("Digite números (0 para parar):\n");
+    scanf("%d", &amp;n);
+
+    while (n != 0) {
+        soma += n;
+        scanf("%d", &amp;n);
+    }
+    printf("Soma total: %d\n", soma);
+    return 0;
+}
+</pre>
+    <div class="terminal-output">
+Digite números (0 para parar):<br>
+3 7 2 5 0<br>
+Soma total: 17
+    </div>
+
+    <div class="warning-box">
+        <strong>Armadilha clássica — loop infinito:</strong>
+        Se você esquecer de atualizar a variável de controle dentro do bloco, o loop nunca termina.<br><br>
+        <code>int i = 1; while (i &lt;= 5) { printf("%d\n", i); }</code>  ← i nunca muda → loop infinito!<br>
+        No terminal, pressione <strong>Ctrl + C</strong> para interromper.
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 3. DO-WHILE -->
+<!-- ============================================================ -->
+<div class="content-section">
+    <h2>3. O Loop <code>do-while</code></h2>
+
+    <div class="definicao">
+        O <code>do-while</code> executa o bloco de código <strong>pelo menos uma vez</strong> e só então verifica a condição. Se a condição for verdadeira, o bloco se repete. É o único loop de C em que o teste vem <em>depois</em> do corpo.
+    </div>
+
+    <h3>Sintaxe</h3>
+<pre>
+do {
+    <span class="code-comment">/* bloco executado ao menos uma vez */</span>
+    instrução1;
+    instrução2;
+} while (condição);   <span class="code-comment">// ← ponto-e-vírgula obrigatório aqui!</span>
+</pre>
+
+    <div class="flow-diagram">
+        <div class="flow-block">Executa bloco</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-condition">Avalia condição</div>
+        <div style="margin-top:8px;">
+            <span style="color:#28a745">↑ verdadeira → repete</span> &nbsp;&nbsp;
+            <span style="color:#dc3545">→ falsa → sai</span>
+        </div>
+    </div>
+
+    <h3>Exemplo 4 — Menu de opções (uso clássico do do-while)</h3>
+<pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int opcao;
+
+    do {
+        printf("\n=== MENU ===\n");
+        printf("1. Somar\n");
+        printf("2. Subtrair\n");
+        printf("0. Sair\n");
+        printf("Escolha: ");
+        scanf("%d", &amp;opcao);
+
+        if (opcao == 1) printf("Você escolheu Somar.\n");
+        if (opcao == 2) printf("Você escolheu Subtrair.\n");
+
+    } while (opcao != 0);    <span class="code-comment">// repete até o usuário digitar 0</span>
+
+    printf("Programa encerrado.\n");
+    return 0;
+}
+</pre>
+    <div class="terminal-output">
+=== MENU ===<br>
+1. Somar<br>
+2. Subtrair<br>
+0. Sair<br>
+Escolha: 1<br>
+Você escolheu Somar.<br><br>
+=== MENU ===<br>
+...<br>
+Escolha: 0<br>
+Programa encerrado.
+    </div>
+
+    <div class="tip-box">
+        Menus são o exemplo <em>perfeito</em> de <code>do-while</code>: o menu <strong>sempre</strong> precisa aparecer ao menos uma vez antes de qualquer verificação.
+    </div>
+
+    <h3>Exemplo 5 — Validação de entrada</h3>
+<pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int nota;
+
+    do {
+        printf("Digite uma nota entre 0 e 10: ");
+        scanf("%d", &amp;nota);
+        if (nota &lt; 0 || nota &gt; 10)
+            printf("Nota inválida! Tente novamente.\n");
+    } while (nota &lt; 0 || nota &gt; 10);
+
+    printf("Nota registrada: %d\n", nota);
+    return 0;
+}
+</pre>
+    <p>Note que a condição <code>nota &lt; 0 || nota &gt; 10</code> aparece <em>duas vezes</em>: dentro do <code>if</code> para mostrar a mensagem, e no <code>while</code> para decidir se repete. Isso é normal em validação de entrada com <code>do-while</code>.</p>
+</div>
+
+<!-- ============================================================ -->
+<!-- 4. WHILE vs DO-WHILE: DIFERENÇA CRÍTICA -->
+<!-- ============================================================ -->
+<div class="content-section">
+    <h2>4. <code>while</code> vs <code>do-while</code> — A Diferença que Importa</h2>
+
+    <p>Quando a condição já é <strong>falsa desde o início</strong>, os dois loops se comportam de forma completamente diferente:</p>
+
+    <div class="grid-container">
+        <div class="grid-item">
+            <strong>while — condição falsa de início:</strong>
+<pre>
+int x = 10;
+while (x &lt; 5) {
+    printf("executou\n");
+}
+printf("fim\n");
+</pre>
+            <div class="terminal-output">fim</div>
+            <p style="color:#dc3545">O bloco <strong>nunca</strong> foi executado.</p>
+        </div>
+        <div class="grid-item">
+            <strong>do-while — condição falsa de início:</strong>
+<pre>
+int x = 10;
+do {
+    printf("executou\n");
+} while (x &lt; 5);
+printf("fim\n");
+</pre>
+            <div class="terminal-output">executou<br>fim</div>
+            <p style="color:#28a745">O bloco executou <strong>uma vez</strong>, mesmo com condição falsa.</p>
+        </div>
+    </div>
+
+    <div class="warning-box">
+        <strong>Regra de ouro:</strong> Use <code>do-while</code> somente quando tiver certeza de que o bloco deve executar pelo menos uma vez, independentemente de qualquer condição. Em todos os outros casos, prefira <code>while</code> ou <code>for</code>.
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 5. break e continue dentro de while -->
+<!-- ============================================================ -->
+<div class="content-section">
+    <h2>5. <code>break</code> e <code>continue</code> dentro de Loops</h2>
+
+    <p>As palavras-chave <code>break</code> e <code>continue</code> modificam o fluxo de qualquer loop (<code>for</code>, <code>while</code> ou <code>do-while</code>).</p>
+
+    <table>
+        <tr>
+            <th>Palavra-chave</th>
+            <th>Efeito</th>
+            <th>Análogo a</th>
+        </tr>
+        <tr>
+            <td><code>break</code></td>
+            <td>Encerra o loop imediatamente e passa para a instrução após o loop</td>
+            <td>Porta de saída de emergência</td>
+        </tr>
+        <tr>
+            <td><code>continue</code></td>
+            <td>Pula o restante do bloco atual e vai direto para a próxima iteração (re-teste da condição)</td>
+            <td>Pular uma iteração</td>
+        </tr>
+    </table>
+
+    <h3>Exemplo 6 — <code>break</code>: parar quando encontrar o número</h3>
+<pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int i = 1;
+    while (i &lt;= 100) {
+        if (i % 7 == 0 &amp;&amp; i % 3 == 0) {   <span class="code-comment">// divisível por 7 E por 3</span>
+            printf("Primeiro múltiplo de 21: %d\n", i);
+            break;                           <span class="code-comment">// sai do loop</span>
+        }
+        i++;
+    }
+    return 0;
+}
+</pre>
+    <div class="terminal-output">Primeiro múltiplo de 21: 21</div>
+
+    <h3>Exemplo 7 — <code>continue</code>: pular números pares</h3>
+<pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int i = 0;
+    while (i &lt; 10) {
+        i++;
+        if (i % 2 == 0) continue;    <span class="code-comment">// pula o printf para pares</span>
+        printf("%d ", i);
+    }
+    printf("\n");
+    return 0;
+}
+</pre>
+    <div class="terminal-output">1 3 5 7 9</div>
+
+    <div class="dica">
+        Ao usar <code>continue</code> dentro de um <code>while</code>, certifique-se de que o incremento/atualização da variável de controle esteja <strong>antes</strong> do <code>continue</code>, senão você cria um loop infinito! No exemplo acima, <code>i++</code> vem antes do <code>continue</code>.
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 6. EXEMPLO COMPLETO: SEQUÊNCIA DE COLLATZ -->
+<!-- ============================================================ -->
+<div class="content-section">
+    <h2>6. Exemplo Completo — Sequência de Collatz</h2>
+
+    <p>A <strong>Conjectura de Collatz</strong> diz: dado qualquer inteiro positivo n, aplique a regra abaixo repetidamente até chegar em 1:</p>
+    <ul>
+        <li>Se n for <strong>par</strong>: n = n / 2</li>
+        <li>Se n for <strong>ímpar</strong>: n = 3*n + 1</li>
+    </ul>
+    <p>Não sabemos quantas iterações serão necessárias → uso perfeito de <code>while</code>.</p>
+
+<pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int n, passos = 0;
+
+    do {
+        printf("Digite um inteiro positivo: ");
+        scanf("%d", &amp;n);
+    } while (n &lt;= 0);           <span class="code-comment">// do-while para validar entrada</span>
+
+    printf("Sequência: %d", n);
+
+    while (n != 1) {            <span class="code-comment">// while porque não sabemos quantos passos</span>
+        if (n % 2 == 0)
+            n = n / 2;
+        else
+            n = 3 * n + 1;
+        printf(" → %d", n);
+        passos++;
+    }
+
+    printf("\nTotal de passos: %d\n", passos);
+    return 0;
+}
+</pre>
+
+    <div class="terminal-output">
+Digite um inteiro positivo: 6<br>
+Sequência: 6 → 3 → 10 → 5 → 16 → 8 → 4 → 2 → 1<br>
+Total de passos: 8
+    </div>
+
+    <div class="exemplo">
+        Note o uso combinado: <code>do-while</code> para <strong>validar a entrada</strong> (deve ser positivo) e <code>while</code> para a <strong>sequência</strong> em si, cujo comprimento é imprevisível. Essa separação de responsabilidades é um padrão muito comum em C.
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 7. C vs JAVA -->
+<!-- ============================================================ -->
+<div class="content-section">
+    <h2>7. C vs Java — Comparação dos Loops</h2>
+
+    <table class="comparison-table">
+        <tr>
+            <th>Aspecto</th>
+            <th>C</th>
+            <th>Java</th>
+        </tr>
+        <tr>
+            <td>Sintaxe <code>while</code></td>
+            <td>Idêntica: <code>while (cond) { }</code></td>
+            <td>Idêntica: <code>while (cond) { }</code></td>
+        </tr>
+        <tr>
+            <td>Sintaxe <code>do-while</code></td>
+            <td>Idêntica: <code>do { } while (cond);</code></td>
+            <td>Idêntica: <code>do { } while (cond);</code></td>
+        </tr>
+        <tr>
+            <td>Condição booleana</td>
+            <td>Qualquer expressão inteira: <code>while (n)</code> → verdadeiro se n ≠ 0</td>
+            <td>Deve ser estritamente <code>boolean</code>; <code>while (n)</code> é <span style="color:red">erro de compilação</span></td>
+        </tr>
+        <tr>
+            <td>Loop infinito</td>
+            <td><code>while (1) { }</code> — idioma padrão em C</td>
+            <td><code>while (true) { }</code> — Java exige literal booleano</td>
+        </tr>
+        <tr>
+            <td>Verificação de tipo da condição</td>
+            <td>Nenhuma — qualquer inteiro funciona (0 = falso, resto = verdadeiro)</td>
+            <td>Estrita — <code>while (1)</code> não compila</td>
+        </tr>
+        <tr>
+            <td>Ponto-e-vírgula em do-while</td>
+            <td><code>} while (cond);</code> — obrigatório</td>
+            <td><code>} while (cond);</code> — obrigatório</td>
+        </tr>
+        <tr>
+            <td>For-each / for-in</td>
+            <td>Não existe — use <code>for</code> com índice ou <code>while</code></td>
+            <td><code>for (Tipo x : colecao)</code> disponível</td>
+        </tr>
+        <tr>
+            <td>Leitura interativa dentro de loop</td>
+            <td><code>scanf()</code> — retorna número de itens lidos; útil em condição de while</td>
+            <td><code>Scanner.nextInt()</code> — lança exceção se entrada inválida</td>
+        </tr>
+    </table>
+
+    <div class="grid-container">
+        <div class="grid-item">
+            <strong>C — while com inteiro como condição:</strong>
+<pre>
+int n = 5;
+while (n) {       <span class="code-comment">// válido! n != 0</span>
+    printf("%d\n", n);
+    n--;
+}
+</pre>
+        </div>
+        <div class="grid-item">
+            <strong>Java — requer boolean explícito:</strong>
+<pre>
+int n = 5;
+<span class="code-comment">// while (n) → ERRO em Java</span>
+while (n != 0) {  <span class="code-comment">// obrigatório</span>
+    System.out.println(n);
+    n--;
+}
+</pre>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 8. EXERCÍCIOS -->
+<!-- ============================================================ -->
+<div class="exercise-section">
+    <h2>8. Exercícios de Fixação</h2>
+    <p>Responda às questões abaixo e clique em <strong>Verificar Respostas</strong> para conferir seu desempenho.</p>
+
+    <form class="quiz-form" id="quiz">
+
+        <!-- Q1 -->
+        <div class="quiz-question">
+            <p><strong>1.</strong> Qual é a principal diferença entre <code>while</code> e <code>do-while</code>?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q1" value="a"> O <code>while</code> só funciona com variáveis inteiras.</label></li>
+                <li><label><input type="radio" name="q1" value="b"> O <code>do-while</code> testa a condição antes de executar o bloco.</label></li>
+                <li><label><input type="radio" name="q1" value="c"> O <code>do-while</code> garante que o bloco execute pelo menos uma vez.</label></li>
+                <li><label><input type="radio" name="q1" value="d"> O <code>while</code> não aceita a palavra-chave <code>break</code>.</label></li>
+            </ul>
+        </div>
+
+        <!-- Q2 -->
+        <div class="quiz-question">
+            <p><strong>2.</strong> Quantas vezes o trecho abaixo imprime algo?<br>
+            <code>int x = 10; while (x &lt; 5) { printf("oi\n"); x++; }</code></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q2" value="a"> 5 vezes</label></li>
+                <li><label><input type="radio" name="q2" value="b"> 10 vezes</label></li>
+                <li><label><input type="radio" name="q2" value="c"> 0 vezes</label></li>
+                <li><label><input type="radio" name="q2" value="d"> 1 vez</label></li>
+            </ul>
+        </div>
+
+        <!-- Q3 -->
+        <div class="quiz-question">
+            <p><strong>3.</strong> E se o trecho da questão 2 fosse um <code>do-while</code>?<br>
+            <code>int x = 10; do { printf("oi\n"); x++; } while (x &lt; 5);</code></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q3" value="a"> 0 vezes</label></li>
+                <li><label><input type="radio" name="q3" value="b"> 1 vez</label></li>
+                <li><label><input type="radio" name="q3" value="c"> 5 vezes</label></li>
+                <li><label><input type="radio" name="q3" value="d"> 10 vezes</label></li>
+            </ul>
+        </div>
+
+        <!-- Q4 -->
+        <div class="quiz-question">
+            <p><strong>4.</strong> O que a instrução <code>continue</code> faz dentro de um <code>while</code>?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q4" value="a"> Termina o programa.</label></li>
+                <li><label><input type="radio" name="q4" value="b"> Encerra o loop imediatamente.</label></li>
+                <li><label><input type="radio" name="q4" value="c"> Pula o restante do bloco atual e vai para o próximo teste da condição.</label></li>
+                <li><label><input type="radio" name="q4" value="d"> Reinicia o loop desde o início, zerando as variáveis.</label></li>
+            </ul>
+        </div>
+
+        <!-- Q5 -->
+        <div class="quiz-question">
+            <p><strong>5.</strong> Qual é a saída do código abaixo?</p>
+<pre>
+int i = 1;
+while (i &lt;= 4) {
+    if (i == 3) { i++; continue; }
+    printf("%d ", i);
+    i++;
+}
+</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q5" value="a"> 1 2 3 4</label></li>
+                <li><label><input type="radio" name="q5" value="b"> 1 2 4</label></li>
+                <li><label><input type="radio" name="q5" value="c"> 1 2</label></li>
+                <li><label><input type="radio" name="q5" value="d"> 2 4</label></li>
+            </ul>
+        </div>
+
+        <!-- Q6 -->
+        <div class="quiz-question">
+            <p><strong>6.</strong> Em C, a expressão <code>while (n)</code> é equivalente a:</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q6" value="a"> <code>while (n == true)</code></label></li>
+                <li><label><input type="radio" name="q6" value="b"> <code>while (n != 0)</code></label></li>
+                <li><label><input type="radio" name="q6" value="c"> <code>while (n &gt; 0)</code></label></li>
+                <li><label><input type="radio" name="q6" value="d"> <code>while (n == 1)</code></label></li>
+            </ul>
+        </div>
+
+        <!-- Q7 -->
+        <div class="quiz-question">
+            <p><strong>7.</strong> Qual é o trecho de código mais adequado para implementar um menu que deve ser exibido ao menos uma vez e repetido até o usuário escolher sair?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q7" value="a"> <code>for (int i = 0; opcao != 0; i++)</code></label></li>
+                <li><label><input type="radio" name="q7" value="b"> <code>while (opcao != 0)</code> — testando antes</label></li>
+                <li><label><input type="radio" name="q7" value="c"> <code>do { ... } while (opcao != 0);</code></label></li>
+                <li><label><input type="radio" name="q7" value="d"> Não é possível implementar um menu com loops simples.</label></li>
+            </ul>
+        </div>
+
+        <!-- Q8 -->
+        <div class="quiz-question">
+            <p><strong>8.</strong> Qual erro existe no código abaixo?</p>
+<pre>
+int i = 0;
+while (i &lt; 5) {
+    if (i % 2 == 0) continue;   <span class="code-comment">// pular pares</span>
+    printf("%d ", i);
+    i++;
+}
+</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q8" value="a"> O <code>continue</code> não é permitido dentro de <code>while</code>.</label></li>
+                <li><label><input type="radio" name="q8" value="b"> O <code>printf</code> está fora do loop.</label></li>
+                <li><label><input type="radio" name="q8" value="c"> O <code>i++</code> nunca é alcançado quando i é par, causando loop infinito em i=0.</label></li>
+                <li><label><input type="radio" name="q8" value="d"> Não há erro; o código imprime 1 3 5.</label></li>
+            </ul>
+        </div>
+
+        <button type="button" class="submit-btn" onclick="verificarRespostas()">Verificar Respostas</button>
+    </form>
+
+    <div id="quiz-results" style="display:none; margin-top:20px;"></div>
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align:center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education"
+                 style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+<script>
+function verificarRespostas() {
+    const gabarito = { q1:'c', q2:'c', q3:'b', q4:'c', q5:'b', q6:'b', q7:'c', q8:'c' };
+
+    const explicacoes = {
+        q1: "O <code>do-while</code> executa o bloco ANTES de testar a condição, garantindo ao menos uma execução.",
+        q2: "Como x=10 já é maior que 5, a condição <code>x &lt; 5</code> é falsa desde o início e o bloco nunca executa.",
+        q3: "No <code>do-while</code>, o bloco sempre executa primeiro. Após a 1ª execução x vira 11 e a condição 11&lt;5 é falsa, então para.",
+        q4: "<code>continue</code> pula o restante do bloco atual e vai para o próximo teste da condição do loop.",
+        q5: "Quando i=3: i++ faz i=4, <code>continue</code> pula o printf e o segundo i++. Então o loop testa 4&lt;=4 (verdadeiro), imprime 4, i vira 5 e para.",
+        q6: "Em C, qualquer valor diferente de 0 é considerado verdadeiro. <code>while(n)</code> é exatamente <code>while(n != 0)</code>.",
+        q7: "O <code>do-while</code> é o loop ideal para menus, pois garante que o bloco execute pelo menos uma vez antes de qualquer verificação.",
+        q8: "Quando i=0 (par), o <code>continue</code> é executado antes do <code>i++</code>. i nunca é incrementado, criando um loop infinito."
+    };
+
+    let acertos = 0;
+    const total = Object.keys(gabarito).length;
+    let html = '';
+
+    for (const [q, resp] of Object.entries(gabarito)) {
+        const num = q.replace('q','');
+        const sel = document.querySelector(`input[name="${q}"]:checked`);
+        if (sel) {
+            if (sel.value === resp) {
+                acertos++;
+                html += `<p>Questão ${num}: <span style="color:green;font-weight:bold;">✅ Correto!</span> — ${explicacoes[q]}</p>`;
+            } else {
+                html += `<p>Questão ${num}: <span style="color:red;font-weight:bold;">❌ Incorreto.</span> Gabarito: <strong>${resp.toUpperCase()}</strong> — ${explicacoes[q]}</p>`;
+            }
+        } else {
+            html += `<p>Questão ${num}: <span style="color:orange;font-weight:bold;">⚠ Não respondida.</span></p>`;
+        }
+    }
+
+    const r = document.getElementById('quiz-results');
+    r.innerHTML = `<h3>Sua pontuação: ${acertos} de ${total}</h3>${html}`;
+    r.style.display = 'block';
+    r.scrollIntoView({ behavior: 'smooth' });
+}
+</script>
+
+</body>
+</html>

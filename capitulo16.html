@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 16 – Recursão em C</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Aula 16 — Recursão</h1>
+    <p>Funções que chamam a si mesmas — caso base, caso recursivo e a pilha de chamadas</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo15.html">← Aula 15</a>
+    <a href="capitulo17.html">Aula 17 →</a>
+</nav>
+
+<!-- ═══════════════════════════════════════ 1. O QUE É RECURSÃO -->
+<div class="content-section">
+    <h2>1. O que é Recursão?</h2>
+
+    <p>Até agora todas as funções que escrevemos chamavam <em>outras</em> funções. Recursão é a técnica em que uma <strong>função chama a si mesma</strong> para resolver uma versão menor do mesmo problema, repetindo esse processo até chegar a um caso simples que pode ser resolvido diretamente.</p>
+
+    <div class="definicao">
+        <strong>Recursão</strong> é uma técnica em que uma função resolve um problema chamando a si mesma com uma versão <em>menor ou mais simples</em> do mesmo problema. Toda função recursiva deve ter obrigatoriamente dois elementos: um <strong>caso base</strong> (que encerra a recursão) e um <strong>caso recursivo</strong> (que avança em direção ao caso base).
+    </div>
+
+    <h3>A estrutura obrigatória de toda função recursiva</h3>
+<pre>
+tipo funcaoRecursiva(parametros) {
+
+    <span class="code-comment">/* CASO BASE — condição de parada: resolve sem chamar a si mesma */</span>
+    if (condicaoDeParada)
+        return valorSimples;
+
+    <span class="code-comment">/* CASO RECURSIVO — chama a si mesma com problema menor */</span>
+    return funcaoRecursiva(parametrosMenores);
+}
+</pre>
+
+    <div class="warning-box">
+        <strong>⚠️ Sem caso base = stack overflow.</strong> Se uma função recursiva nunca atingir a condição de parada, ela se chamará infinitamente até esgotar a memória da pilha — causando um <em>stack overflow</em> e encerrando o programa com erro.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 2. CONTAGEM REGRESSIVA -->
+<div class="content-section">
+    <h2>2. Primeiro Exemplo: Contagem Regressiva</h2>
+
+    <p>Antes de exemplos matemáticos, vamos ver recursão da forma mais visual possível: uma contagem regressiva.</p>
+
+<pre>
+#include &lt;stdio.h&gt;
+
+void contagem(int n) {
+    <span class="code-comment">/* Caso base: quando n chega a 0, encerra */</span>
+    if (n == 0) {
+        printf("Fim!\n");
+        return;
+    }
+
+    <span class="code-comment">/* Caso recursivo: imprime n e chama com n-1 */</span>
+    printf("%d...\n", n);
+    contagem(n - 1);
+}
+
+int main() {
+    contagem(5);
+    return 0;
+}
+</pre>
+    <div class="terminal-output">5...<br>4...<br>3...<br>2...<br>1...<br>Fim!</div>
+
+    <h3>O que acontece passo a passo</h3>
+    <table>
+        <tr>
+            <th>Chamada</th>
+            <th>n</th>
+            <th>Ação</th>
+            <th>Próxima chamada</th>
+        </tr>
+        <tr><td>1ª</td><td>5</td><td>Imprime "5..."</td><td><code>contagem(4)</code></td></tr>
+        <tr><td>2ª</td><td>4</td><td>Imprime "4..."</td><td><code>contagem(3)</code></td></tr>
+        <tr><td>3ª</td><td>3</td><td>Imprime "3..."</td><td><code>contagem(2)</code></td></tr>
+        <tr><td>4ª</td><td>2</td><td>Imprime "2..."</td><td><code>contagem(1)</code></td></tr>
+        <tr><td>5ª</td><td>1</td><td>Imprime "1..."</td><td><code>contagem(0)</code></td></tr>
+        <tr style="background-color:#d4edda;"><td>6ª</td><td>0</td><td>Imprime "Fim!" e retorna</td><td>— caso base atingido</td></tr>
+    </table>
+
+    <div class="info-box">
+        <strong>Antes vs. depois da chamada recursiva:</strong> O <code>printf</code> aqui vem <em>antes</em> da chamada recursiva — por isso os números aparecem em ordem decrescente (5, 4, 3...). Se você movesse o <code>printf</code> para <em>depois</em> da chamada, a ordem seria crescente (1, 2, 3...) porque os <code>printf</code> só executariam ao <em>retornar</em> de cada nível. Experimente!
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 3. A PILHA DE CHAMADAS -->
+<div class="content-section">
+    <h2>3. A Pilha de Chamadas (Call Stack)</h2>
+
+    <p>Cada chamada de função reserva um espaço na <strong>pilha de memória</strong> (stack) para armazenar seus parâmetros e variáveis locais. Com recursão, várias chamadas ficam empilhadas ao mesmo tempo, aguardando umas às outras:</p>
+
+    <table>
+        <tr><th colspan="2">Estado da pilha durante <code>contagem(3)</code></th></tr>
+        <tr><td style="text-align:center; background:#f8d7da; padding:8px;" colspan="2"><code>contagem(0)</code> ← topo — em execução (caso base)</td></tr>
+        <tr><td style="text-align:center; background:#fff3cd; padding:8px;" colspan="2"><code>contagem(1)</code> ← aguardando retorno</td></tr>
+        <tr><td style="text-align:center; background:#d1ecf1; padding:8px;" colspan="2"><code>contagem(2)</code> ← aguardando retorno</td></tr>
+        <tr><td style="text-align:center; background:#d4edda; padding:8px;" colspan="2"><code>contagem(3)</code> ← aguardando retorno</td></tr>
+        <tr><td style="text-align:center; background:#e2e3e5; padding:8px;" colspan="2"><code>main()</code> ← base da pilha</td></tr>
+    </table>
+
+    <p>Após o caso base retornar, cada chamada desempilha em ordem inversa: <code>contagem(0)</code> retorna para <code>contagem(1)</code>, que retorna para <code>contagem(2)</code>, e assim por diante até voltar ao <code>main</code>.</p>
+
+    <div class="warning-box">
+        <strong>Stack overflow:</strong> A pilha tem tamanho limitado (tipicamente 1–8 MB). Uma recursão muito profunda — ou sem caso base — empilha tantas chamadas que esgota esse espaço, causando encerramento abrupto do programa.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 4. FATORIAL -->
+<div class="content-section">
+    <h2>4. Fatorial — O Exemplo Clássico</h2>
+
+    <p>O fatorial de um número inteiro positivo <code>n</code> é o produto de todos os inteiros de 1 até <code>n</code>. A definição matemática já é naturalmente recursiva:</p>
+
+    <div class="formula">
+        n! = n × (n−1)! &nbsp;&nbsp;&nbsp;&nbsp; com caso base &nbsp;&nbsp;&nbsp;&nbsp; 0! = 1
+    </div>
+
+<pre>
+#include &lt;stdio.h&gt;
+
+long fatorial(int n) {
+    <span class="code-comment">/* Caso base */</span>
+    if (n == 0) return 1;
+
+    <span class="code-comment">/* Caso recursivo: n! = n × (n-1)! */</span>
+    return n * fatorial(n - 1);
+}
+
+int main() {
+    for (int i = 0; i &lt;= 10; i++)
+        printf("%2d! = %ld\n", i, fatorial(i));
+    return 0;
+}
+</pre>
+    <div class="terminal-output"> 0! = 1<br> 1! = 1<br> 2! = 2<br> 3! = 6<br> 4! = 24<br> 5! = 120<br> 6! = 720<br> 7! = 5040<br> 8! = 40320<br> 9! = 362880<br>10! = 3628800</div>
+
+    <h3>Expandindo <code>fatorial(4)</code> passo a passo</h3>
+    <table>
+        <tr><th>Chamada</th><th>Cálculo</th><th>Retorna</th></tr>
+        <tr><td><code>fatorial(4)</code></td><td>4 × fatorial(3)</td><td>aguarda...</td></tr>
+        <tr><td><code>fatorial(3)</code></td><td>3 × fatorial(2)</td><td>aguarda...</td></tr>
+        <tr><td><code>fatorial(2)</code></td><td>2 × fatorial(1)</td><td>aguarda...</td></tr>
+        <tr><td><code>fatorial(1)</code></td><td>1 × fatorial(0)</td><td>aguarda...</td></tr>
+        <tr style="background:#d4edda;"><td><code>fatorial(0)</code></td><td>caso base!</td><td><strong>1</strong></td></tr>
+        <tr><td>↩ <code>fatorial(1)</code></td><td>1 × 1</td><td><strong>1</strong></td></tr>
+        <tr><td>↩ <code>fatorial(2)</code></td><td>2 × 1</td><td><strong>2</strong></td></tr>
+        <tr><td>↩ <code>fatorial(3)</code></td><td>3 × 2</td><td><strong>6</strong></td></tr>
+        <tr><td>↩ <code>fatorial(4)</code></td><td>4 × 6</td><td><strong>24</strong></td></tr>
+    </table>
+</div>
+
+<!-- ═══════════════════════════════════════ 5. FIBONACCI -->
+<div class="content-section">
+    <h2>5. Fibonacci — Dois Casos Base</h2>
+
+    <p>A sequência de Fibonacci começa com 0 e 1, e cada número seguinte é a soma dos dois anteriores: 0, 1, 1, 2, 3, 5, 8, 13, 21... É um exemplo com <strong>dois casos base</strong> e <strong>duas chamadas recursivas</strong>:</p>
+
+    <div class="formula">
+        fib(0) = 0 &nbsp;&nbsp;&nbsp; fib(1) = 1 &nbsp;&nbsp;&nbsp; fib(n) = fib(n−1) + fib(n−2)
+    </div>
+
+<pre>
+#include &lt;stdio.h&gt;
+
+long fib(int n) {
+    <span class="code-comment">/* Dois casos base */</span>
+    if (n == 0) return 0;
+    if (n == 1) return 1;
+
+    <span class="code-comment">/* Caso recursivo */</span>
+    return fib(n - 1) + fib(n - 2);
+}
+
+int main() {
+    for (int i = 0; i &lt;= 12; i++)
+        printf("fib(%2d) = %ld\n", i, fib(i));
+    return 0;
+}
+</pre>
+    <div class="terminal-output">fib( 0) = 0<br>fib( 1) = 1<br>fib( 2) = 1<br>fib( 3) = 2<br>fib( 4) = 3<br>fib( 5) = 5<br>fib( 6) = 8<br>fib( 7) = 13<br>fib( 8) = 21<br>fib( 9) = 34<br>fib(10) = 55<br>fib(11) = 89<br>fib(12) = 144</div>
+
+    <h3>Árvore de chamadas de <code>fib(4)</code> — o problema do retrabalho</h3>
+<pre>
+                    fib(4)
+                   /      \
+              fib(3)      fib(2)
+             /     \      /    \
+         fib(2)  fib(1) fib(1) fib(0)
+         /    \
+      fib(1) fib(0)
+</pre>
+
+    <div class="warning-box">
+        <strong>⚠️ Fibonacci recursivo é ineficiente.</strong> <code>fib(2)</code> é calculada duas vezes, <code>fib(1)</code> três vezes. Para <code>fib(40)</code> o número de chamadas passa de <strong>300 milhões</strong>. Em aplicações reais, use a versão iterativa ou a técnica de <em>memoização</em> (guardar resultados já calculados). Aqui o objetivo é apenas ilustrar a estrutura recursiva com dois casos base.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 6. EXEMPLOS PRÁTICOS -->
+<div class="content-section">
+    <h2>6. Outros Exemplos Práticos</h2>
+
+    <h3>6.1 — Soma dos elementos de um vetor</h3>
+<pre>
+#include &lt;stdio.h&gt;
+
+int somaVetor(int v[], int n) {
+    if (n == 0) return 0;                       <span class="code-comment">// vetor vazio: soma é 0</span>
+    return v[0] + somaVetor(v + 1, n - 1);     <span class="code-comment">// primeiro + soma do resto</span>
+}
+
+int main() {
+    int notas[] = {7, 8, 6, 9, 5};
+    int total = somaVetor(notas, 5);
+    printf("Soma: %d | Media: %.1f\n", total, total / 5.0f);
+    return 0;
+}
+</pre>
+    <div class="terminal-output">Soma: 35 | Media: 7.0</div>
+
+    <h3>6.2 — Potência (base elevada ao expoente)</h3>
+<pre>
+#include &lt;stdio.h&gt;
+
+double potencia(double base, int exp) {
+    if (exp == 0) return 1.0;                   <span class="code-comment">// base^0 = 1</span>
+    return base * potencia(base, exp - 1);      <span class="code-comment">// base^n = base × base^(n-1)</span>
+}
+
+int main() {
+    printf("2^10  = %.0f\n",  potencia(2,   10));
+    printf("3^5   = %.0f\n",  potencia(3,    5));
+    printf("1.5^4 = %.4f\n",  potencia(1.5,  4));
+    return 0;
+}
+</pre>
+    <div class="terminal-output">2^10  = 1024<br>3^5   = 243<br>1.5^4 = 5.0625</div>
+
+    <h3>6.3 — Maior Divisor Comum (algoritmo de Euclides)</h3>
+    <p>Um dos algoritmos mais antigos da matemática — e um dos exemplos mais elegantes de recursão. A ideia: <code>mdc(a, b) = mdc(b, a % b)</code>, com caso base <code>mdc(a, 0) = a</code>.</p>
+<pre>
+#include &lt;stdio.h&gt;
+
+int mdc(int a, int b) {
+    if (b == 0) return a;           <span class="code-comment">// caso base: MDC(a, 0) = a</span>
+    return mdc(b, a % b);           <span class="code-comment">// caso recursivo</span>
+}
+
+int main() {
+    printf("MDC(48, 18)  = %d\n", mdc(48, 18));   <span class="code-comment">// 6</span>
+    printf("MDC(100, 75) = %d\n", mdc(100, 75));  <span class="code-comment">// 25</span>
+    printf("MDC(17, 5)   = %d\n", mdc(17,  5));   <span class="code-comment">// 1 — primos entre si</span>
+    return 0;
+}
+</pre>
+    <div class="terminal-output">MDC(48, 18)  = 6<br>MDC(100, 75) = 25<br>MDC(17, 5)   = 1</div>
+
+    <h3>Acompanhando <code>mdc(48, 18)</code> passo a passo</h3>
+    <table>
+        <tr><th>Chamada</th><th>a</th><th>b</th><th>a % b</th><th>Próxima</th></tr>
+        <tr><td><code>mdc(48, 18)</code></td><td>48</td><td>18</td><td>12</td><td><code>mdc(18, 12)</code></td></tr>
+        <tr><td><code>mdc(18, 12)</code></td><td>18</td><td>12</td><td>6</td><td><code>mdc(12, 6)</code></td></tr>
+        <tr><td><code>mdc(12, 6)</code></td><td>12</td><td>6</td><td>0</td><td><code>mdc(6, 0)</code></td></tr>
+        <tr style="background:#d4edda;"><td><code>mdc(6, 0)</code></td><td>6</td><td>0</td><td>—</td><td>caso base! retorna <strong>6</strong></td></tr>
+    </table>
+
+    <h3>6.4 — Impressão dos dígitos de um número</h3>
+<pre>
+#include &lt;stdio.h&gt;
+
+void imprimirDigitos(int n) {
+    if (n &lt; 10) {                   <span class="code-comment">// caso base: um único dígito</span>
+        printf("%d ", n);
+        return;
+    }
+    imprimirDigitos(n / 10);        <span class="code-comment">// imprime todos exceto o último</span>
+    printf("%d ", n % 10);          <span class="code-comment">// depois imprime o último</span>
+}
+
+int main() {
+    printf("Digitos de 7483: ");
+    imprimirDigitos(7483);
+    printf("\n");
+    return 0;
+}
+</pre>
+    <div class="terminal-output">Digitos de 7483: 7 4 8 3</div>
+</div>
+
+<!-- ═══════════════════════════════════════ 7. RECURSÃO VS ITERAÇÃO -->
+<div class="content-section">
+    <h2>7. Recursão vs. Iteração — Quando Usar Cada Uma</h2>
+
+    <p>Qualquer problema resolvível com recursão também pode ser resolvido com loops, e vice-versa. A escolha depende de qual deixa o código mais claro e eficiente para aquele problema específico.</p>
+
+    <table>
+        <tr>
+            <th>Critério</th>
+            <th>Recursão</th>
+            <th>Iteração (loop)</th>
+        </tr>
+        <tr>
+            <td>Problemas naturalmente hierárquicos (árvores, grafos)</td>
+            <td>✅ Natural e elegante</td>
+            <td>❌ Exige pilha manual — muito complexo</td>
+        </tr>
+        <tr>
+            <td>Legibilidade para divisão em subproblemas</td>
+            <td>✅ Espelha a definição matemática</td>
+            <td>⚠️ Pode ser mais verboso</td>
+        </tr>
+        <tr>
+            <td>Uso de memória</td>
+            <td>⚠️ Cada chamada usa a stack</td>
+            <td>✅ Apenas as variáveis do loop</td>
+        </tr>
+        <tr>
+            <td>Risco de stack overflow</td>
+            <td>⚠️ Sim, em recursões profundas</td>
+            <td>✅ Não</td>
+        </tr>
+        <tr>
+            <td>Desempenho geral</td>
+            <td>⚠️ Overhead de chamadas de função</td>
+            <td>✅ Geralmente mais rápida</td>
+        </tr>
+        <tr>
+            <td>Problemas de sequência simples</td>
+            <td>⚠️ Funciona, mas é desnecessário</td>
+            <td>✅ Natural e direto</td>
+        </tr>
+    </table>
+
+    <h3>Fatorial: recursão vs. iteração lado a lado</h3>
+    <div class="grid-container">
+        <div class="grid-item">
+            <strong>Recursivo — espelha a definição</strong>
+<pre>
+long fatorial(int n) {
+    if (n == 0) return 1;
+    return n * fatorial(n - 1);
+}
+</pre>
+            <p>✅ Idêntico à notação matemática.<br>⚠️ n chamadas empilhadas.</p>
+        </div>
+        <div class="grid-item">
+            <strong>Iterativo — eficiente e seguro</strong>
+<pre>
+long fatorial(int n) {
+    long r = 1;
+    for (int i = 2; i &lt;= n; i++)
+        r *= i;
+    return r;
+}
+</pre>
+            <p>✅ Memória mínima (O(1)).<br>✅ Sem risco de stack overflow.</p>
+        </div>
+    </div>
+
+    <div class="tip-box">
+        <strong>Regra prática:</strong> Use recursão quando o problema for naturalmente hierárquico ou se divide em subproblemas da mesma natureza (árvores, buscas, algoritmos de divisão). Use iteração para sequências simples — somar, buscar em array, converter unidades — onde o loop é igualmente claro e mais eficiente.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 8. C VS JAVA -->
+<div class="content-section">
+    <h2>8. C vs. Java — Recursão</h2>
+
+    <table>
+        <tr>
+            <th>Aspecto</th>
+            <th>C</th>
+            <th>Java</th>
+        </tr>
+        <tr>
+            <td>Sintaxe da recursão</td>
+            <td>Idêntica — função chama a si mesma</td>
+            <td>Idêntica — método chama a si mesmo</td>
+        </tr>
+        <tr>
+            <td>Tamanho padrão da stack</td>
+            <td>Tipicamente 1–8 MB (dependente do SO)</td>
+            <td>512 KB a 1 MB por thread (configurável com <code>-Xss</code>)</td>
+        </tr>
+        <tr>
+            <td>Stack overflow</td>
+            <td>Falha com sinal do SO (segfault)</td>
+            <td>Lança <code>StackOverflowError</code> (capturável)</td>
+        </tr>
+        <tr>
+            <td>Recursão mútua (A chama B, B chama A)</td>
+            <td>Requer protótipos antecipados para A e B</td>
+            <td>Métodos podem se chamar mutuamente sem declaração prévia</td>
+        </tr>
+    </table>
+
+    <h3>Side-by-side: fatorial recursivo</h3>
+    <div class="grid-container">
+        <div class="grid-item">
+            <strong>C</strong>
+<pre>
+long fatorial(int n) {
+    if (n == 0) return 1;
+    return n * fatorial(n - 1);
+}
+</pre>
+        </div>
+        <div class="grid-item">
+            <strong>Java</strong>
+<pre>
+static long fatorial(int n) {
+    if (n == 0) return 1;
+    return n * fatorial(n - 1);
+}
+</pre>
+        </div>
+    </div>
+    <p>A estrutura é praticamente idêntica. A única diferença é que em Java o método precisa ser <code>static</code> para ser chamado sem instância de objeto, enquanto em C funções já são naturalmente estáticas no sentido de pertencer ao arquivo.</p>
+</div>
+
+<!-- ═══════════════════════════════════════ QUIZ -->
+<div class="content-section exercise-section">
+    <h2>Quiz — Aula 16</h2>
+    <form class="quiz-form" onsubmit="return false;">
+
+        <div class="content-section quiz-question">
+            <p><strong>1.</strong> O que é obrigatório em toda função recursiva para evitar um stack overflow?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q1" value="a"> Um loop <code>while</code> interno</label></li>
+                <li><label><input type="radio" name="q1" value="b"> Um caso base que encerra a recursão sem nova chamada</label></li>
+                <li><label><input type="radio" name="q1" value="c"> A instrução <code>return 0</code> ao final</label></li>
+                <li><label><input type="radio" name="q1" value="d"> O uso de variáveis globais para controle</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>2.</strong> Qual é a saída do código abaixo?</p>
+<pre>
+int f(int n) {
+    if (n == 0) return 0;
+    return n + f(n - 1);
+}
+int main() { printf("%d", f(4)); }
+</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q2" value="a"> 4</label></li>
+                <li><label><input type="radio" name="q2" value="b"> 10</label></li>
+                <li><label><input type="radio" name="q2" value="c"> 24</label></li>
+                <li><label><input type="radio" name="q2" value="d"> 0</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>3.</strong> Ao calcular <code>fatorial(5)</code>, quantas chamadas à função são feitas no total (incluindo a chamada inicial)?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q3" value="a"> 4</label></li>
+                <li><label><input type="radio" name="q3" value="b"> 5</label></li>
+                <li><label><input type="radio" name="q3" value="c"> 6</label></li>
+                <li><label><input type="radio" name="q3" value="d"> 10</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>4.</strong> O que acontece se uma função recursiva nunca atingir o caso base?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q4" value="a"> O compilador detecta e recusa compilar</label></li>
+                <li><label><input type="radio" name="q4" value="b"> A função retorna 0 automaticamente ao encher a pilha</label></li>
+                <li><label><input type="radio" name="q4" value="c"> A função se chama indefinidamente até esgotar a pilha, causando stack overflow</label></li>
+                <li><label><input type="radio" name="q4" value="d"> O programa entra em loop infinito mas não termina — continua rodando para sempre</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>5.</strong> Qual é a saída do código abaixo?</p>
+<pre>
+void f(int n) {
+    if (n == 0) return;
+    f(n - 1);
+    printf("%d ", n);
+}
+int main() { f(4); }
+</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q5" value="a"> 4 3 2 1</label></li>
+                <li><label><input type="radio" name="q5" value="b"> 0 1 2 3 4</label></li>
+                <li><label><input type="radio" name="q5" value="c"> 1 2 3 4</label></li>
+                <li><label><input type="radio" name="q5" value="d"> Nenhuma saída</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>6.</strong> Por que a implementação recursiva de Fibonacci é considerada ineficiente?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q6" value="a"> Porque usa dois casos base em vez de um</label></li>
+                <li><label><input type="radio" name="q6" value="b"> Porque o mesmo subproblema é calculado múltiplas vezes — o número de chamadas cresce exponencialmente</label></li>
+                <li><label><input type="radio" name="q6" value="c"> Porque não usa variáveis locais</label></li>
+                <li><label><input type="radio" name="q6" value="d"> Porque usa <code>long</code> em vez de <code>int</code></label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>7.</strong> Qual é o resultado de <code>mdc(12, 8)</code> usando o algoritmo de Euclides recursivo?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q7" value="a"> 2</label></li>
+                <li><label><input type="radio" name="q7" value="b"> 4</label></li>
+                <li><label><input type="radio" name="q7" value="c"> 8</label></li>
+                <li><label><input type="radio" name="q7" value="d"> 12</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>8.</strong> Em qual situação a recursão é claramente preferível à iteração?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q8" value="a"> Somar todos os números de 1 a 1000</label></li>
+                <li><label><input type="radio" name="q8" value="b"> Percorrer uma estrutura em árvore onde cada nó pode ter filhos em número variável</label></li>
+                <li><label><input type="radio" name="q8" value="c"> Ler um arquivo linha por linha</label></li>
+                <li><label><input type="radio" name="q8" value="d"> Calcular a média de um vetor de floats</label></li>
+            </ul>
+        </div>
+
+        <button type="button" class="submit-btn" onclick="verificarRespostas()">Verificar Respostas</button>
+    </form>
+    <div id="quiz-results" style="display:none; margin-top:20px; padding:15px; background:#dff0d8; border-radius:5px;"></div>
+</div>
+
+<div class="navigation-buttons">
+    <a href="capitulo15.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">← Aula 15</a>
+    <a href="index.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">Índice</a>
+    <a href="capitulo17.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">Aula 17 →</a>
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align:center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education" style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+<script>
+function verificarRespostas() {
+    const gabarito = { q1:"b", q2:"b", q3:"c", q4:"c", q5:"c", q6:"b", q7:"b", q8:"b" };
+    const explicacoes = {
+        q1: "O caso base é o elemento que torna a recursão finita: resolve o problema diretamente sem fazer nova chamada. Sem ele, a função se chamaria infinitamente até esgotar a stack.",
+        q2: "f(4) = 4 + f(3) = 4 + 3 + f(2) = 4 + 3 + 2 + f(1) = 4 + 3 + 2 + 1 + f(0) = 4+3+2+1+0 = 10. É a soma de todos os inteiros de 0 a 4.",
+        q3: "fatorial(5) chama fatorial(4), que chama fatorial(3), fatorial(2), fatorial(1) e fatorial(0). São 6 chamadas no total: fatorial(5), (4), (3), (2), (1) e (0) — o caso base.",
+        q4: "Sem caso base, a função continua se chamando e empilhando frames na stack. Quando a memória se esgota (tipicamente 1–8 MB), o SO encerra o programa com um erro de stack overflow.",
+        q5: "O printf vem APÓS a chamada recursiva. A função desce até n=0 sem imprimir nada, e só imprime ao retornar de cada nível: f(1) imprime 1, f(2) imprime 2, f(3) imprime 3, f(4) imprime 4. Resultado: 1 2 3 4.",
+        q6: "fib(n) faz duas chamadas recursivas: fib(n-1) e fib(n-2). O subproblema fib(n-2) é recalculado do zero tanto pela chamada direta quanto indiretamente por fib(n-1). Esse retrabalho cresce exponencialmente — fib(40) exige mais de 300 milhões de chamadas.",
+        q7: "mdc(12, 8): 12 % 8 = 4 → mdc(8, 4): 8 % 4 = 0 → mdc(4, 0): caso base, retorna 4. O MDC de 12 e 8 é 4.",
+        q8: "Estruturas em árvore são o caso clássico onde recursão é superior: cada nó tem filhos que são também nós (mesma estrutura), e a recursão percorre cada subárvore naturalmente. Implementar isso com loops exigiria uma pilha manual explícita — muito mais complexo."
+    };
+
+    let acertos = 0, html = "";
+    const total = Object.keys(gabarito).length;
+    for (const q in gabarito) {
+        const sel = document.querySelector(`input[name="${q}"]:checked`);
+        const num = q.replace("q","");
+        if (sel) {
+            if (sel.value === gabarito[q]) {
+                acertos++;
+                html += `<p>Questão ${num}: <span style="color:green;font-weight:bold;">✅ Correto!</span> — ${explicacoes[q]}</p>`;
+            } else {
+                html += `<p>Questão ${num}: <span style="color:red;font-weight:bold;">❌ Incorreto.</span> Gabarito: <strong>${gabarito[q].toUpperCase()}</strong> — ${explicacoes[q]}</p>`;
+            }
+        } else {
+            html += `<p>Questão ${num}: <span style="color:orange;font-weight:bold;">⚠ Não respondida.</span></p>`;
+        }
+    }
+    const r = document.getElementById("quiz-results");
+    r.innerHTML = `<h3>Sua pontuação: ${acertos} de ${total}</h3>${html}`;
+    r.style.display = "block";
+    r.scrollIntoView({ behavior: "smooth" });
+}
+</script>
+
+</body>
+</html>

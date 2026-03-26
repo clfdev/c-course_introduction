@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz 4 – Ponteiros e Memória (Aulas 20 a 23)</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <style>
+        .quiz-header-info {
+            background: linear-gradient(135deg, #1a237e, #3949ab);
+            color: white;
+            padding: 18px 22px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .quiz-header-info .stat { text-align: center; }
+        .quiz-header-info .stat-val { font-size: 1.8em; font-weight: bold; }
+        .quiz-header-info .stat-lbl { font-size: 0.75em; opacity: 0.85; }
+
+        .aula-tag {
+            display: inline-block;
+            background-color: #3f51b5;
+            color: white;
+            font-size: 0.7em;
+            font-weight: bold;
+            padding: 2px 10px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .section-divider {
+            background: linear-gradient(135deg, #1a237e, #283593);
+            color: white;
+            padding: 14px 20px;
+            border-radius: 8px;
+            margin: 30px 0 16px 0;
+        }
+        .section-divider h2 { color: white; border: none; margin: 0 0 4px 0; font-size: 1.1em; }
+        .section-divider p  { margin: 0; opacity: 0.85; font-size: 0.85em; }
+
+        #results-area { display: none; }
+
+        #score-box {
+            background: linear-gradient(135deg, #1a237e, #3949ab);
+            color: white;
+            text-align: center;
+            padding: 32px 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .score-number  { font-size: 3.5em; font-weight: bold; letter-spacing: 2px; }
+        .score-label   { font-size: 1em; opacity: 0.85; margin-bottom: 12px; }
+        .score-msg     { font-size: 1.1em; background: rgba(255,255,255,0.15);
+                         display: inline-block; padding: 8px 22px; border-radius: 20px; margin-top: 6px; }
+
+        .aula-breakdown { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
+        .aula-stat      { background: #f8f9fa; border-radius: 8px; padding: 12px 14px;
+                          box-shadow: 0 2px 4px rgba(0,0,0,0.08); }
+        .stat-title     { font-weight: bold; color: #1a237e; font-size: 0.95em; margin-bottom: 4px; }
+        .stat-score     { font-size: 1.5em; font-weight: bold; color: #333; }
+        .stat-bar       { background: #ddd; border-radius: 4px; height: 8px; margin-top: 6px; overflow: hidden; }
+        .stat-fill      { background: linear-gradient(90deg, #3949ab, #5c6bc0); height: 100%;
+                          border-radius: 4px; transition: width 0.6s ease; }
+
+        .result-item    { padding: 14px 16px; border-radius: 8px; margin-bottom: 10px; border-left: 5px solid; }
+        .result-item.correct   { background: #e8f5e9; border-color: #43a047; }
+        .result-item.incorrect { background: #fce4ec; border-color: #e53935; }
+        .result-item.unanswered{ background: #fff8e1; border-color: #ffb300; }
+        .result-header  { font-weight: bold; margin-bottom: 4px; }
+        .result-explain { font-size: 0.9em; color: #444; margin-top: 6px; line-height: 1.6; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Quiz 4 — Ponteiros e Memória</h1>
+    <p>Avaliação das Aulas 20 a 23</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo23.html">← Aula 23</a>
+    <a href="capitulo24.html">Aula 24 →</a>
+</nav>
+
+<div class="quiz-header-info">
+    <div class="stat"><div class="stat-val">20</div><div class="stat-lbl">Questões</div></div>
+    <div class="stat"><div class="stat-val">4</div><div class="stat-lbl">Aulas cobertas</div></div>
+    <div class="stat"><div class="stat-val">14/20</div><div class="stat-lbl">Aprovação (70%)</div></div>
+    <div style="flex:1; min-width:200px; font-size:0.9em; opacity:0.9;">
+        Cobre: Operadores <code>&amp;</code> e <code>*</code> · alocação de memória ·
+        aritmética de ponteiros · <code>malloc</code> / <code>calloc</code> / <code>realloc</code> / <code>free</code> ·
+        passagem por valor vs. por referência · <code>const</code> em ponteiros
+    </div>
+</div>
+
+<form id="quiz-form" onsubmit="return false;">
+
+<!-- ═══════════ AULA 20 — Ponteiros e alocação: operadores & e * ═══════════ -->
+<div class="section-divider">
+    <h2>Aula 20 — Ponteiros e Alocação de Memória: operadores <code>&amp;</code> e <code>*</code></h2>
+    <p>Questões 1 a 5</p>
+</div>
+
+<!-- Q1 -->
+<div class="content-section quiz-question" id="q1-block">
+    <span class="aula-tag">Aula 20</span>
+    <p><strong>1.</strong> Qual é a saída?</p>
+<pre>
+#include &lt;stdio.h&gt;
+int main() {
+    int x = 7;
+    int *p = &amp;x;
+    *p = 20;
+    printf("%d", x);
+}
+</pre>
+    <ul class="options-list">
+        <li><label><input type="radio" name="q1" value="a"> 7</label></li>
+        <li><label><input type="radio" name="q1" value="b"> 20</label></li>
+        <li><label><input type="radio" name="q1" value="c"> Endereço de <code>x</code></label></li>
+        <li><label><input type="radio" name="q1" value="d"> Comportamento indefinido</label></li>
+    </ul>
+</div>
+
+<!-- Q2 -->
+<div class="content-section quiz-question" id="q2-block">
+    <span class="aula-tag">Aula 20</span>
+    <p><strong>2.</strong> Em sistemas 64-bit, qual é o tamanho em bytes de um <code>double *</code>?</p>
+    <ul class="options-list">
+        <li><label><input type="radio" name="q2" value="a"> 8 bytes — mesmo que <code>double</code></label></li>
+        <li><label><input type="radio" name="q2" value="b"> 4 bytes — metade de <code>double</code></label></li>
+        <li><label><input type="radio" name="q2" value="c"> 8 bytes — independente do tipo apontado, todo ponteiro tem 8 bytes em 64-bit</label></li>
+        <li><label><input type="radio" name="q2" value="d"> 16 bytes — o dobro de um ponteiro <code>int *</code></label></li>
+    </ul>
+</div>
+
+<!-- Q3 -->
+<div class="content-section quiz-question" id="q3-block">
+    <span class="aula-tag">Aula 20</span>
+    <p><strong>3.</strong> O que acontece ao tentar usar um ponteiro que não foi inicializado?</p>
+    <ul class="options-list">
+        <li><label><input type="radio" name="q3" value="a"> O compilador recusa compilar com erro</label></li>
+        <li><label><input type="radio" name="q3" value="b"> O ponteiro automaticamente aponta para <code>NULL</code></label></li>
+        <li><label><input type="radio" name="q3" value="c"> Comportamento indefinido — contém endereço aleatório; usá-lo pode corromper dados ou causar segfault</label></li>
+        <li><label><input type="radio" name="q3" value="d"> O programa imprime <code>0</code> e continua normalmente</label></li>
+    </ul>
+</div>
+
+<!-- Q4 -->
+<div class="content-section quiz-question" id="q4-block">
+    <span class="aula-tag">Aula 20</span>
+    <p><strong>4.</strong> Qual a diferença entre <code>*p++</code> e <code>(*p)++</code>?</p>
+    <ul class="options-list">
+        <li><label><input type="radio" name="q4" value="a"> São equivalentes — o compilador trata os dois da mesma forma</label></li>
+        <li><label><input type="radio" name="q4" value="b"> <code>*p++</code> incrementa o ponteiro (avança para o próximo endereço); <code>(*p)++</code> incrementa o valor apontado</label></li>
+        <li><label><input type="radio" name="q4" value="c"> <code>*p++</code> incrementa o valor; <code>(*p)++</code> incrementa o ponteiro</label></li>
+        <li><label><input type="radio" name="q4" value="d"> Ambos causam erro de compilação por ambiguidade</label></li>
+    </ul>
+</div>
+
+<!-- Q5 -->
+<div class="content-section quiz-question" id="q5-block">
+    <span class="aula-tag">Aula 20</span>
+    <p><strong>5.</strong> Por que é boa prática escrever <code>p = NULL</code> logo após <code>free(p)</code>?</p>
+    <ul class="options-list">
+        <li><label><input type="radio" name="q5" value="a"> Para que a memória liberada seja imediatamente reutilizada pelo SO</label></li>
+        <li><label><input type="radio" name="q5" value="b"> Porque <code>free</code> não libera a memória sem esse comando adicional</label></li>
+        <li><label><input type="radio" name="q5" value="c"> Para evitar que o ponteiro seja usado acidentalmente após a liberação — um <em>dangling pointer</em> que aponta para memória já devolvida</label></li>
+        <li><label><input type="radio" name="q5" value="d"> Para reinicializar o bloco de memória com zeros</label></li>
+    </ul>
+</div>
+
+<!-- ═══════════ AULA 21 — Aritmética de Ponteiros ═══════════ -->
+<div class="section-divider">
+    <h2>Aula 21 — Aritmética de Ponteiros</h2>
+    <p>Questões 6 a 10</p>
+</div>
+
+<!-- Q6 -->
+<div class="content-section quiz-question" id="q6-block">
+    <span class="aula-tag">Aula 21</span>
+    <p><strong>6.</strong> Se <code>p</code> é um <code>int *</code> apontando para <code>0x1000</code>, qual é o endereço de <code>p + 3</code>?</p>
+    <ul class="options-list">
+        <li><label><input type="radio" name="q6" value="a"> <code>0x1003</code> — soma 3 bytes</label></li>
+        <li><label><input type="radio" name="q6" value="b"> <code>0x100C</code> — soma 3 × 4 = 12 bytes</label></li>
+        <li><label><input type="radio" name="q6" value="c"> <code>0x1006</code> — soma 3 × 2 = 6 bytes</label></li>
+        <li><label><input type="radio" name="q6" value="d"> <code>0x1018</code> — soma 3 × 8 = 24 bytes</label></li>
+    </ul>
+</div>
+
+<!-- Q7 -->
+<div class="content-section quiz-question" id="q7-block">
+    <span class="aula-tag">Aula 21</span>
+    <p><strong>7.</strong> Qual é a saída?</p>
+<pre>
+int v[] = {10, 20, 30, 40, 50};
+int *p = v + 2;
+printf("%d %d", *p, *(p + 1));
+</pre>
+    <ul class="options-list">
+        <li><label><input type="radio" name="q7" value="a"> 10 20</label></li>
+        <li><label><input type="radio" name="q7" value="b"> 20 30</label></li>
+        <li><label><input type="radio" name="q7" value="c"> 30 40</label></li>
+        <li><label><input type="radio" name="q7" value="d"> 30 50</label></li>
+    </ul>
+</div>
+
+<!-- Q8 -->
+<div class="content-section quiz-question" id="q8-block">
+    <span class="aula-tag">Aula 21</span>
+    <p><strong>8.</strong> As expressões <code>v[i]</code> e <code>*(v + i)</code> para um array <code>int v[]</code> são:</p>
+    <ul class="options-list">
+        <li><label><input type="radio" name="q8" value="a"> Diferentes — <code>v[i]</code> faz verificação de limite; <code>*(v+i)</code> não</label></li>
+        <li><label><input type="radio" name="q8" value="b"> Idênticas — o compilador gera exatamente o mesmo código para ambas</label></li>
+        <li><label><input type="radio" name="q8" value="c"> Similares, mas <code>*(v+i)</code> é mais lenta por envolver aritmética adicional</label></li>
+        <li><label><input type="radio" name="q8" value="d"> Diferentes — <code>v[i]</code> copia o elemento; <code>*(v+i)</code> retorna referência</label></li>
+    </ul>
+</div>
+
+<!-- Q9 -->
+<div class="content-section quiz-question" id="q9-block">
+    <span class="aula-tag">Aula 21</span>
+    <p><strong>9.</strong> Dado <code>int v[6]</code> com <code>int *p = &amp;v[1]</code> e <code>int *q = &amp;v[5]</code>, qual é o valor de <code>q - p</code>?</p>
+    <ul class="options-list">
+        <li><label><input type="radio" name="q9" value="a"> 16 (distância em bytes)</label></li>
+        <li><label><input type="radio" name="q9" value="b"> 6 (tamanho do array)</label></li>
+        <li><label><input type="radio" name="q9" value="c"> 4 (distância em elementos)</label></li>
+        <li><label><input type="radio" name="q9" value="d"> 5 (índice de q)</label></li>
+    </ul>
+</div>
+
+<!-- Q10 -->
+<div class="content-section quiz-question" id="q10-block">
+    <span class="aula-tag">Aula 21</span>
+    <p><strong>10.</strong> A função abaixo conta o comprimento de uma string. O que ela retorna para <code>"hello"</code>?</p>
+<pre>
+int len(const char *s) {
+    const char *p = s;
+    while (*p) p++;
+    return p - s;
+}
+</pre>
+    <ul class="options-list">
+        <li><label><input type="radio" name="q10" value="a"> 4</label></li>
+        <li><label><input type="radio" name="q10" value="b"> 5</label></li>
+        <li><label><input type="radio" name="q10" value="c"> 6 (inclui o <code>'\0'</code>)</label></li>
+        <li><label><input type="radio" name="q10" value="d"> Endereço do último caractere</label></li>
+    </ul>
+</div>
+
+<!-- ═══════════ AULA 22 — malloc, calloc, realloc, free ═══════════ -->
+<div class="section-divider">
+    <h2>Aula 22 — Alocação Dinâmica: <code>malloc</code>, <code>calloc</code>, <code>realloc</code> e <code>free</code></h2>
+    <p>Questões 11 a 15</p>
+</div>
+
+<!-- Q11 -->
+<div class="content-section quiz-question" id="q11-block">
+    <span class="aula-tag">Aula 22</span>
+    <p><strong>11.</strong> Qual é a diferença fundamental entre <code>malloc</code> e <code>calloc</code>?</p>
+    <ul class="options-list">
+        <li><label><input type="radio" name="q11" value="a"> <code>malloc</code> aloca na stack; <code>calloc</code> aloca no heap</label></li>
+        <li><label><input type="radio" name="q11" value="b"> <code>malloc</code> não inicializa o bloco (pode conter lixo); <code>calloc</code> inicializa todos os bytes com zero</label></li>
+        <li><label><input type="radio" name="q11" value="c"> <code>malloc</code> é para tipos primitivos; <code>calloc</code> é para structs</label></li>
+        <li><label><input type="radio" name="q11" value="d"> Não há diferença funcional — são aliases um do outro</label></li>
+    </ul>
+</div>
+
+<!-- Q12 -->
+<div class="content-section quiz-question" id="q12-block">
+    <span class="aula-tag">Aula 22</span>
+    <p><strong>12.</strong> Qual é o erro no código abaixo?</p>
+<pre>
+int *p = (int *) malloc(10 * sizeof(int));
+p = realloc(p, 20 * sizeof(int));
+</pre>
+    <ul class="options-list">
+        <li><label><input type="radio" name="q12" value="a"> <code>realloc</code> não pode ser usado com ponteiros obtidos de <code>malloc</code></label></li>
+        <li><label><input type="radio" name="q12" value="b"> Se <code>realloc</code> falhar e retornar <code>NULL</code>, o bloco original é perdido (memory leak) pois <code>p</code> foi sobrescrito com <code>NULL</code></label></li>
+        <li><label><input type="radio" name="q12" value="c"> O novo tamanho deve ser obrigatoriamente menor que o original</label></li>
+        <li><label><input type="radio" name="q12" value="d"> Não há nenhum erro — o código está correto</label></li>
+    </ul>
+</div>
+
+<!-- Q13 -->
+<div class="content-section quiz-question" id="q13-block">
+    <span class="aula-tag">Aula 22</span>
+    <p><strong>13.</strong> Qual das afirmações sobre <code>free</code> é <strong>verdadeira</strong>?</p>
+    <ul class="options-list">
+        <li><label><input type="radio" name="q13" value="a"> <code>free(NULL)</code> causa segmentation fault</label></li>
+        <li><label><input type="radio" name="q13" value="b"> Após <code>free(p)</code>, chamar <code>free(p)</code> novamente é seguro se <code>p != NULL</code></label></li>
+        <li><label><input type="radio" name="q13" value="c"> <code>free(NULL)</code> é seguro e não faz nada; chamar <code>free</code> duas vezes no mesmo ponteiro não nulo é comportamento indefinido</label></li>
+        <li><label><input type="radio" name="q13" value="d"> <code>free</code> zera automaticamente o bloco liberado</label></li>
+    </ul>
+</div>
+
+<!-- Q14 -->
+<div class="content-section quiz-question" id="q14-block">
+    <span class="aula-tag">Aula 22</span>
+    <p><strong>14.</strong> Qual é a fórmula correta para acessar o elemento na linha <code>i</code>, coluna <code>j</code> de uma matriz alocada como array único com <code>C</code> colunas?</p>
+    <ul class="options-list">
+        <li><label><input type="radio" name="q14" value="a"> <code>matriz[i + j]</code></label></li>
+        <li><label><input type="radio" name="q14" value="b"> <code>matriz[i * C + j]</code></label></li>
+        <li><label><input type="radio" name="q14" value="c"> <code>matriz[j * C + i]</code></label></li>
+        <li><label><input type="radio" name="q14" value="d"> <code>matriz[i][j]</code> (funciona igual)</label></li>
+    </ul>
+</div>
+
+<!-- Q15 -->
+<div class="content-section quiz-question" id="q15-block">
+    <span class="aula-tag">Aula 22</span>
+    <p><strong>15.</strong> Por que a estratégia de <strong>dobrar a capacidade</strong> no <code>realloc</code> é preferível a aumentar 1 elemento por vez?</p>
+    <ul class="options-list">
+        <li><label><input type="radio" name="q15" value="a"> Porque usa menos memória total no final</label></li>
+        <li><label><input type="radio" name="q15" value="b"> O custo amortizado de cada inserção permanece O(1) — o número de realocações cresce apenas logaritmicamente com o total de elementos</label></li>
+        <li><label><input type="radio" name="q15" value="c"> Evita completamente a necessidade de usar <code>realloc</code></label></li>
+        <li><label><input type="radio" name="q15" value="d"> Permite usar <code>calloc</code> em vez de <code>realloc</code></label></li>
+    </ul>
+</div>
+
+<!-- ═══════════ AULA 23 — Ponteiros e Funções ═══════════ -->
+<div class="section-divider">
+    <h2>Aula 23 — Ponteiros e Funções: passagem por referência versus por valor</h2>
+    <p>Questões 16 a 20</p>
+</div>
+
+<!-- Q16 -->
+<div class="content-section quiz-question" id="q16-block">
+    <span class="aula-tag">Aula 23</span>
+    <p><strong>16.</strong> Qual é a saída?</p>
+<pre>
+#include &lt;stdio.h&gt;
+void f(int x) { x = 99; }
+int main() {
+    int a = 5;
+    f(a);
+    printf("%d", a);
+}
+</pre>
+    <ul class="options-list">
+        <li><label><input type="radio" name="q16" value="a"> 99</label></li>
+        <li><label><input type="radio" name="q16" value="b"> 5</label></li>
+        <li><label><input type="radio" name="q16" value="c"> 0</label></li>
+        <li><label><input type="radio" name="q16" value="d"> Comportamento indefinido</label></li>
+    </ul>
+</div>
+
+<!-- Q17 -->
+<div class="content-section quiz-question" id="q17-block">
+    <span class="aula-tag">Aula 23</span>
+    <p><strong>17.</strong> Qual é a saída?</p>
+<pre>
+#include &lt;stdio.h&gt;
+void trocar(int *a, int *b) {
+    int t = *a; *a = *b; *b = t;
+}
+int main() {
+    int x = 10, y = 20;
+    trocar(&amp;x, &amp;y);
+    printf("%d %d", x, y);
+}
+</pre>
+    <ul class="options-list">
+        <li><label><input type="radio" name="q17" value="a"> 10 20</label></li>
+        <li><label><input type="radio" name="q17" value="b"> 20 10</label></li>
+        <li><label><input type="radio" name="q17" value="c"> 0 0</label></li>
+        <li><label><input type="radio" name="q17" value="d"> Comportamento indefinido</label></li>
+    </ul>
+</div>
+
+<!-- Q18 -->
+<div class="content-section quiz-question" id="q18-block">
+    <span class="aula-tag">Aula 23</span>
+    <p><strong>18.</strong> O que o parâmetro <code>const float *v</code> garante dentro de uma função?</p>
+    <ul class="options-list">
+        <li><label><input type="radio" name="q18" value="a"> O array é copiado antes de ser passado à função</label></li>
+        <li><label><input type="radio" name="q18" value="b"> Os valores apontados por <code>v</code> não podem ser modificados — o compilador emite erro se a função tentar escrever em <code>v[i]</code></label></li>
+        <li><label><input type="radio" name="q18" value="c"> O ponteiro <code>v</code> não pode ser reatribuído dentro da função</label></li>
+        <li><label><input type="radio" name="q18" value="d"> A função é marcada como somente leitura pelo compilador</label></li>
+    </ul>
+</div>
+
+<!-- Q19 -->
+<div class="content-section quiz-question" id="q19-block">
+    <span class="aula-tag">Aula 23</span>
+    <p><strong>19.</strong> Por que a função abaixo está <strong>errada</strong>?</p>
+<pre>
+int *calcular() {
+    int resultado = 42;
+    return &amp;resultado;
+}
+</pre>
+    <ul class="options-list">
+        <li><label><input type="radio" name="q19" value="a"> Funções não podem retornar ponteiros em C</label></li>
+        <li><label><input type="radio" name="q19" value="b"> Retorna o endereço de uma variável local que é destruída ao retornar — o ponteiro fica <em>dangling</em> (pendurado), apontando para memória inválida</label></li>
+        <li><label><input type="radio" name="q19" value="c"> O tipo de retorno deveria ser <code>int</code>, não <code>int *</code></label></li>
+        <li><label><input type="radio" name="q19" value="d"> Variáveis locais não têm endereço em C</label></li>
+    </ul>
+</div>
+
+<!-- Q20 -->
+<div class="content-section quiz-question" id="q20-block">
+    <span class="aula-tag">Aula 23</span>
+    <p><strong>20.</strong> Uma função recebe <code>int **pp</code> e executa <code>*pp = malloc(10 * sizeof(int))</code>. O que isso faz no chamador?</p>
+    <ul class="options-list">
+        <li><label><input type="radio" name="q20" value="a"> Aloca memória acessível apenas dentro da função</label></li>
+        <li><label><input type="radio" name="q20" value="b"> Modifica o ponteiro original no chamador, fazendo-o apontar para o bloco recém-alocado no heap</label></li>
+        <li><label><input type="radio" name="q20" value="c"> Cria uma cópia do ponteiro que nunca pode ser liberada</label></li>
+        <li><label><input type="radio" name="q20" value="d"> Causa erro de compilação — não é possível atribuir a <code>*pp</code></label></li>
+    </ul>
+</div>
+
+<!-- Botão enviar -->
+<div class="content-section" style="text-align:center;">
+    <button type="button" class="submit-btn" onclick="enviarQuiz()" style="font-size:1.1em; padding:14px 36px;">
+        📩 Enviar Respostas e Ver Gabarito
+    </button>
+</div>
+
+</form>
+
+<!-- ════════════════════ ÁREA DE RESULTADOS ════════════════════ -->
+<div id="results-area">
+
+    <div id="score-box">
+        <div class="score-number" id="score-number">—</div>
+        <div class="score-label">de 20 questões corretas</div>
+        <div class="score-msg" id="score-msg">—</div>
+    </div>
+
+    <div class="content-section">
+        <h2>Desempenho por Aula</h2>
+        <div class="aula-breakdown" id="aula-breakdown"></div>
+    </div>
+
+    <div class="content-section">
+        <h2>Gabarito Detalhado</h2>
+        <div id="gabarito-detalhado"></div>
+    </div>
+
+    <div style="text-align:center; margin:20px 0;">
+        <a href="capitulo24.html" style="display:inline-block; padding:12px 30px;
+           background-color:#3047bb; color:white; text-decoration:none;
+           border-radius:6px; font-weight:bold; font-size:1.05em;">
+            Continuar para a Aula 24 →
+        </a>
+    </div>
+
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align:center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education"
+                 style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+<script>
+const GABARITO = {
+
+    // ── Aula 20 ──────────────────────────────────────────────────────────
+    q1: {
+        resp: 'b', aula: 'Aula 20',
+        enunciado: 'Desreferência com *p = 20 modifica x',
+        explicacao: 'O ponteiro <code>p</code> aponta para <code>x</code> (<code>&amp;x</code>). A instrução <code>*p = 20</code> escreve 20 diretamente no endereço de <code>x</code>. Após a atribuição, <code>x</code> e <code>*p</code> referenciam o mesmo endereço e valem 20.'
+    },
+    q2: {
+        resp: 'c', aula: 'Aula 20',
+        enunciado: 'Tamanho de ponteiro em sistemas 64-bit',
+        explicacao: 'Em sistemas 64-bit, todo ponteiro ocupa exatamente <strong>8 bytes</strong>, independente do tipo que aponta. Um <code>int *</code>, <code>float *</code>, <code>double *</code> e <code>char *</code> têm todos 8 bytes. O tipo informa apenas como interpretar os bytes no endereço e o passo em aritmética de ponteiros.'
+    },
+    q3: {
+        resp: 'c', aula: 'Aula 20',
+        enunciado: 'Risco de ponteiro não inicializado',
+        explicacao: 'Um ponteiro não inicializado contém lixo de memória — um endereço aleatório. Desreferenciá-lo tenta acessar aquele endereço desconhecido, podendo corromper dados de outra variável, causar segmentation fault ou produzir resultados silenciosamente errados. Sempre inicialize com <code>NULL</code> ou com <code>&amp;variavel</code>.'
+    },
+    q4: {
+        resp: 'b', aula: 'Aula 20',
+        enunciado: 'Diferença entre *p++ e (*p)++',
+        explicacao: 'O operador <code>++</code> tem precedência maior que <code>*</code>. Portanto <code>*p++</code> primeiro incrementa <strong>o ponteiro</strong> <code>p</code> (fazendo-o apontar para o próximo elemento) e depois desreferencia o endereço original. Já <code>(*p)++</code> usa parênteses para forçar a desreferência primeiro e depois incrementar <strong>o valor</strong> apontado.'
+    },
+    q5: {
+        resp: 'c', aula: 'Aula 20',
+        enunciado: 'Importância de p = NULL após free',
+        explicacao: 'Após <code>free(p)</code>, a memória é devolvida ao sistema mas o ponteiro ainda contém o endereço antigo — um <em>dangling pointer</em>. Se for usado acidentalmente, pode acessar memória reutilizada por outra variável, causando corrupção silenciosa. Atribuir <code>NULL</code> faz qualquer uso posterior resultar em segfault detectável.'
+    },
+
+    // ── Aula 21 ──────────────────────────────────────────────────────────
+    q6: {
+        resp: 'b', aula: 'Aula 21',
+        enunciado: 'Escala automática: int * + 3 avança 12 bytes',
+        explicacao: 'A aritmética de ponteiros escala automaticamente pelo tamanho do tipo. <code>int</code> ocupa 4 bytes, portanto <code>p + 3</code> avança <code>3 × 4 = 12</code> bytes. Partindo de <code>0x1000</code>, chegamos a <code>0x100C</code> (1000 + C em hexa = 1000 + 12 em decimal).'
+    },
+    q7: {
+        resp: 'c', aula: 'Aula 21',
+        enunciado: 'Navegação com p = v + 2 e *(p+1)',
+        explicacao: '<code>p = v + 2</code> aponta para <code>v[2] = 30</code>, então <code>*p = 30</code>. E <code>*(p + 1)</code> aponta para <code>v[3] = 40</code>. Saída: <code>30 40</code>.'
+    },
+    q8: {
+        resp: 'b', aula: 'Aula 21',
+        enunciado: 'Equivalência entre v[i] e *(v+i)',
+        explicacao: '<code>v[i]</code> e <code>*(v + i)</code> são exatamente equivalentes em C — o compilador gera código idêntico para ambas as notações. A notação de colchetes é apenas açúcar sintático sobre aritmética de ponteiros. Nenhuma das formas faz verificação de limites.'
+    },
+    q9: {
+        resp: 'c', aula: 'Aula 21',
+        enunciado: 'Subtração de ponteiros: distância em elementos',
+        explicacao: 'A subtração de dois ponteiros do mesmo array retorna a <strong>distância em elementos</strong> (não em bytes). <code>q</code> aponta para <code>v[5]</code> e <code>p</code> aponta para <code>v[1]</code>, portanto <code>q - p = 5 - 1 = 4</code> elementos.'
+    },
+    q10: {
+        resp: 'b', aula: 'Aula 21',
+        enunciado: 'Comprimento de "hello" via aritmética de ponteiros',
+        explicacao: '<code>p</code> começa em <code>s</code> e avança enquanto <code>*p != \'\\0\'</code>. Para <code>"hello"</code>: h-e-l-l-o são 5 avanços, então <code>p</code> para no terminador <code>\'\\0\'</code>. A subtração <code>p - s = 5</code> — o número de caracteres sem o terminador.'
+    },
+
+    // ── Aula 22 ──────────────────────────────────────────────────────────
+    q11: {
+        resp: 'b', aula: 'Aula 22',
+        enunciado: 'Diferença entre malloc e calloc',
+        explicacao: '<code>malloc</code> aloca o bloco sem tocar no conteúdo — os bytes podem ter qualquer valor (lixo de memória). <code>calloc</code> aloca e <strong>zera todos os bytes</strong> antes de retornar. Ambos alocam no heap e retornam <code>NULL</code> em caso de falha.'
+    },
+    q12: {
+        resp: 'b', aula: 'Aula 22',
+        enunciado: 'Armadilha do realloc sem variável temporária',
+        explicacao: 'Se <code>realloc</code> falhar, ele retorna <code>NULL</code> <em>sem liberar</em> o bloco original. Ao fazer <code>p = realloc(p, ...)</code>, se o retorno for <code>NULL</code>, <code>p</code> recebe <code>NULL</code> e você perde a única referência ao bloco original — memory leak garantido. A solução: <code>int *tmp = realloc(p, ...); if (tmp) p = tmp;</code>'
+    },
+    q13: {
+        resp: 'c', aula: 'Aula 22',
+        enunciado: 'Comportamento de free(NULL) e double free',
+        explicacao: 'O padrão C garante que <code>free(NULL)</code> é uma operação segura que não faz nada. Porém, chamar <code>free</code> duas vezes no mesmo ponteiro não nulo (<em>double free</em>) é comportamento indefinido — pode corromper as estruturas internas do heap ou criar vulnerabilidades de segurança.'
+    },
+    q14: {
+        resp: 'b', aula: 'Aula 22',
+        enunciado: 'Fórmula de acesso em matriz alocada como array único',
+        explicacao: 'Em um array unidimensional que simula uma matriz de <code>C</code> colunas, o elemento <code>[i][j]</code> está na posição <code>i * C + j</code>. Isso reflete o armazenamento em row-major order: cada linha ocupa <code>C</code> posições consecutivas, e a linha <code>i</code> começa na posição <code>i * C</code>.'
+    },
+    q15: {
+        resp: 'b', aula: 'Aula 22',
+        enunciado: 'Eficiência da estratégia de dobrar capacidade',
+        explicacao: 'Dobrar a capacidade significa que o número de realocações para inserir N elementos é O(log N). Com incremento de 1, seriam N realocações — O(N). A estratégia de dobrar é a mesma usada por <code>ArrayList</code> em Java e <code>vector</code> em C++, garantindo inserção com custo amortizado O(1).'
+    },
+
+    // ── Aula 23 ──────────────────────────────────────────────────────────
+    q16: {
+        resp: 'b', aula: 'Aula 23',
+        enunciado: 'Call by value: função não modifica a variável original',
+        explicacao: 'A função <code>f</code> recebe uma cópia independente de <code>a</code>. A atribuição <code>x = 99</code> modifica apenas essa cópia local — a variável <code>a</code> em <code>main</code> permanece 5. Esse é o comportamento de <strong>call by value</strong>.'
+    },
+    q17: {
+        resp: 'b', aula: 'Aula 23',
+        enunciado: 'Swap com ponteiros: troca os originais',
+        explicacao: '<code>trocar(&amp;x, &amp;y)</code> passa os endereços de <code>x</code> e <code>y</code>. Dentro da função, <code>*a</code> e <code>*b</code> acessam diretamente as variáveis originais. Após a troca, <code>x = 20</code> e <code>y = 10</code>.'
+    },
+    q18: {
+        resp: 'b', aula: 'Aula 23',
+        enunciado: 'Efeito de const float *v no parâmetro',
+        explicacao: '<code>const float *v</code> significa que os <strong>valores apontados</strong> por <code>v</code> são somente leitura dentro da função. Tentar escrever <code>v[i] = x</code> resulta em erro de compilação. O ponteiro <code>v</code> em si (sua posição) ainda pode ser reatribuído — para imobilizá-lo também seria preciso <code>float * const v</code>.'
+    },
+    q19: {
+        resp: 'b', aula: 'Aula 23',
+        enunciado: 'Retornar ponteiro para variável local — dangling pointer',
+        explicacao: '<code>resultado</code> é uma variável local: existe apenas no frame de pilha de <code>calcular()</code>. Ao retornar, esse frame é destruído e <code>&amp;resultado</code> aponta para memória que pode ser imediatamente reutilizada por outra função — um <em>dangling pointer</em>. Usar esse ponteiro é comportamento indefinido. A solução correta é usar <code>malloc</code>.'
+    },
+    q20: {
+        resp: 'b', aula: 'Aula 23',
+        enunciado: 'Ponteiro para ponteiro int**: modificar o ponteiro do chamador',
+        explicacao: '<code>pp</code> é um ponteiro para ponteiro. <code>*pp</code> é o ponteiro original no chamador. Ao escrever <code>*pp = malloc(...)</code>, a função modifica o ponteiro no chamador, fazendo-o apontar para o novo bloco alocado no heap. Após a chamada, o ponteiro do chamador aponta para a memória dinâmica recém-criada.'
+    }
+};
+
+const AULAS = {
+    'Aula 20': ['q1','q2','q3','q4','q5'],
+    'Aula 21': ['q6','q7','q8','q9','q10'],
+    'Aula 22': ['q11','q12','q13','q14','q15'],
+    'Aula 23': ['q16','q17','q18','q19','q20']
+};
+
+function enviarQuiz() {
+    let acertos = 0;
+    const aulaAcertos = {};
+    Object.keys(AULAS).forEach(a => aulaAcertos[a] = 0);
+
+    let htmlGabarito = '';
+
+    for (const [q, dados] of Object.entries(GABARITO)) {
+        const sel    = document.querySelector(`input[name="${q}"]:checked`);
+        const num    = q.replace('q', '');
+        const acertou = sel && sel.value === dados.resp;
+        const naoRes  = !sel;
+
+        if (acertou) {
+            acertos++;
+            aulaAcertos[dados.aula]++;
+        }
+
+        const cls    = acertou ? 'correct' : (naoRes ? 'unanswered' : 'incorrect');
+        const icon   = acertou ? '✅' : (naoRes ? '⚠️' : '❌');
+        const header = acertou
+            ? `${icon} Questão ${num} — Correta`
+            : naoRes
+                ? `${icon} Questão ${num} — Não respondida`
+                : `${icon} Questão ${num} — Incorreta · Gabarito: <strong>${dados.resp.toUpperCase()}</strong>`;
+
+        htmlGabarito += `
+        <div class="result-item ${cls}">
+            <div class="result-header">${header} <span style="font-size:0.8em;color:#888;">[${dados.aula}]</span></div>
+            <div style="font-size:0.9em;color:#555;margin-bottom:4px;">${dados.enunciado}</div>
+            <div class="result-explain">${dados.explicacao}</div>
+        </div>`;
+    }
+
+    // Placar
+    document.getElementById('score-number').textContent = `${acertos}/20`;
+
+    let msg;
+    if      (acertos >= 18) msg = '🏆 Excelente! Domínio completo das aulas 20 a 23.';
+    else if (acertos >= 14) msg = '✅ Aprovado! Bom domínio de ponteiros e memória.';
+    else if (acertos >= 10) msg = '📖 Revise as aulas com maior número de erros e tente novamente.';
+    else                    msg = '🔄 Recomendado rever as aulas 20 a 23 antes de continuar.';
+    document.getElementById('score-msg').textContent = msg;
+
+    // Breakdown por aula
+    let htmlBreakdown = '';
+    for (const [aula, qs] of Object.entries(AULAS)) {
+        const tot = qs.length;
+        const ac  = aulaAcertos[aula];
+        const pct = Math.round(ac / tot * 100);
+        htmlBreakdown += `
+        <div class="aula-stat">
+            <div class="stat-title">${aula}</div>
+            <div class="stat-score">${ac}/${tot}</div>
+            <div class="stat-bar"><div class="stat-fill" style="width:${pct}%"></div></div>
+        </div>`;
+    }
+    document.getElementById('aula-breakdown').innerHTML = htmlBreakdown;
+    document.getElementById('gabarito-detalhado').innerHTML = htmlGabarito;
+
+    // Exibir resultados
+    document.getElementById('results-area').style.display = 'block';
+    document.getElementById('quiz-form').querySelectorAll('input').forEach(i => i.disabled = true);
+    document.getElementById('quiz-form').querySelector('.submit-btn').style.display = 'none';
+    document.getElementById('results-area').scrollIntoView({ behavior: 'smooth' });
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 27b – Structs: seta, aninhadas, arrays, sizeof e comparação</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Aula 27b — Structs <span style="font-size:0.7em;opacity:0.85;">Parte 2 de 2</span></h1>
+    <p>Operador seta, structs aninhadas, arrays de structs, <code style="color:#aad4ff">sizeof</code> e padding</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo27a.html">← Parte 1</a>
+    <a href="capitulo28.html">Aula 28 →</a>
+</nav>
+
+<div class="info-box">
+    Esta é a continuação da Aula 27a. Os exemplos aqui assumem familiaridade com <code>struct</code>, <code>typedef</code> e passagem por ponteiro — temas da Parte 1.
+</div>
+
+<!-- ═══════════════════════════════════════ 6. OPERADOR SETA -->
+<div class="content-section">
+    <h2>6. Operador Seta (<code>-&gt;</code>) vs. Ponto (<code>.</code>)</h2>
+
+    <p>Existem dois operadores de acesso a campos de struct — qual usar depende se você tem a variável diretamente ou um ponteiro para ela:</p>
+
+    <table>
+        <tr>
+            <th>Situação</th>
+            <th>Operador</th>
+            <th>Exemplo</th>
+            <th>Equivalente</th>
+        </tr>
+        <tr>
+            <td>Variável é a própria struct</td>
+            <td><code>.</code> (ponto)</td>
+            <td><code>aluno.nota</code></td>
+            <td>—</td>
+        </tr>
+        <tr>
+            <td>Variável é um <em>ponteiro</em> para struct</td>
+            <td><code>-&gt;</code> (seta)</td>
+            <td><code>ptr-&gt;nota</code></td>
+            <td><code>(*ptr).nota</code></td>
+        </tr>
+    </table>
+
+<pre>
+typedef struct { int x; int y; } Ponto;
+
+Ponto  p  = {3, 4};
+Ponto *pp = &amp;p;
+
+<span class="code-comment">/* Estas três expressões acessam o mesmo campo: */</span>
+printf("%d\n", p.x);        <span class="code-comment">// variável — usa ponto</span>
+printf("%d\n", pp-&gt;x);     <span class="code-comment">// ponteiro — usa seta</span>
+printf("%d\n", (*pp).x);   <span class="code-comment">// desreferência explícita + ponto (verboso)</span>
+
+<span class="code-comment">/* ❌ Erros comuns: */</span>
+<span class="code-comment">// printf("%d\n", p->x);   — p é struct, não ponteiro: use ponto</span>
+<span class="code-comment">// printf("%d\n", pp.x);   — pp é ponteiro: use seta</span>
+</pre>
+
+    <div class="grid-container">
+        <div class="grid-item">
+            <strong>Java — sempre ponto, mesmo com referência</strong>
+<pre>
+Aluno a = new Aluno();
+a.nota = 8.5f;    // Java usa . sempre
+
+// O objeto em Java é sempre
+// acessado por referência,
+// mas a sintaxe é sempre ponto
+</pre>
+        </div>
+        <div class="grid-item">
+            <strong>C — ponto ou seta, dependendo do tipo</strong>
+<pre>
+Aluno  a;         // struct direta
+Aluno *p = &a;   // ponteiro para struct
+
+a.nota  = 8.5f;  // ponto
+p->nota = 8.5f;  // seta (modifica o mesmo a)
+</pre>
+        </div>
+    </div>
+
+    <div class="dica">
+        <strong>Regra mnemônica:</strong> "Ponto para variável, seta para ponteiro." Ou: se o tipo na declaração tem <code>*</code>, use <code>-&gt;</code>. Se não tem <code>*</code>, use <code>.</code>.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 7. STRUCTS ANINHADAS -->
+<div class="content-section">
+    <h2>7. Structs Aninhadas</h2>
+
+    <p>Um campo de uma struct pode ser outra struct — o equivalente de um atributo cujo tipo é outra classe em Java:</p>
+
+<pre>
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+typedef struct {
+    int dia;
+    int mes;
+    int ano;
+} Data;
+
+typedef struct {
+    char  nome[60];
+    char  cpf[15];
+    Data  nascimento;    <span class="code-comment">// campo do tipo Data (struct dentro de struct)</span>
+    float salario;
+} Funcionario;
+
+void exibir(const Funcionario *f) {
+    printf("Nome:         %s\n",   f-&gt;nome);
+    printf("CPF:          %s\n",   f-&gt;cpf);
+    printf("Nascimento:   %02d/%02d/%04d\n",
+           f-&gt;nascimento.dia,      <span class="code-comment">// acesso: seta + ponto</span>
+           f-&gt;nascimento.mes,
+           f-&gt;nascimento.ano);
+    printf("Salário:      R$ %.2f\n\n", f-&gt;salario);
+}
+
+int main() {
+    Funcionario f1 = {
+        .nome        = "Carlos Mota",
+        .cpf         = "123.456.789-00",
+        .nascimento  = {.dia = 15, .mes = 8, .ano = 1990},
+        .salario     = 5800.0f
+    };
+
+    Funcionario f2;
+    strcpy(f2.nome, "Beatriz Lima");
+    strcpy(f2.cpf,  "987.654.321-00");
+    f2.nascimento.dia = 22;
+    f2.nascimento.mes = 3;
+    f2.nascimento.ano = 1995;
+    f2.salario = 4300.0f;
+
+    exibir(&amp;f1);
+    exibir(&amp;f2);
+
+    return 0;
+}
+</pre>
+    <div class="terminal-output">
+Nome:         Carlos Mota<br>
+CPF:          123.456.789-00<br>
+Nascimento:   15/08/1990<br>
+Salário:      R$ 5800.00<br>
+<br>
+Nome:         Beatriz Lima<br>
+CPF:          987.654.321-00<br>
+Nascimento:   22/03/1995<br>
+Salário:      R$ 4300.00
+    </div>
+
+    <div class="info-box">
+        <strong>Acesso a struct aninhada:</strong> <code>f-&gt;nascimento.dia</code> — seta para o primeiro nível (<code>f</code> é ponteiro para <code>Funcionario</code>), ponto para o segundo (<code>nascimento</code> é um campo direto, não ponteiro). Em Java seria <code>f.nascimento.dia</code> sempre.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 8. ARRAY DE STRUCTS -->
+<div class="content-section">
+    <h2>8. Arrays de Structs</h2>
+
+    <p>Arrays de structs são extremamente comuns — é a forma natural de representar coleções de entidades como turmas, catálogos ou filas:</p>
+
+<pre>
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+typedef struct {
+    char  nome[40];
+    float preco;
+    int   estoque;
+} Produto;
+
+<span class="code-comment">/* Encontra o produto mais barato — retorna ponteiro para ele */</span>
+Produto *maisBarato(Produto *cat, int n) {
+    Produto *menor = &amp;cat[0];
+    for (int i = 1; i &lt; n; i++)
+        if (cat[i].preco &lt; menor-&gt;preco)
+            menor = &amp;cat[i];
+    return menor;
+}
+
+<span class="code-comment">/* Ordena por preço (selection sort) */</span>
+void ordenarPorPreco(Produto *cat, int n) {
+    for (int i = 0; i &lt; n - 1; i++) {
+        int minIdx = i;
+        for (int j = i + 1; j &lt; n; j++)
+            if (cat[j].preco &lt; cat[minIdx].preco)
+                minIdx = j;
+        if (minIdx != i) {
+            Produto temp  = cat[i];    <span class="code-comment">// structs podem ser copiadas por =</span>
+            cat[i]        = cat[minIdx];
+            cat[minIdx]   = temp;
+        }
+    }
+}
+
+int main() {
+    Produto catalogo[] = {
+        {"Caderno",   12.90f, 50},
+        {"Caneta",     2.50f, 200},
+        {"Mochila",   89.90f, 15},
+        {"Borracha",   1.80f, 100},
+        {"Régua",      4.50f, 75}
+    };
+    int n = 5;
+
+    Produto *barato = maisBarato(catalogo, n);
+    printf("Mais barato: %s (R$ %.2f)\n\n", barato-&gt;nome, barato-&gt;preco);
+
+    ordenarPorPreco(catalogo, n);
+
+    printf("Catálogo ordenado por preço:\n");
+    printf("%-15s %8s %8s\n", "Produto", "Preço", "Estoque");
+    printf("-------------------------------\n");
+    for (int i = 0; i &lt; n; i++)
+        printf("%-15s R$%6.2f %8d\n",
+               catalogo[i].nome,
+               catalogo[i].preco,
+               catalogo[i].estoque);
+
+    return 0;
+}
+</pre>
+    <div class="terminal-output">
+Mais barato: Borracha (R$ 1.80)<br>
+<br>
+Catálogo ordenado por preço:<br>
+Produto          Preço  Estoque<br>
+-------------------------------<br>
+Borracha       R$  1.80      100<br>
+Caneta         R$  2.50      200<br>
+Régua          R$  4.50       75<br>
+Caderno        R$ 12.90       50<br>
+Mochila        R$ 89.90       15
+    </div>
+
+    <div class="info-box">
+        <strong>Cópia de structs com <code>=</code>:</strong> Ao contrário de arrays (que decaem para ponteiro), structs em C podem ser copiadas com <code>=</code> — o compilador copia campo a campo automaticamente. Isso é equivalente a criar um novo objeto com os mesmos valores em Java. Por isso o swap na função de ordenação funciona corretamente com uma variável <code>Produto temp</code>.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 9. SIZEOF E PADDING -->
+<div class="content-section">
+    <h2>9. <code>sizeof</code> e Padding</h2>
+
+    <p>O tamanho de uma struct não é necessariamente a soma dos tamanhos dos seus campos. O compilador pode inserir bytes de preenchimento (<em>padding</em>) entre campos para garantir alinhamento de memória eficiente:</p>
+
+<pre>
+#include &lt;stdio.h&gt;
+
+typedef struct {
+    char  c;      <span class="code-comment">// 1 byte</span>
+    int   i;      <span class="code-comment">// 4 bytes — alinhado em múltiplo de 4</span>
+    char  c2;     <span class="code-comment">// 1 byte</span>
+} Exemplo;
+
+typedef struct {
+    int   i;      <span class="code-comment">// 4 bytes</span>
+    char  c;      <span class="code-comment">// 1 byte</span>
+    char  c2;     <span class="code-comment">// 1 byte</span>
+} ExemploOtimizado;
+
+int main() {
+    printf("sizeof(char)              = %zu\n", sizeof(char));
+    printf("sizeof(int)               = %zu\n", sizeof(int));
+    printf("sizeof(Exemplo)           = %zu\n", sizeof(Exemplo));
+    printf("sizeof(ExemploOtimizado)  = %zu\n", sizeof(ExemploOtimizado));
+    return 0;
+}
+</pre>
+    <div class="terminal-output">sizeof(char)              = 1<br>sizeof(int)               = 4<br>sizeof(Exemplo)           = 12  ← padding: 1+3pad+4+1+3pad<br>sizeof(ExemploOtimizado)  = 8   ← 4+1+1+2pad</div>
+
+    <div class="tip-box">
+        <strong>Para minimizar padding:</strong> Declare os campos em ordem decrescente de tamanho — maior para menor. Isso reduz o espaço desperdiçado. Em Java esse problema não existe — a JVM organiza os campos internamente de forma otimizada.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 10. COMPARAÇÃO GERAL -->
+<div class="content-section">
+    <h2>10. Comparação Geral — C vs. Java</h2>
+
+    <table>
+        <tr>
+            <th>Aspecto</th>
+            <th>C (<code>struct</code>)</th>
+            <th>Java (<code>class</code>)</th>
+        </tr>
+        <tr>
+            <td>Sintaxe de declaração</td>
+            <td><code>struct Nome { campos; };</code></td>
+            <td><code>class Nome { campos; métodos; }</code></td>
+        </tr>
+        <tr>
+            <td>Métodos</td>
+            <td>❌ Não — funções ficam fora da struct</td>
+            <td>✅ Sim — métodos são parte da classe</td>
+        </tr>
+        <tr>
+            <td>Construtor</td>
+            <td>❌ Não — usar função de inicialização</td>
+            <td>✅ Sim — construtores automáticos</td>
+        </tr>
+        <tr>
+            <td>Encapsulamento</td>
+            <td>❌ Todos os campos são públicos</td>
+            <td>✅ <code>private</code>, <code>protected</code>, <code>public</code></td>
+        </tr>
+        <tr>
+            <td>Herança</td>
+            <td>❌ Não suportada</td>
+            <td>✅ <code>extends</code></td>
+        </tr>
+        <tr>
+            <td>Passagem para função</td>
+            <td>Por valor (cópia) ou por ponteiro (explícito)</td>
+            <td>Referência automática (implícita)</td>
+        </tr>
+        <tr>
+            <td>Acesso a campos</td>
+            <td><code>var.campo</code> ou <code>ptr-&gt;campo</code></td>
+            <td>Sempre <code>obj.campo</code></td>
+        </tr>
+        <tr>
+            <td>Cópia com <code>=</code></td>
+            <td>✅ Copia todos os campos</td>
+            <td>❌ Copia apenas a referência</td>
+        </tr>
+        <tr>
+            <td>Padding de memória</td>
+            <td>⚠️ Visível — ordem dos campos afeta <code>sizeof</code></td>
+            <td>✅ Transparente — JVM gerencia</td>
+        </tr>
+    </table>
+
+    <div class="dica">
+        <strong>Resumo mental para quem vem do Java:</strong> Pense em <code>struct</code> como uma classe Java que só tem atributos públicos, sem construtores, sem métodos e sem herança. As "funções membro" ficam fora da struct e recebem um ponteiro como primeiro parâmetro — é o padrão que as aulas de listas lineares (Aulas 29+) vão explorar extensivamente.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ QUIZ -->
+<div class="content-section exercise-section">
+    <h2>Quiz — Aula 27b</h2>
+    <form class="quiz-form" onsubmit="return false;">
+
+        <div class="content-section quiz-question">
+            <p><strong>1.</strong> Dado <code>Aluno *p = &amp;turma[0];</code>, como acessar o campo <code>nota</code> corretamente?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q1" value="a"> <code>p.nota</code></label></li>
+                <li><label><input type="radio" name="q1" value="b"> <code>p-&gt;nota</code> ou <code>(*p).nota</code></label></li>
+                <li><label><input type="radio" name="q1" value="c"> <code>*p.nota</code></label></li>
+                <li><label><input type="radio" name="q1" value="d"> <code>&amp;p.nota</code></label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>2.</strong> Dado <code>Funcionario *f</code> onde <code>nascimento</code> é um campo do tipo <code>Data</code> (não ponteiro), como acessar <code>ano</code>?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q2" value="a"> <code>f.nascimento.ano</code></label></li>
+                <li><label><input type="radio" name="q2" value="b"> <code>f-&gt;nascimento-&gt;ano</code></label></li>
+                <li><label><input type="radio" name="q2" value="c"> <code>f-&gt;nascimento.ano</code></label></li>
+                <li><label><input type="radio" name="q2" value="d"> <code>(*f).nascimento-&gt;ano</code></label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>3.</strong> Por que o <code>sizeof</code> de uma struct pode ser maior que a soma dos tamanhos dos seus campos?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q3" value="a"> Porque C adiciona um campo oculto com o endereço da struct</label></li>
+                <li><label><input type="radio" name="q3" value="b"> Por causa do <em>padding</em> — bytes inseridos pelo compilador entre campos para garantir alinhamento de memória eficiente</label></li>
+                <li><label><input type="radio" name="q3" value="c"> Porque <code>sizeof</code> inclui o tamanho do nome do tipo</label></li>
+                <li><label><input type="radio" name="q3" value="d"> Apenas quando a struct contém ponteiros</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>4.</strong> Em Java, toda classe tem modificadores como <code>private</code>. Em C, structs:</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q4" value="a"> Também têm modificadores — <code>private</code> e <code>public</code> funcionam igual</label></li>
+                <li><label><input type="radio" name="q4" value="b"> Todos os campos são sempre públicos — não existe encapsulamento nativo; a convenção é usar <code>const</code> e funções de acesso para proteger dados</label></li>
+                <li><label><input type="radio" name="q4" value="c"> Usam <code>static</code> para simular <code>private</code></label></li>
+                <li><label><input type="radio" name="q4" value="d"> Campos precedidos de <code>_</code> são automaticamente privados</label></li>
+            </ul>
+        </div>
+
+        <button type="button" class="submit-btn" onclick="verificarRespostas()">Verificar Respostas</button>
+    </form>
+    <div id="quiz-results" style="display:none; margin-top:20px; padding:15px; background:#dff0d8; border-radius:5px;"></div>
+</div>
+
+<div class="navigation-buttons">
+    <a href="capitulo27a.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">← Parte 1</a>
+    <a href="index.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">Índice</a>
+    <a href="capitulo28.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">Aula 28 →</a>
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align:center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education"
+                 style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+<script>
+function verificarRespostas() {
+    const gabarito = { q1:"b", q2:"c", q3:"b", q4:"b" };
+    const explicacoes = {
+        q1: "Quando a variável é um ponteiro para struct, usa-se o operador seta (->): p->nota, equivalente a (*p).nota. O ponto (.) só é usado quando a variável é a struct diretamente, não um ponteiro.",
+        q2: "f é ponteiro para Funcionario — usa-se -> para o primeiro nível: f->nascimento. Mas nascimento é um campo Data embutido (não ponteiro), então usa-se . para o segundo nível: f->nascimento.ano. Dois -> seria errado porque nascimento não é ponteiro.",
+        q3: "O compilador insere bytes de padding entre campos para que cada campo fique em endereço alinhado com seu tamanho. Um int (4 bytes) deve estar em múltiplo de 4. Isso pode aumentar o sizeof acima da soma dos campos. Declarar campos do maior para o menor minimiza o padding.",
+        q4: "Structs em C não têm modificadores de acesso — todos os campos são sempre acessíveis por qualquer código com uma variável do tipo. O encapsulamento em C é feito por convenção e design de API (expor apenas o .h sem revelar o interior)."
+    };
+
+    let acertos = 0, html = "";
+    const total = Object.keys(gabarito).length;
+    for (const q in gabarito) {
+        const sel = document.querySelector(`input[name="${q}"]:checked`);
+        const num = q.replace("q","");
+        if (sel) {
+            if (sel.value === gabarito[q]) {
+                acertos++;
+                html += `<p>Questão ${num}: <span style="color:green;font-weight:bold;">✅ Correto!</span> — ${explicacoes[q]}</p>`;
+            } else {
+                html += `<p>Questão ${num}: <span style="color:red;font-weight:bold;">❌ Incorreto.</span> Gabarito: <strong>${gabarito[q].toUpperCase()}</strong> — ${explicacoes[q]}</p>`;
+            }
+        } else {
+            html += `<p>Questão ${num}: <span style="color:orange;font-weight:bold;">⚠ Não respondida.</span></p>`;
+        }
+    }
+    const r = document.getElementById("quiz-results");
+    r.innerHTML = `<h3>Sua pontuação: ${acertos} de ${total}</h3>${html}`;
+    r.style.display = "block";
+    r.scrollIntoView({ behavior: "smooth" });
+}
+</script>
+
+</body>
+</html>

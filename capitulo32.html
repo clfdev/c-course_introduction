@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 32 – Lista Linear Sequencial: Estrutura e Operações Básicas</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Aula 32 – Lista Linear Sequencial</h1>
+    <p>Montando a estrutura completa e implementando as primeiras funções: inicializar, exibir, tamanho e acesso a elementos</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo31.html">← Aula 31</a>
+    <a href="capitulo33.html">Aula 33 →</a>
+</nav>
+
+<!-- ═══════════════════════════════════════ DEFINIÇÃO -->
+<div class="content-section">
+    <h2>O que é uma Lista Linear Sequencial?</h2>
+
+    <div class="definicao">
+        Uma <strong>lista linear sequencial</strong> é uma estrutura de dados onde os elementos estão armazenados de forma <em>contígua</em> na memória, na mesma ordem em que o usuário os vê. Cada elemento (exceto o primeiro e o último) tem exatamente um predecessor e um sucessor.
+    </div>
+
+    <p>Ela é implementada com um <strong>array de tamanho fixo</strong> mais um <strong>contador</strong> que registra quantas posições estão ocupadas:</p>
+
+    <table>
+        <tr><th>Conceito</th><th>Em C (nossa lista)</th><th>Em Java (equivalente)</th></tr>
+        <tr>
+            <td>Capacidade máxima</td>
+            <td><code>MAX = 50</code> (constante fixa)</td>
+            <td><code>array.length</code> ou <code>new int[50]</code></td>
+        </tr>
+        <tr>
+            <td>Tamanho atual</td>
+            <td><code>nroElem</code> (campo da struct)</td>
+            <td><code>arrayList.size()</code></td>
+        </tr>
+        <tr>
+            <td>Acesso a elemento</td>
+            <td><code>l-&gt;A[i].chave</code></td>
+            <td><code>lista.get(i)</code></td>
+        </tr>
+        <tr>
+            <td>Tamanho dinâmico?</td>
+            <td>❌ Não — fixo em MAX</td>
+            <td>✅ ArrayList cresce automaticamente</td>
+        </tr>
+    </table>
+
+    <div class="info-box">
+        <strong>Lista Sequencial vs ArrayList:</strong> Nossa lista se parece mais com um <code>int[]</code> de Java do que com um <code>ArrayList</code>: o espaço é reservado de uma vez e nunca cresce. O <code>nroElem</code> faz o papel do <code>.size()</code> do ArrayList — controla quantas posições estão de fato em uso.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ ESTRUTURA COMPLETA -->
+<div class="content-section">
+    <h2>A Estrutura Completa do Projeto</h2>
+    <p>Com tudo que aprendemos nas aulas 29, 30 e 31, montamos a base de todos os algoritmos que virão:</p>
+
+    <pre>
+#include &lt;stdio.h&gt;
+#include &lt;stdbool.h&gt;
+
+#define MAX  50    <span class="code-comment">// capacidade máxima da lista</span>
+#define ERRO -1    <span class="code-comment">// código de retorno para operações inválidas</span>
+
+typedef int TIPOCHAVE;           <span class="code-comment">// apelido semântico para o tipo da chave</span>
+
+typedef struct {
+    TIPOCHAVE chave;             <span class="code-comment">// identificador do registro</span>
+    <span class="code-comment">// outros campos poderiam estar aqui: char nome[50], float salario...</span>
+} REGISTRO;
+
+typedef struct {
+    REGISTRO A[MAX + 1];         <span class="code-comment">// +1 reserva espaço para sentinela (Aula 34)</span>
+    int      nroElem;            <span class="code-comment">// quantos elementos estão usados (0 a MAX)</span>
+} LISTA;</pre>
+
+    <div class="tip-box">
+        <strong>Por que <code>#include &lt;stdbool.h&gt;</code>?</strong> Algumas funções retornam <code>bool</code> (<code>true</code>/<code>false</code>) para indicar sucesso ou falha. Este header, disponível desde C99, define esse tipo. Sem ele, teríamos que usar <code>int</code> com 0 e 1.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ INICIALIZAR -->
+<div class="content-section">
+    <h2>Função 1 — <code>inicializarLista</code></h2>
+    <p>A primeira coisa a fazer com qualquer lista é inicializá-la. Sem isso, <code>nroElem</code> contém "lixo" de memória e todas as outras funções se comportarão de forma imprevisível.</p>
+
+    <pre>
+void inicializarLista(LISTA* l) {
+    l-&gt;nroElem = 0;
+} <span class="code-comment">/* inicializarLista */</span></pre>
+
+    <p>Simples assim. Ela recebe um ponteiro para a lista (<code>LISTA*</code>, como aprendemos na Aula 31) e zera o contador. O array <code>A</code> não precisa ser "limpo" — posições além de <code>nroElem</code> são simplesmente ignoradas.</p>
+
+    <div class="exemplo">
+        Em Java, o equivalente seria o construtor: <code>Lista() { this.nroElem = 0; }</code> — chamado automaticamente com <code>new Lista()</code>. Em C, não há construtor automático; você <strong>precisa chamar</strong> <code>inicializarLista(&amp;lista)</code> explicitamente antes de usar a lista.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ EXIBIR -->
+<div class="content-section">
+    <h2>Função 2 — <code>exibirLista</code></h2>
+    <p>Percorre os <code>nroElem</code> primeiros elementos do array e imprime suas chaves:</p>
+
+    <pre>
+void exibirLista(LISTA* l) {
+    int i;
+    printf("Lista: \" ");
+    for (i = 0; i &lt; l-&gt;nroElem; i++)
+        printf("%i ", l-&gt;A[i].chave);  <span class="code-comment">// TIPOCHAVE = int, então %i</span>
+    printf("\"\n");
+} <span class="code-comment">/* exibirLista */</span></pre>
+
+    <p>Note que o <code>for</code> vai de <code>0</code> até <code>nroElem - 1</code> (a condição é <code>i &lt; nroElem</code>). Posições de <code>nroElem</code> em diante existem no array mas contêm lixo — por isso as ignoramos.</p>
+</div>
+
+<!-- ═══════════════════════════════════════ TAMANHO -->
+<div class="content-section">
+    <h2>Funções 3 e 4 — <code>tamanho</code> e <code>tamanhoEmBytes</code></h2>
+
+    <pre>
+<span class="code-comment">/* Retorna quantos elementos estão atualmente na lista */</span>
+int tamanho(LISTA* l) {
+    return l-&gt;nroElem;
+} <span class="code-comment">/* tamanho */</span>
+
+<span class="code-comment">/* Retorna o tamanho total da struct LISTA em bytes */</span>
+int tamanhoEmBytes(LISTA* l) {
+    return sizeof(LISTA);
+} <span class="code-comment">/* tamanhoEmBytes */</span></pre>
+
+    <div class="warning-box">
+        <strong>Tamanho lógico ≠ tamanho físico:</strong>
+        <code>tamanho()</code> retorna quantos elementos estão <em>em uso</em> (de 0 a MAX). <code>tamanhoEmBytes()</code> retorna o tamanho <em>total</em> da struct em memória — que é sempre o mesmo, independente de quantos elementos estejam preenchidos, pois a alocação é estática.
+    </div>
+
+    <table>
+        <tr><th>Função C</th><th>Equivalente Java</th><th>O que retorna</th></tr>
+        <tr><td><code>tamanho(&amp;l)</code></td><td><code>arrayList.size()</code></td><td>Elementos em uso (lógico)</td></tr>
+        <tr><td><code>tamanhoEmBytes(&amp;l)</code></td><td>Sem equivalente direto</td><td>Bytes ocupados pela struct na memória</td></tr>
+        <tr><td><code>MAX</code></td><td><code>array.length</code></td><td>Capacidade máxima (físico)</td></tr>
+    </table>
+</div>
+
+<!-- ═══════════════════════════════════════ ACESSO A ELEMENTOS -->
+<div class="content-section">
+    <h2>Funções 5, 6 e 7 — Acesso a Elementos</h2>
+    <p>Três funções para recuperar a chave de elementos específicos:</p>
+
+    <pre>
+<span class="code-comment">/* Retorna a chave do primeiro elemento (ou ERRO se lista vazia) */</span>
+TIPOCHAVE primeiroElem(LISTA* l) {
+    if (l-&gt;nroElem &gt; 0) return l-&gt;A[0].chave;
+    else return ERRO;
+} <span class="code-comment">/* primeiroElem */</span>
+
+<span class="code-comment">/* Retorna a chave do último elemento (ou ERRO se lista vazia) */</span>
+TIPOCHAVE ultimoElem(LISTA* l) {
+    if (l-&gt;nroElem &gt; 0) return l-&gt;A[l-&gt;nroElem - 1].chave;
+    else return ERRO;
+} <span class="code-comment">/* ultimoElem */</span>
+
+<span class="code-comment">/* Retorna a chave do n-ésimo elemento (ou ERRO se índice inválido) */</span>
+TIPOCHAVE enesimoElem(LISTA* l, int n) {
+    if ((n &gt;= 0) &amp;&amp; (n &lt; l-&gt;nroElem)) return l-&gt;A[n].chave;
+    else return ERRO;
+} <span class="code-comment">/* enesimoElem */</span></pre>
+
+    <div class="tip-box">
+        <strong>Porque <code>l-&gt;A[l-&gt;nroElem - 1]</code>?</strong> Arrays em C começam no índice 0. Se a lista tem 5 elementos, eles ocupam os índices 0, 1, 2, 3 e 4. O último elemento está em <code>nroElem - 1 = 4</code>. Em Java seria <code>lista.get(lista.size() - 1)</code>.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ PROGRAMA COMPLETO -->
+<div class="content-section">
+    <h2>Testando as Funções: Mini-Programa</h2>
+
+    <pre>
+int main() {
+    LISTA lista;
+    inicializarLista(&amp;lista);
+
+    exibirLista(&amp;lista);  <span class="code-comment">// Lista: ""</span>
+    printf("Tamanho:   %d\n", tamanho(&amp;lista));         <span class="code-comment">// 0</span>
+    printf("Em bytes:  %d\n", tamanhoEmBytes(&amp;lista));   <span class="code-comment">// ex.: 204 bytes</span>
+
+    <span class="code-comment">// Inserção direta para testar (veremos inserirElemLista na Aula 33)</span>
+    REGISTRO reg;
+    reg.chave = 9;  lista.A[0] = reg; lista.nroElem++;
+    reg.chave = 3;  lista.A[1] = reg; lista.nroElem++;
+    reg.chave = 7;  lista.A[2] = reg; lista.nroElem++;
+
+    exibirLista(&amp;lista);   <span class="code-comment">// Lista: " 9 3 7 "</span>
+    printf("Primeiro: %d\n", primeiroElem(&amp;lista));   <span class="code-comment">// 9</span>
+    printf("Ultimo:   %d\n", ultimoElem(&amp;lista));      <span class="code-comment">// 7</span>
+    printf("2o elem:  %d\n", enesimoElem(&amp;lista, 1));  <span class="code-comment">// 3 (índice 1)</span>
+
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>Lista: " "</p>
+        <p>Tamanho:   0</p>
+        <p>Em bytes:  204</p>
+        <p>Lista: " 9 3 7 "</p>
+        <p>Primeiro: 9</p>
+        <p>Ultimo:   7</p>
+        <p>2o elem:  3</p>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ EXERCÍCIOS -->
+<div class="exercise-section">
+    <h2>Exercícios — Aula 32</h2>
+
+    <form class="quiz-form" id="quiz-form">
+
+        <div class="quiz-question">
+            <p><strong>1. Por que é obrigatório chamar <code>inicializarLista(&amp;lista)</code> antes de usar a lista?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q1" value="a"> Para alocar memória para o array A</label></li>
+                <li><label><input type="radio" name="q1" value="b"> Porque sem isso nroElem contém lixo e todas as operações se comportarão incorretamente</label></li>
+                <li><label><input type="radio" name="q1" value="c"> Para registrar a lista no sistema operacional</label></li>
+                <li><label><input type="radio" name="q1" value="d"> Porque em C structs não podem ser usadas sem inicialização explícita</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>2. Uma LISTA com MAX=50 e nroElem=3 tem quantos elementos acessíveis pelas funções?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q2" value="a"> 50</label></li>
+                <li><label><input type="radio" name="q2" value="b"> 51 (MAX+1)</label></li>
+                <li><label><input type="radio" name="q2" value="c"> 3</label></li>
+                <li><label><input type="radio" name="q2" value="d"> 47 (MAX - nroElem)</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>3. O que <code>tamanhoEmBytes(&amp;lista)</code> retorna para uma lista com nroElem=0 vs nroElem=50?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q3" value="a"> 0 bytes quando vazia e o tamanho real quando cheia</label></li>
+                <li><label><input type="radio" name="q3" value="b"> O mesmo valor nos dois casos — a alocação é estática e não muda</label></li>
+                <li><label><input type="radio" name="q3" value="c"> Proporcional ao nroElem — cresce conforme se insere elementos</label></li>
+                <li><label><input type="radio" name="q3" value="d"> Sempre 4 bytes — sizeof retorna o tamanho do ponteiro</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>4. Se <code>nroElem = 5</code>, qual é o índice do último elemento no array <code>A</code>?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q4" value="a"> 5</label></li>
+                <li><label><input type="radio" name="q4" value="b"> 4</label></li>
+                <li><label><input type="radio" name="q4" value="c"> 6</label></li>
+                <li><label><input type="radio" name="q4" value="d"> nroElem (que é 5)</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>5. O que <code>enesimoElem(&amp;lista, 0)</code> retorna?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q5" value="a"> ERRO — índice 0 é inválido</label></li>
+                <li><label><input type="radio" name="q5" value="b"> A chave do primeiro elemento (índice 0)</label></li>
+                <li><label><input type="radio" name="q5" value="c"> O número de elementos na lista</label></li>
+                <li><label><input type="radio" name="q5" value="d"> O endereço do primeiro elemento</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>6. Qual função Java é conceitualmente mais próxima de <code>tamanho(&amp;lista)</code>?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q6" value="a"> <code>array.length</code></label></li>
+                <li><label><input type="radio" name="q6" value="b"> <code>arrayList.size()</code></label></li>
+                <li><label><input type="radio" name="q6" value="c"> <code>arrayList.capacity()</code></label></li>
+                <li><label><input type="radio" name="q6" value="d"> <code>Arrays.getLength(array)</code></label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>7. Por que a lista usa <code>REGISTRO A[MAX+1]</code> em vez de <code>REGISTRO A[MAX]</code>?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q7" value="a"> Convenção de estilo — a posição extra não é usada</label></li>
+                <li><label><input type="radio" name="q7" value="b"> Para armazenar o tamanho da lista na última posição</label></li>
+                <li><label><input type="radio" name="q7" value="c"> Para reservar uma posição extra usada pela busca com sentinela</label></li>
+                <li><label><input type="radio" name="q7" value="d"> Porque sizeof retorna valores errados com arrays de tamanho exato</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>8. O que acontece se você chamar <code>primeiroElem(&amp;lista)</code> numa lista com <code>nroElem=0</code>?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q8" value="a"> O programa crasha com segfault</label></li>
+                <li><label><input type="radio" name="q8" value="b"> Retorna 0</label></li>
+                <li><label><input type="radio" name="q8" value="c"> Retorna ERRO (que vale -1)</label></li>
+                <li><label><input type="radio" name="q8" value="d"> Retorna o lixo que está em A[0]</label></li>
+            </ul>
+        </div>
+
+        <button type="button" class="submit-btn" onclick="verificarRespostas()">Verificar Respostas</button>
+    </form>
+
+    <div id="quiz-results" style="display:none; margin-top:20px; padding:15px; background-color:#dff0d8; border-radius:5px;"></div>
+</div>
+
+<div class="navigation-buttons">
+    <a href="capitulo31.html">← Aula 31</a>
+    <a href="index.html">Índice</a>
+    <a href="capitulo33.html">Aula 33 →</a>
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align: center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education" style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+<script>
+    function verificarRespostas() {
+        const gabarito = { q1:"b", q2:"c", q3:"b", q4:"b", q5:"b", q6:"b", q7:"c", q8:"c" };
+        const explicacoes = {
+            q1: "Sem inicialização, nroElem contém qualquer valor que estava na memória ('lixo'). Funções como exibirLista iterariam por um número arbitrário de posições, causando comportamento imprevisível.",
+            q2: "Apenas os primeiros nroElem elementos são considerados válidos. Com nroElem=3, apenas A[0], A[1] e A[2] estão em uso. As posições de 3 a 50 existem fisicamente mas são ignoradas pelas funções.",
+            q3: "sizeof(LISTA) retorna o tamanho da struct em bytes — valor fixo que depende de MAX, não de nroElem. Uma lista com 0 elementos ocupa exatamente o mesmo espaço que uma com 50.",
+            q4: "Arrays em C começam no índice 0. Com 5 elementos, eles ocupam os índices 0, 1, 2, 3 e 4. O último é nroElem-1 = 4. Em Java: lista.get(lista.size()-1) usa o mesmo raciocínio.",
+            q5: "O índice 0 é o primeiro elemento do array. enesimoElem com n=0 passa na verificação (0 >= 0 e 0 < nroElem se a lista não estiver vazia) e retorna A[0].chave.",
+            q6: "tamanho() retorna nroElem — o número de elementos em uso, que varia conforme se insere ou remove. Isso equivale ao arrayList.size() do Java, não ao array.length (que seria MAX).",
+            q7: "A posição A[MAX] fica reservada para a técnica de busca com sentinela (Aula 34): colocamos a chave procurada nessa posição extra para simplificar o loop de busca.",
+            q8: "A função verifica 'if (l->nroElem > 0)' antes de acessar A[0]. Com nroElem=0 a condição é falsa e a função retorna ERRO (-1), protegendo contra acesso inválido à memória."
+        };
+
+        let acertos = 0, html = "";
+        const total = Object.keys(gabarito).length;
+        for (const q in gabarito) {
+            const sel = document.querySelector(`input[name="${q}"]:checked`);
+            const num = q.substring(1);
+            if (sel) {
+                if (sel.value === gabarito[q]) {
+                    acertos++;
+                    html += `<p>Questão ${num}: <span style="color:green;font-weight:bold;">✓ Correto!</span> — ${explicacoes[q]}</p>`;
+                } else {
+                    html += `<p>Questão ${num}: <span style="color:red;font-weight:bold;">✗ Incorreto.</span> — ${explicacoes[q]}</p>`;
+                }
+            } else {
+                html += `<p>Questão ${num}: <span style="color:orange;font-weight:bold;">⚠ Não respondida.</span></p>`;
+            }
+        }
+        const r = document.getElementById("quiz-results");
+        r.innerHTML = `<h3>Sua pontuação: ${acertos} de ${total}</h3>${html}`;
+        r.style.display = "block";
+        r.scrollIntoView({ behavior:"smooth" });
+    }
+</script>
+
+</body>
+</html>

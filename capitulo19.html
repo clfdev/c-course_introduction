@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 19 – Protótipos, Header Files, static e inline</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Aula 19 — Protótipos, Header Files, <code style="color:#aad4ff">static</code> e <code style="color:#aad4ff">inline</code></h1>
+    <p>Como organizar e proteger funções em C — a base da programação modular</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo18.html">← Aula 18</a>
+    <a href="capitulo20.html">Aula 20 →</a>
+</nav>
+
+<!-- ═══════════════════════════════════════ 1. PROTÓTIPOS -->
+<div class="content-section">
+    <h2>1. Protótipos de Função</h2>
+
+    <p>Até agora você provavelmente colocou todas as funções <em>antes</em> de <code>main()</code> para que o compilador as conhecesse. Mas e quando o programa cresce e as funções precisam se chamar mutuamente? A solução é o <strong>protótipo</strong>.</p>
+
+    <div class="definicao">
+        Um <strong>protótipo</strong> (ou declaração antecipada) é uma linha que informa ao compilador o <strong>nome</strong>, o <strong>tipo de retorno</strong> e os <strong>tipos dos parâmetros</strong> de uma função, <em>antes</em> de sua definição completa aparecer no código. O compilador usa essa informação para verificar chamadas durante a compilação.
+    </div>
+
+    <h3>Sintaxe</h3>
+<pre>
+<span class="code-comment">// Protótipo — apenas a assinatura, terminada com ;</span>
+float calcularMedia(float a, float b);
+
+<span class="code-comment">// Os nomes dos parâmetros são opcionais no protótipo:</span>
+float calcularMedia(float, float);   <span class="code-comment">// equivalente</span>
+</pre>
+
+    <h3>Exemplo prático: protótipos permitem chamar funções definidas depois</h3>
+<pre>
+#include &lt;stdio.h&gt;
+
+<span class="code-comment">/* ── Protótipos ───────────────────────────────── */</span>
+float calcularMedia(float a, float b);
+void classificarAluno(float media);
+
+<span class="code-comment">/* ── main ──────────────────────────────────────── */</span>
+int main() {
+    float n1 = 7.5, n2 = 8.0;
+    float media = calcularMedia(n1, n2);
+    classificarAluno(media);
+    return 0;
+}
+
+<span class="code-comment">/* ── Definições (podem vir depois de main) ─────── */</span>
+float calcularMedia(float a, float b) {
+    return (a + b) / 2.0;
+}
+
+void classificarAluno(float media) {
+    if (media &gt;= 7.0)
+        printf("Aprovado (%.1f)\n", media);
+    else
+        printf("Reprovado (%.1f)\n", media);
+}
+</pre>
+    <div class="terminal-output">Aprovado (7.8)</div>
+
+    <div class="tip-box">
+        <strong>Por que usar protótipos?</strong> Eles eliminam a obrigação de escrever funções em ordem de uso, e são <em>obrigatórios</em> quando o programa é dividido em múltiplos arquivos — que é exatamente o tema da próxima aula.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 2. HEADER FILES -->
+<div class="content-section">
+    <h2>2. Arquivos de Cabeçalho (.h)</h2>
+
+    <p>Você já usa arquivos <code>.h</code> todo dia: <code>#include &lt;stdio.h&gt;</code> inclui o cabeçalho da biblioteca padrão de I/O. Agora você vai criar os seus próprios.</p>
+
+    <div class="definicao">
+        Um <strong>arquivo de cabeçalho</strong> (<em>header file</em>, extensão <code>.h</code>) é um arquivo de texto que contém protótipos de funções, definições de constantes (<code>#define</code>), definições de tipos (<code>typedef</code>, <code>struct</code>) e qualquer outra coisa que precisa ser <em>compartilhada</em> entre arquivos <code>.c</code>. É a <strong>interface pública</strong> do seu módulo.
+    </div>
+
+    <h3>Estrutura de um arquivo .h bem feito</h3>
+<pre>
+<span class="code-comment">/* matematica.h — cabeçalho do módulo de matemática */</span>
+
+<span class="code-comment">/* ── Inclusion guard: evita que o arquivo seja incluído duas vezes ── */</span>
+#ifndef MATEMATICA_H
+#define MATEMATICA_H
+
+<span class="code-comment">/* Constantes */</span>
+#define PI 3.14159265358979
+
+<span class="code-comment">/* Protótipos das funções públicas */</span>
+float calcularMedia(float a, float b);
+float areaCirculo(float raio);
+int   ehPrimo(int n);
+
+#endif <span class="code-comment">/* MATEMATICA_H */</span>
+</pre>
+
+    <h3>Inclusion guard — por que é obrigatório</h3>
+    <p>Se dois arquivos <code>.c</code> incluírem o mesmo <code>.h</code>, e um deles incluir o outro, o conteúdo do <code>.h</code> seria inserido duas vezes no mesmo arquivo de compilação, causando erros de "redeclaração". O inclusion guard previne isso:</p>
+
+    <table>
+        <tr><th>Diretiva</th><th>Significado</th></tr>
+        <tr><td><code>#ifndef MATEMATICA_H</code></td><td>Se o símbolo <code>MATEMATICA_H</code> ainda <strong>não</strong> foi definido...</td></tr>
+        <tr><td><code>#define MATEMATICA_H</code></td><td>...define-o agora (marca que este arquivo já foi lido)</td></tr>
+        <tr><td><code>#endif</code></td><td>Fecha o bloco condicional</td></tr>
+    </table>
+
+    <div class="dica">
+        Por convenção, o nome do símbolo do inclusion guard é o nome do arquivo em maiúsculas com <code>.</code> trocado por <code>_</code>: o arquivo <code>matematica.h</code> usa <code>MATEMATICA_H</code>. Isso garante unicidade entre arquivos do projeto.
+    </div>
+
+    <h3>O par .h / .c — interface e implementação</h3>
+<pre>
+<span class="code-comment">/* ─── matematica.h ─── interface (o que o usuário precisa saber) ─── */</span>
+#ifndef MATEMATICA_H
+#define MATEMATICA_H
+#define PI 3.14159265358979
+float calcularMedia(float a, float b);
+float areaCirculo(float raio);
+int   ehPrimo(int n);
+#endif
+
+<span class="code-comment">/* ─── matematica.c ─── implementação (como funciona por dentro) ─── */</span>
+#include "matematica.h"   <span class="code-comment">// aspas: arquivo local (não &lt;&gt; de sistema)</span>
+#include &lt;math.h&gt;
+
+float calcularMedia(float a, float b) {
+    return (a + b) / 2.0f;
+}
+
+float areaCirculo(float raio) {
+    return PI * raio * raio;
+}
+
+int ehPrimo(int n) {
+    if (n &lt; 2) return 0;
+    for (int i = 2; i * i &lt;= n; i++)
+        if (n % i == 0) return 0;
+    return 1;
+}
+</pre>
+
+    <div class="info-box">
+        <strong><code>#include "arquivo.h"</code> vs <code>#include &lt;arquivo.h&gt;</code></strong><br>
+        Aspas <code>""</code> → o compilador procura primeiro no diretório do projeto (seus próprios headers).<br>
+        Ângulos <code>&lt;&gt;</code> → o compilador procura apenas nos diretórios padrão do sistema (<code>stdio.h</code>, <code>math.h</code>, etc.).
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 3. FUNÇÕES STATIC -->
+<div class="content-section">
+    <h2>3. Funções <code>static</code> — Encapsulamento por Arquivo</h2>
+
+    <p>Por padrão, toda função em C tem <strong>ligação externa</strong>: qualquer outro arquivo <code>.c</code> pode acessá-la (desde que tenha o protótipo). Às vezes você quer o contrário — uma função que é um detalhe interno, invisível para o resto do programa.</p>
+
+    <div class="definicao">
+        Uma função declarada com <code>static</code> tem <strong>ligação interna</strong>: ela existe <em>apenas</em> no arquivo onde foi definida. Nenhum outro arquivo pode chamá-la — mesmo que tente incluir um protótipo.
+    </div>
+
+<pre>
+<span class="code-comment">/* ─── validacao.c ─── */</span>
+#include &lt;stdio.h&gt;
+
+<span class="code-comment">/* Função PRIVADA — auxiliar interna, não exportada */</span>
+static int ehValido(int valor) {
+    return valor &gt;= 0 &amp;&amp; valor &lt;= 100;
+}
+
+<span class="code-comment">/* Função PÚBLICA — visível para outros arquivos */</span>
+float calcularMedia(int a, int b) {
+    if (!ehValido(a) || !ehValido(b)) {
+        printf("Valor fora do intervalo [0,100]!\n");
+        return -1.0f;
+    }
+    return (a + b) / 2.0f;
+}
+</pre>
+
+    <table>
+        <tr>
+            <th>Aspecto</th>
+            <th>Função normal</th>
+            <th>Função <code>static</code></th>
+        </tr>
+        <tr>
+            <td>Visibilidade</td>
+            <td>Todo o programa (ligação externa)</td>
+            <td>Apenas o arquivo onde está definida</td>
+        </tr>
+        <tr>
+            <td>Conflito de nomes</td>
+            <td>Dois arquivos não podem ter funções com o mesmo nome</td>
+            <td>Dois arquivos podem ter funções <code>static</code> com o mesmo nome</td>
+        </tr>
+        <tr>
+            <td>Aparece no .h?</td>
+            <td>✅ Deve ter protótipo no .h</td>
+            <td>❌ Nunca deve aparecer no .h</td>
+        </tr>
+        <tr>
+            <td>Analogia em Java</td>
+            <td>Método <code>public</code></td>
+            <td>Método <code>private</code></td>
+        </tr>
+    </table>
+
+    <div class="tip-box">
+        <strong>Boas práticas:</strong> Sempre declare como <code>static</code> qualquer função auxiliar que não precisa ser conhecida fora do seu arquivo. Isso previne conflitos de nomes em projetos grandes e deixa a API pública mais limpa.
+    </div>
+
+    <h3>Exemplo: validação privada em um módulo de cadastro</h3>
+<pre>
+<span class="code-comment">/* ─── cadastro.c ─── */</span>
+#include "cadastro.h"
+#include &lt;string.h&gt;
+#include &lt;stdio.h&gt;
+
+<span class="code-comment">/* Auxiliares estáticas — não aparecem no cadastro.h */</span>
+static int nomeValido(const char *nome) {
+    return strlen(nome) &gt;= 3 &amp;&amp; strlen(nome) &lt;= 50;
+}
+
+static int idadeValida(int idade) {
+    return idade &gt;= 0 &amp;&amp; idade &lt;= 130;
+}
+
+<span class="code-comment">/* Função pública */</span>
+int cadastrarPessoa(const char *nome, int idade) {
+    if (!nomeValido(nome)) {
+        printf("Nome inválido: '%s'\n", nome);
+        return 0;
+    }
+    if (!idadeValida(idade)) {
+        printf("Idade inválida: %d\n", idade);
+        return 0;
+    }
+    printf("Cadastrado: %s, %d anos\n", nome, idade);
+    return 1;
+}
+</pre>
+</div>
+
+<!-- ═══════════════════════════════════════ 4. FUNÇÕES INLINE -->
+<div class="content-section">
+    <h2>4. Funções <code>static inline</code> — Otimização sem Perda de Clareza</h2>
+
+    <p>Toda chamada de função tem um custo: o programa precisa salvar o estado atual, desviar para o código da função, executar, e retornar. Para funções muito pequenas e chamadas com alta frequência (dentro de loops), esse overhead pode ser significativo.</p>
+
+    <div class="definicao">
+        A palavra-chave <code>inline</code> é uma <strong>sugestão ao compilador</strong> para que ele substitua a chamada da função pelo seu código diretamente no ponto da chamada — eliminando o overhead da chamada. A combinação <code>static inline</code> é a forma mais segura e recomendada em C.
+    </div>
+
+<pre>
+#include &lt;stdio.h&gt;
+
+<span class="code-comment">/* Função static inline — ideal para operações pequenas e frequentes */</span>
+static inline int quadrado(int x) {
+    return x * x;
+}
+
+static inline float celsius_para_fahrenheit(float c) {
+    return c * 9.0f / 5.0f + 32.0f;
+}
+
+static inline int max(int a, int b) {
+    return (a &gt; b) ? a : b;
+}
+
+int main() {
+    int soma = 0;
+    for (int i = 1; i &lt;= 100; i++)
+        soma += quadrado(i);   <span class="code-comment">// O compilador pode expandir o código aqui</span>
+
+    printf("Soma dos quadrados de 1 a 100: %d\n", soma);
+    printf("37°C = %.1f°F\n", celsius_para_fahrenheit(37.0f));
+    printf("max(15, 23) = %d\n", max(15, 23));
+    return 0;
+}
+</pre>
+    <div class="terminal-output">Soma dos quadrados de 1 a 100: 338350<br>37°C = 98.6°F<br>max(15, 23) = 23</div>
+
+    <h3>Quando usar <code>inline</code> — e quando não usar</h3>
+    <table>
+        <tr>
+            <th>✅ Use <code>static inline</code></th>
+            <th>❌ Não use <code>inline</code></th>
+        </tr>
+        <tr>
+            <td>Funções com 1 a 5 linhas</td>
+            <td>Funções com loops, switch ou recursão</td>
+        </tr>
+        <tr>
+            <td>Operações matemáticas simples</td>
+            <td>Funções raramente chamadas</td>
+        </tr>
+        <tr>
+            <td>Funções chamadas dentro de loops críticos</td>
+            <td>Funções que precisam de endereço de memória fixo</td>
+        </tr>
+        <tr>
+            <td>Conversões de unidade (ex: graus, bytes)</td>
+            <td>Funções longas (o compilador provavelmente ignorará o hint)</td>
+        </tr>
+    </table>
+
+    <div class="warning-box">
+        <strong>⚠️ <code>inline</code> é apenas uma sugestão:</strong> O compilador é livre para ignorá-la. Não use <code>inline</code> com a expectativa de que <em>sempre</em> haverá expansão — use porque o código fica mais claro e o compilador pode aproveitar. A diferença real de performance só importa em loops executados milhões de vezes.
+    </div>
+
+    <h3>Comparação: #define vs static inline</h3>
+    <p>Muita gente usa <code>#define</code> para mini-funções como <code>#define QUAD(x) ((x)*(x))</code>. Isso funciona, mas tem armadilhas. A versão <code>static inline</code> é mais segura:</p>
+<pre>
+<span class="code-comment">/* ❌ Problema com #define — efeito colateral */</span>
+#define QUAD(x) ((x)*(x))
+int i = 3;
+int r = QUAD(i++);   <span class="code-comment">// expande para (i++)*(i++) — incrementa i DUAS vezes!</span>
+
+<span class="code-comment">/* ✅ Correto com static inline */</span>
+static inline int quadrado(int x) { return x * x; }
+int r2 = quadrado(i++);   <span class="code-comment">// i++ ocorre UMA vez, como esperado</span>
+</pre>
+</div>
+
+<!-- ═══════════════════════════════════════ 5. RESUMO DO FLUXO -->
+<div class="content-section">
+    <h2>5. Resumo: como as peças se encaixam</h2>
+
+    <table>
+        <tr>
+            <th>Ferramenta</th>
+            <th>Onde fica</th>
+            <th>Para que serve</th>
+            <th>Analogia Java</th>
+        </tr>
+        <tr>
+            <td><strong>Protótipo</strong></td>
+            <td>Topo do <code>.c</code> ou no <code>.h</code></td>
+            <td>Informa assinatura ao compilador antes da definição</td>
+            <td>Declaração de método em interface</td>
+        </tr>
+        <tr>
+            <td><strong>Arquivo <code>.h</code></strong></td>
+            <td>Arquivo separado</td>
+            <td>Interface pública: protótipos, constantes, tipos</td>
+            <td>Arquivo de interface / API pública</td>
+        </tr>
+        <tr>
+            <td><strong>Inclusion guard</strong></td>
+            <td>Dentro do <code>.h</code></td>
+            <td>Evita inclusão dupla</td>
+            <td>Não tem equivalente direto</td>
+        </tr>
+        <tr>
+            <td><strong>Função <code>static</code></strong></td>
+            <td>No <code>.c</code>, sem entrar no <code>.h</code></td>
+            <td>Função privada ao arquivo</td>
+            <td>Método <code>private</code></td>
+        </tr>
+        <tr>
+            <td><strong>Função <code>static inline</code></strong></td>
+            <td>No <code>.h</code> ou no <code>.c</code></td>
+            <td>Eliminação de overhead de chamada para funções pequenas</td>
+            <td>Não tem equivalente direto</td>
+        </tr>
+    </table>
+
+    <div class="info-box">
+        <strong>Próxima aula:</strong> Na Aula 16, você vai colocar tudo isso em prática criando um projeto com múltiplos arquivos no VSCode — compilando e executando <code>main.c</code> + <code>modulo.c</code> + <code>modulo.h</code> juntos.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ QUIZ -->
+<div class="content-section exercise-section">
+    <h2>Quiz — Aula 15</h2>
+    <form class="quiz-form" onsubmit="return false;">
+
+        <div class="content-section quiz-question">
+            <p><strong>1.</strong> Qual é o objetivo principal de um protótipo de função?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q1" value="a"> Executar a função antes da main()</label></li>
+                <li><label><input type="radio" name="q1" value="b"> Informar ao compilador a assinatura da função antes de sua definição</label></li>
+                <li><label><input type="radio" name="q1" value="c"> Criar uma cópia da função para uso em outros arquivos</label></li>
+                <li><label><input type="radio" name="q1" value="d"> Substituir o arquivo .h em programas de arquivo único</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>2.</strong> Por que o inclusion guard (<code>#ifndef / #define / #endif</code>) é necessário?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q2" value="a"> Para proteger o arquivo .h contra acesso não autorizado</label></li>
+                <li><label><input type="radio" name="q2" value="b"> Para definir constantes globais visíveis em todo o projeto</label></li>
+                <li><label><input type="radio" name="q2" value="c"> Para evitar que o conteúdo do .h seja inserido mais de uma vez no mesmo arquivo de compilação</label></li>
+                <li><label><input type="radio" name="q2" value="d"> Para impedir que o arquivo .h seja modificado durante a compilação</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>3.</strong> Qual é a diferença entre <code>#include "meuarquivo.h"</code> e <code>#include &lt;stdio.h&gt;</code>?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q3" value="a"> Aspas são para arquivos .h do sistema, ângulos para arquivos locais</label></li>
+                <li><label><input type="radio" name="q3" value="b"> Aspas buscam primeiro no diretório do projeto; ângulos buscam apenas nos diretórios do sistema</label></li>
+                <li><label><input type="radio" name="q3" value="c"> Não há diferença — é apenas uma questão de estilo</label></li>
+                <li><label><input type="radio" name="q3" value="d"> Aspas incluem o arquivo uma vez; ângulos podem incluir múltiplas vezes</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>4.</strong> Uma função declarada <code>static</code> em <code>modulo.c</code> pode ser chamada em <code>main.c</code>?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q4" value="a"> Sim, se o protótipo for colocado em <code>modulo.h</code></label></li>
+                <li><label><input type="radio" name="q4" value="b"> Sim, se <code>main.c</code> incluir <code>modulo.c</code> diretamente</label></li>
+                <li><label><input type="radio" name="q4" value="c"> Não — funções <code>static</code> têm ligação interna e ficam invisíveis fora de <code>modulo.c</code></label></li>
+                <li><label><input type="radio" name="q4" value="d"> Sim, se ambos os arquivos forem compilados juntos com <code>gcc</code></label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>5.</strong> O que acontece com o trecho <code>#define DOBRO(x) ((x)+(x))</code> quando chamado como <code>DOBRO(i++)</code>?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q5" value="a"> <code>i</code> é incrementado uma vez, como esperado</label></li>
+                <li><label><input type="radio" name="q5" value="b"> <code>i</code> é incrementado duas vezes — efeito colateral do macro</label></li>
+                <li><label><input type="radio" name="q5" value="c"> Erro de compilação: macros não aceitam operadores de incremento</label></li>
+                <li><label><input type="radio" name="q5" value="d"> <code>i</code> não é incrementado — o macro ignora o <code>++</code></label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>6.</strong> Para qual situação <code>static inline</code> é mais adequado?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q6" value="a"> Uma função que lê um arquivo inteiro e processa 10.000 linhas</label></li>
+                <li><label><input type="radio" name="q6" value="b"> Uma função de ordenação com algoritmo de 50 linhas</label></li>
+                <li><label><input type="radio" name="q6" value="c"> Uma conversão de unidade chamada 1 milhão de vezes dentro de um loop</label></li>
+                <li><label><input type="radio" name="q6" value="d"> A função <code>main()</code> do programa</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>7.</strong> O que pertence ao arquivo <code>.h</code> e o que pertence ao arquivo <code>.c</code>?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q7" value="a"> <code>.h</code> contém a implementação completa; <code>.c</code> contém os protótipos</label></li>
+                <li><label><input type="radio" name="q7" value="b"> <code>.h</code> contém protótipos, constantes e tipos; <code>.c</code> contém a implementação das funções</label></li>
+                <li><label><input type="radio" name="q7" value="c"> Ambos contêm exatamente as mesmas informações por redundância</label></li>
+                <li><label><input type="radio" name="q7" value="d"> Não há diferença — é uma divisão opcional por estilo</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>8.</strong> Uma função <code>static</code> em Java tem um significado diferente do que em C. Em C, <code>static</code> numa função significa:</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q8" value="a"> A função pertence à classe, não a uma instância (igual ao Java)</label></li>
+                <li><label><input type="radio" name="q8" value="b"> A função não pode receber parâmetros</label></li>
+                <li><label><input type="radio" name="q8" value="c"> A função tem visibilidade restrita ao arquivo onde foi definida</label></li>
+                <li><label><input type="radio" name="q8" value="d"> A função é armazenada em memória permanente (não na stack)</label></li>
+            </ul>
+        </div>
+
+        <button type="button" class="submit-btn" onclick="verificarRespostas()">Verificar Respostas</button>
+    </form>
+    <div id="quiz-results" style="display:none; margin-top:20px; padding:15px; background:#dff0d8; border-radius:5px;"></div>
+</div>
+
+<div class="navigation-buttons">
+    <a href="capitulo18.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">← Aula 14</a>
+    <a href="index.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">Índice</a>
+    <a href="capitulo20.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">Aula 16 →</a>
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align:center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education" style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+<script>
+function verificarRespostas() {
+    const gabarito = { q1:"b", q2:"c", q3:"b", q4:"c", q5:"b", q6:"c", q7:"b", q8:"c" };
+    const explicacoes = {
+        q1: "O protótipo informa ao compilador a assinatura da função (nome, retorno, parâmetros) antes de sua definição aparecer no código, permitindo que o compilador verifique chamadas e aceite funções definidas em qualquer ordem.",
+        q2: "Se dois arquivos .c incluem o mesmo .h, e um incluir o outro, o preprocessador insertaria o conteúdo do .h duas vezes, causando erros de 'redeclaração'. O inclusion guard usa um símbolo para rastrear se o arquivo já foi processado.",
+        q3: "Aspas fazem o compilador buscar no diretório do projeto primeiro, depois nos caminhos de sistema. Ângulos buscam apenas nos caminhos de sistema (onde ficam stdio.h, math.h, etc.).",
+        q4: "A palavra-chave static dá ligação interna à função: ela existe apenas no arquivo modulo.c. Nenhum outro arquivo pode acessá-la, mesmo com protótipo.",
+        q5: "O macro DOBRO(i++) é expandido para ((i++)+(i++)). O operador ++ é avaliado duas vezes, causando incremento duplo — comportamento indefinido na prática.",
+        q6: "static inline é ideal para funções muito curtas chamadas em alta frequência, como conversões de unidade dentro de loops. Para funções longas o compilador ignora o inline.",
+        q7: "O .h é a interface pública: protótipos, constantes, tipos. O .c é a implementação: código executável. Essa separação permite compilar módulos independentemente e esconder detalhes de implementação.",
+        q8: "Em C, static numa função significa ligação interna — a função só é visível no arquivo onde foi definida. É análogo a private em Java, não ao static do Java (que significa 'pertence à classe')."
+    };
+
+    let acertos = 0, html = "";
+    const total = Object.keys(gabarito).length;
+    for (const q in gabarito) {
+        const sel = document.querySelector(`input[name="${q}"]:checked`);
+        const num = q.replace("q","");
+        if (sel) {
+            if (sel.value === gabarito[q]) {
+                acertos++;
+                html += `<p>Questão ${num}: <span style="color:green;font-weight:bold;">✅ Correto!</span> — ${explicacoes[q]}</p>`;
+            } else {
+                html += `<p>Questão ${num}: <span style="color:red;font-weight:bold;">❌ Incorreto.</span> Gabarito: <strong>${gabarito[q].toUpperCase()}</strong> — ${explicacoes[q]}</p>`;
+            }
+        } else {
+            html += `<p>Questão ${num}: <span style="color:orange;font-weight:bold;">⚠ Não respondida.</span></p>`;
+        }
+    }
+    const r = document.getElementById("quiz-results");
+    r.innerHTML = `<h3>Sua pontuação: ${acertos} de ${total}</h3>${html}`;
+    r.style.display = "block";
+    r.scrollIntoView({ behavior: "smooth" });
+}
+</script>
+
+</body>
+</html>

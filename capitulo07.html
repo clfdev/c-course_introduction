@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 07 – Comentários no Código</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Aula 07 – Comentários no Código</h1>
+    <p>Documentando programas em C — tipos de comentário, boas práticas e comparação com Java</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo06.html">← Aula 06</a>
+    <a href="capitulo08.html">Aula 08 →</a>
+</nav>
+
+<!-- ═══════════════════════════════════════ O QUE SÃO COMENTÁRIOS -->
+<div class="content-section">
+    <h2>O que são Comentários?</h2>
+    <p>Comentários são trechos de texto inseridos no código-fonte que o <strong>compilador ignora completamente</strong> — eles existem apenas para os seres humanos que leem o código. Um bom comentário explica o <em>porquê</em> de uma decisão de programação, não simplesmente o que a linha faz (o código já mostra isso).</p>
+
+    <div class="definicao">
+        Um comentário é qualquer texto delimitado pelos marcadores de comentário do C. O compilador remove todos os comentários antes de processar o código, portanto eles não têm nenhum efeito sobre o comportamento do programa.
+    </div>
+
+    <div class="info-box">
+        <strong>Por que comentar o código?</strong>
+        <ul>
+            <li>Tornar o código compreensível para outras pessoas (e para você mesmo, seis meses depois)</li>
+            <li>Documentar decisões que não são óbvias pela leitura do código</li>
+            <li>Explicar fórmulas matemáticas, algoritmos e casos especiais</li>
+            <li>Desabilitar temporariamente trechos de código durante o desenvolvimento e depuração</li>
+            <li>Gerar documentação automática com ferramentas como Doxygen</li>
+        </ul>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ COMENTÁRIO DE LINHA -->
+<div class="content-section">
+    <h2>Comentário de Linha: //</h2>
+    <p>O comentário de linha começa com <code>//</code> e se estende até o final da linha. Tudo após o <code>//</code> naquela linha é ignorado pelo compilador. É o tipo mais comum para anotações rápidas e explicações curtas.</p>
+
+    <div class="definicao">
+        <code>// texto ignorado até o final da linha</code><br><br>
+        Introduzido no padrão <strong>C99</strong>. Não estava disponível no C original (ANSI C / C89), mas é suportado por todos os compiladores modernos, incluindo o MinGW no Code::Blocks.
+    </div>
+
+    <pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int idade = 25;          // idade do usuário em anos
+    float altura = 1.75;     // altura em metros
+    float imc;
+
+    // Cálculo do IMC: peso / (altura ao quadrado)
+    imc = 70.0 / (altura * altura);
+
+    printf("IMC: %.2f\n", imc); // exibe com 2 casas decimais
+
+    return 0; // encerra o programa com sucesso
+}</pre>
+
+    <div class="terminal-output">
+        <p>IMC: 22.86</p>
+    </div>
+
+    <div class="tip-box">
+        <strong>DICA — comentário ao final da linha:</strong> Comentários no final de uma linha de código (chamados de <em>inline comments</em>) são úteis para explicar o propósito de uma variável ou o significado de um valor específico. Mantenha-os curtos — se precisar de mais de uma linha para explicar, use um comentário de bloco acima do código.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ COMENTÁRIO DE BLOCO -->
+<div class="content-section">
+    <h2>Comentário de Bloco: /* ... */</h2>
+    <p>O comentário de bloco começa com <code>/*</code> e termina com <code>*/</code>. Pode se estender por quantas linhas forem necessárias. É o único tipo de comentário disponível no C original (antes de C99) e é amplamente usado para cabeçalhos de arquivo e documentação de funções.</p>
+
+    <div class="definicao">
+        <code>/* texto comentado — pode ocupar várias linhas */</code><br><br>
+        Disponível desde o <strong>C original (ANSI C / C89)</strong>. Não pode ser aninhado: o primeiro <code>*/</code> encontrado encerra o comentário, mesmo que haja outro <code>/*</code> dentro.
+    </div>
+
+    <pre>
+/*
+ * Programa: calculadora_basica.c
+ * Autor:    João Silva
+ * Data:     2024-03-15
+ * Descrição: Demonstra as quatro operações aritméticas
+ *            com entrada do usuário.
+ */
+
+#include &lt;stdio.h&gt;
+
+/*
+ * Função: exibirResultado
+ * Parâmetros: op (char) - operador usado
+ *             a, b (int) - operandos
+ *             resultado (float) - resultado da operação
+ */
+void exibirResultado(char op, int a, int b, float resultado) {
+    printf("%d %c %d = %.2f\n", a, op, b, resultado); /* formatação padronizada */
+}
+
+int main() {
+    int x = 15, y = 4;
+
+    exibirResultado('+', x, y, x + y);
+    exibirResultado('-', x, y, x - y);
+    exibirResultado('*', x, y, x * y);
+    exibirResultado('/', x, y, (float)x / y); /* cast para divisão real */
+
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>15 + 4 = 19.00</p>
+        <p>15 - 4 = 11.00</p>
+        <p>15 * 4 = 60.00</p>
+        <p>15 / 4 = 3.75</p>
+    </div>
+
+    <div class="warning-box">
+        <strong>Comentários de bloco não podem ser aninhados:</strong> O trecho abaixo causa erro de compilação, pois o primeiro <code>*/</code> encerra o comentário antes do esperado:
+        <pre>/* comentário externo /* interno */ ainda comentário? */
+<span class="code-comment">// O compilador vê: /* comentário externo /* interno */
+// e depois tenta compilar: "ainda comentário? */"  ← ERRO</span></pre>
+        Para comentar blocos que já contêm comentários, use comentários de linha <code>//</code> em cada linha, ou use diretivas de compilação condicional (<code>#if 0 ... #endif</code>).
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ DESABILITAR CÓDIGO -->
+<div class="content-section">
+    <h2>Desabilitando Código Temporariamente</h2>
+    <p>Uma das utilizações práticas dos comentários é <strong>desabilitar temporariamente</strong> trechos de código durante o desenvolvimento, sem apagá-los. Isso é útil para testar alternativas ou isolar bugs.</p>
+
+    <h3>Usando // para comentar linhas individuais</h3>
+    <pre>
+int main() {
+    int x = 10;
+
+    // printf("Versão antiga: %d\n", x * 2);  // desabilitada temporariamente
+    printf("Versão nova: %d\n", x * x);        // versão atual
+
+    return 0;
+}</pre>
+
+    <h3>Usando #if 0 para blocos maiores</h3>
+    <p>Para comentar grandes blocos que já contêm comentários, a técnica mais segura em C é usar a diretiva de pré-processador <code>#if 0</code>:</p>
+
+    <pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int x = 42;
+
+#if 0
+    /* Este bloco inteiro é ignorado pelo compilador */
+    printf("Código antigo: %d\n", x);
+    /* outro comentário interno — sem problema aqui */
+    x = x * 2 + 1;
+    printf("Resultado antigo: %d\n", x);
+#endif
+
+    printf("Resultado atual: %d\n", x); // apenas esta linha executa
+
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>Resultado atual: 42</p>
+    </div>
+
+    <div class="tip-box">
+        <strong>DICA:</strong> <code>#if 0 ... #endif</code> é o método preferido para comentar blocos grandes em C porque: (1) funciona mesmo que o bloco contenha comentários <code>/* */</code>, e (2) é fácil de encontrar e reativar — basta mudar <code>#if 0</code> para <code>#if 1</code>.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ BOAS PRÁTICAS -->
+<div class="content-section">
+    <h2>Boas Práticas de Comentário</h2>
+    <p>Comentar bem é uma habilidade que se desenvolve com a prática. Veja a diferença entre comentários que agregam valor e comentários que apenas repetem o óbvio:</p>
+
+    <h3>Comentários ruins — evite</h3>
+    <div class="bad-practice">
+        Comentários que apenas repetem o que o código já diz são ruído — aumentam o tamanho do arquivo sem agregar informação.
+    </div>
+
+    <pre>
+<span class="code-comment">// incrementa i em 1</span>
+i++;
+
+<span class="code-comment">// declara variável x do tipo int e atribui 5</span>
+int x = 5;
+
+<span class="code-comment">// verifica se a é maior que b</span>
+if (a > b) {
+    <span class="code-comment">// imprime "a é maior"</span>
+    printf("a é maior\n");
+}</pre>
+
+    <h3>Comentários bons — pratique</h3>
+    <div class="good-practice">
+        Bons comentários explicam o <em>porquê</em>, documentam casos especiais, fórmulas não triviais e decisões de projeto que não são óbvias pela leitura do código.
+    </div>
+
+    <pre>
+// Incrementa i para avançar ao próximo elemento do array
+// (arrays em C não têm método .next() como em Java)
+i++;
+
+// Usa divisão inteira intencionalmente para descartar os centavos
+int valor_em_reais = total_centavos / 100;
+
+// Fórmula de Bhaskara — discriminante negativo indica raízes complexas
+float delta = b*b - 4*a*c;
+if (delta &lt; 0) {
+    printf("Raízes complexas — sem solução real.\n");
+    return 1; // encerra com código de erro
+}
+
+// Buffer de leitura: +1 para o caractere nulo '\0' que termina strings em C
+char nome[51]; // suporta até 50 caracteres + '\0'</pre>
+
+    <h3>Cabeçalho de arquivo — padrão recomendado</h3>
+    <p>Todo arquivo <code>.c</code> ou <code>.h</code> deve começar com um bloco de comentário descrevendo seu propósito:</p>
+
+    <pre>
+/*
+ * Arquivo:   molecular_energy.c
+ * Autor:     Caio Lima Firme
+ * Criado em: 2024-01-10
+ * Descrição: Cálculo de energia molecular usando o método
+ *            Hartree-Fock com base STO-3G.
+ *
+ * Compilar:  gcc molecular_energy.c -o mol -lm
+ */
+
+#include &lt;stdio.h&gt;
+#include &lt;math.h&gt;</pre>
+</div>
+
+<!-- ═══════════════════════════════════════ DOXYGEN -->
+<div class="content-section">
+    <h2>Documentação Automática com Doxygen</h2>
+    <p>Para projetos maiores, é comum usar comentários no estilo <strong>Doxygen</strong> — uma ferramenta que lê comentários especialmente formatados e gera documentação HTML ou PDF automaticamente. O estilo usa <code>/**</code> (dois asteriscos) e tags especiais:</p>
+
+    <pre>
+/**
+ * @brief Calcula a área de um círculo.
+ *
+ * Utiliza a fórmula: A = π × r²
+ * onde π é aproximado por PI_MACRO (3.14159).
+ *
+ * @param raio  O raio do círculo em metros (deve ser positivo).
+ * @return      A área em metros quadrados, ou -1.0 se raio &lt;= 0.
+ */
+float areaCirculo(float raio) {
+    if (raio &lt;= 0) return -1.0f;
+    return 3.14159f * raio * raio;
+}</pre>
+
+    <div class="info-box">
+        <strong>Tags Doxygen mais usadas:</strong>
+        <ul>
+            <li><code>@brief</code> — descrição curta da função</li>
+            <li><code>@param nome</code> — documenta um parâmetro</li>
+            <li><code>@return</code> — documenta o valor de retorno</li>
+            <li><code>@note</code> — observação adicional</li>
+            <li><code>@warning</code> — alerta ao usuário da função</li>
+            <li><code>@see</code> — referência a outra função relacionada</li>
+        </ul>
+        Doxygen é padrão em projetos científicos e industriais em C — e é muito utilizado em projetos de química computacional como os estudados neste curso.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ C VS JAVA -->
+<div class="content-section">
+    <h2>Comentários em C versus Java</h2>
+    <p>As sintaxes de comentário são praticamente idênticas nas duas linguagens. A principal diferença está na ferramenta de documentação automática utilizada por cada ecossistema:</p>
+
+    <table>
+        <tr>
+            <th>Aspecto</th>
+            <th>C</th>
+            <th>Java</th>
+        </tr>
+        <tr>
+            <td>Comentário de linha</td>
+            <td><code>// texto</code> (desde C99)</td>
+            <td><code>// texto</code> (idêntico)</td>
+        </tr>
+        <tr>
+            <td>Comentário de bloco</td>
+            <td><code>/* texto */</code></td>
+            <td><code>/* texto */</code> (idêntico)</td>
+        </tr>
+        <tr>
+            <td>Comentário de documentação</td>
+            <td><code>/** ... */</code> — processado pelo <strong>Doxygen</strong></td>
+            <td><code>/** ... */</code> — processado pelo <strong>Javadoc</strong></td>
+        </tr>
+        <tr>
+            <td>Tags de documentação</td>
+            <td><code>@param</code>, <code>@return</code>, <code>@brief</code> (Doxygen)</td>
+            <td><code>@param</code>, <code>@return</code>, <code>@author</code> (Javadoc)</td>
+        </tr>
+        <tr>
+            <td>Comentar blocos grandes</td>
+            <td><code>#if 0 ... #endif</code> (método mais seguro)</td>
+            <td><code>/* ... */</code> (funciona pois Java não tem pré-processador)</td>
+        </tr>
+        <tr>
+            <td>Aninhamento de <code>/* */</code></td>
+            <td>Não permitido — causa erro de compilação</td>
+            <td>Não permitido — causa erro de compilação</td>
+        </tr>
+        <tr>
+            <td><code>//</code> no C original (C89)</td>
+            <td>Não existia — foi introduzido no C99</td>
+            <td>Sempre disponível em Java</td>
+        </tr>
+    </table>
+
+    <h3>Código equivalente nas duas linguagens</h3>
+    <table>
+        <tr>
+            <th style="width:50%">C</th>
+            <th style="width:50%">Java</th>
+        </tr>
+        <tr>
+            <td>
+<pre style="margin:0; font-size:0.85em;">
+/*
+ * Calcula o quadrado de um número.
+ * @param n - número inteiro
+ * @return n ao quadrado
+ */
+int quadrado(int n) {
+    return n * n; // operação simples
+}
+</pre>
+            </td>
+            <td>
+<pre style="margin:0; font-size:0.85em;">
+/**
+ * Calcula o quadrado de um número.
+ * @param n número inteiro
+ * @return n ao quadrado
+ */
+int quadrado(int n) {
+    return n * n; // operação simples
+}
+</pre>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<!-- ═══════════════════════════════════════ EXERCÍCIOS -->
+<div class="exercise-section">
+    <h2>Exercícios — Aula 07</h2>
+    <p>Teste seus conhecimentos sobre comentários em C:</p>
+
+    <form class="quiz-form" id="quiz-form">
+
+        <div class="quiz-question">
+            <p><strong>1. O que o compilador C faz com os comentários no código-fonte?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q1" value="a"> Converte-os em mensagens de depuração no executável final</label></li>
+                <li><label><input type="radio" name="q1" value="b"> Ignora-os completamente — comentários não afetam o comportamento do programa</label></li>
+                <li><label><input type="radio" name="q1" value="c"> Armazena-os em uma seção especial do arquivo executável para documentação</label></li>
+                <li><label><input type="radio" name="q1" value="d"> Gera um aviso (<em>warning</em>) para cada comentário encontrado</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>2. Em qual padrão do C o comentário de linha <code>//</code> foi introduzido?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q2" value="a"> C89 (ANSI C original)</label></li>
+                <li><label><input type="radio" name="q2" value="b"> C95</label></li>
+                <li><label><input type="radio" name="q2" value="c"> C99</label></li>
+                <li><label><input type="radio" name="q2" value="d"> C11</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>3. O código abaixo compila corretamente? Por quê?</strong></p>
+            <pre>/* comentário /* aninhado */ ainda comentário? */
+printf("ok\n");</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q3" value="a"> Sim — comentários aninhados são válidos em C</label></li>
+                <li><label><input type="radio" name="q3" value="b"> Não — o primeiro <code>*/</code> encerra o comentário, e o restante é interpretado como código inválido</label></li>
+                <li><label><input type="radio" name="q3" value="c"> Sim — o compilador reconhece o aninhamento e ignora todo o bloco</label></li>
+                <li><label><input type="radio" name="q3" value="d"> Não — comentários de bloco não podem estar na mesma linha que código</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>4. Qual é a forma mais segura de comentar um grande bloco de código em C que já contém comentários <code>/* */</code>?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q4" value="a"> Envolver tudo com <code>/* ... */</code> externo</label></li>
+                <li><label><input type="radio" name="q4" value="b"> Usar <code>#if 0 ... #endif</code></label></li>
+                <li><label><input type="radio" name="q4" value="c"> Adicionar <code>//</code> no início de cada linha manualmente</label></li>
+                <li><label><input type="radio" name="q4" value="d"> Deletar o código e recuperar pelo histórico do editor</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>5. Qual dos comentários abaixo representa uma <u>boa</u> prática?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q5" value="a"> <code>i++; // incrementa i</code></label></li>
+                <li><label><input type="radio" name="q5" value="b"> <code>int x = 5; // declara x como inteiro e atribui 5</code></label></li>
+                <li><label><input type="radio" name="q5" value="c"> <code>char nome[51]; // +1 para o '\0' que termina strings em C</code></label></li>
+                <li><label><input type="radio" name="q5" value="d"> <code>printf("ok\n"); // imprime "ok" seguido de nova linha</code></label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>6. Qual ferramenta de documentação automática é usada no ecossistema C, equivalente ao Javadoc do Java?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q6" value="a"> JSDoc</label></li>
+                <li><label><input type="radio" name="q6" value="b"> Sphinx</label></li>
+                <li><label><input type="radio" name="q6" value="c"> Doxygen</label></li>
+                <li><label><input type="radio" name="q6" value="d"> DocC</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>7. Analise o código. Qual linha será executada?</strong></p>
+            <pre>#if 0
+    printf("Linha A\n");
+    printf("Linha B\n");
+#endif
+    printf("Linha C\n");</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q7" value="a"> Linha A, B e C</label></li>
+                <li><label><input type="radio" name="q7" value="b"> Apenas Linha A</label></li>
+                <li><label><input type="radio" name="q7" value="c"> Apenas Linha C</label></li>
+                <li><label><input type="radio" name="q7" value="d"> Nenhuma — o programa não compila com <code>#if 0</code></label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>8. Qual tag Doxygen é usada para documentar o valor de retorno de uma função?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q8" value="a"> <code>@output</code></label></li>
+                <li><label><input type="radio" name="q8" value="b"> <code>@result</code></label></li>
+                <li><label><input type="radio" name="q8" value="c"> <code>@value</code></label></li>
+                <li><label><input type="radio" name="q8" value="d"> <code>@return</code></label></li>
+            </ul>
+        </div>
+
+        <button type="button" class="submit-btn" onclick="verificarRespostas()">Verificar Respostas</button>
+    </form>
+
+    <div id="quiz-results" style="display:none; margin-top:20px; padding:15px; background-color:#dff0d8; border-radius:5px;"></div>
+</div>
+
+<div class="navigation-buttons">
+    <a href="capitulo06.html">← Aula 06</a>
+    <a href="index.html">Índice</a>
+    <a href="capitulo08.html">Aula 08 →</a>
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align: center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education" style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+<script>
+    function verificarRespostas() {
+        const gabarito = {
+            q1: "b",
+            q2: "c",
+            q3: "b",
+            q4: "b",
+            q5: "c",
+            q6: "c",
+            q7: "c",
+            q8: "d"
+        };
+
+        const explicacoes = {
+            q1: "O compilador remove todos os comentários antes de processar o código. Eles não geram nenhum dado no executável e não afetam o comportamento do programa — existem apenas para os programadores.",
+            q2: "O comentário de linha // foi introduzido no padrão C99. O C original (ANSI C / C89) só tinha comentários de bloco /* */. Todos os compiladores modernos, incluindo o MinGW no Code::Blocks, suportam C99.",
+            q3: "Comentários de bloco /* */ não podem ser aninhados em C. O compilador fecha o comentário no primeiro */ que encontra, portanto 'ainda comentário? */' é tratado como código — causando erro de compilação.",
+            q4: "#if 0 ... #endif é a forma mais segura: o pré-processador ignora tudo entre as diretivas, incluindo comentários /* */ já existentes dentro do bloco. Basta mudar #if 0 para #if 1 para reativar o código.",
+            q5: "O comentário em (c) agrega informação real: explica por que o array tem tamanho 51 em vez de 50 — o +1 para o '\\0' é um detalhe não óbvio para quem está aprendendo C. Os demais apenas repetem o que o código já diz.",
+            q6: "Doxygen é a ferramenta padrão de documentação automática para C e C++. Ela lê comentários no formato /** ... */ com tags como @param e @return e gera documentação HTML, PDF e outros formatos.",
+            q7: "#if 0 instrui o pré-processador a ignorar tudo até o #endif correspondente — como se as linhas A e B não existissem. Apenas a Linha C, que está após o #endif, é compilada e executada.",
+            q8: "@return documenta o valor retornado pela função no estilo Doxygen (e Javadoc). É uma das tags mais usadas, junto com @param para parâmetros e @brief para a descrição curta."
+        };
+
+        let acertos = 0;
+        let html = "";
+        const total = Object.keys(gabarito).length;
+
+        for (const q in gabarito) {
+            const selecionada = document.querySelector(`input[name="${q}"]:checked`);
+            const num = q.substring(1);
+            if (selecionada) {
+                if (selecionada.value === gabarito[q]) {
+                    acertos++;
+                    html += `<p>Questão ${num}: <span style="color:green; font-weight:bold;">✓ Correto!</span> — ${explicacoes[q]}</p>`;
+                } else {
+                    html += `<p>Questão ${num}: <span style="color:red; font-weight:bold;">✗ Incorreto.</span> — ${explicacoes[q]}</p>`;
+                }
+            } else {
+                html += `<p>Questão ${num}: <span style="color:orange; font-weight:bold;">⚠ Não respondida.</span></p>`;
+            }
+        }
+
+        const resultado = document.getElementById("quiz-results");
+        resultado.innerHTML = `<h3>Sua pontuação: ${acertos} de ${total}</h3>${html}`;
+        resultado.style.display = "block";
+        resultado.scrollIntoView({ behavior: "smooth" });
+    }
+</script>
+
+</body>
+</html>

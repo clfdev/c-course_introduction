@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 12 - break e continue em C</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Aula 12 — <code style="color:#aad4ff">break</code> e <code style="color:#aad4ff">continue</code></h1>
+    <p>Controlando o fluxo interno dos loops — quando sair, quando pular</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo11.html">← Aula Anterior</a>
+    <a href="capitulo13.html">Próxima Aula →</a>
+</nav>
+
+<div class="info-box">
+    <strong>Aula Suplementar.</strong> Esta aula aprofunda dois comandos que aparecem dentro de qualquer loop (<code>for</code>, <code>while</code>, <code>do-while</code>) e também dentro do <code>switch</code>. O conteúdo complementa as Aulas 08–11 e é especialmente útil antes de estudar funções e algoritmos de busca.
+</div>
+
+<!-- ============================================================ -->
+<!-- 1. VISÃO GERAL -->
+<!-- ============================================================ -->
+<div class="content-section">
+    <h2>1. Visão Geral — Controle de Fluxo Dentro de Loops</h2>
+
+    <p>Em C (e em Java), toda estrutura de repetição segue um ciclo natural: testa a condição, executa o bloco, repete. Às vezes, porém, precisamos <strong>interromper esse ciclo</strong> antes do previsto ou <strong>pular uma iteração</strong> específica. Para isso existem dois comandos:</p>
+
+    <table>
+        <tr>
+            <th>Comando</th>
+            <th>Efeito imediato</th>
+            <th>Onde pode ser usado</th>
+        </tr>
+        <tr>
+            <td><code>break</code></td>
+            <td>Encerra o loop (ou <code>switch</code>) imediatamente e transfere o controle para a instrução seguinte ao bloco</td>
+            <td><code>for</code>, <code>while</code>, <code>do-while</code>, <code>switch</code></td>
+        </tr>
+        <tr>
+            <td><code>continue</code></td>
+            <td>Abandona o restante do bloco da iteração <em>atual</em> e vai direto para o próximo ciclo (re-teste da condição)</td>
+            <td><code>for</code>, <code>while</code>, <code>do-while</code></td>
+        </tr>
+    </table>
+
+    <div class="info-box">
+        <strong>Diferença fundamental:</strong> <code>break</code> <em>mata</em> o loop. <code>continue</code> <em>pula uma volta</em> do loop. O loop continua existindo após um <code>continue</code>; após um <code>break</code>, ele termina.
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 2. BREAK -->
+<!-- ============================================================ -->
+<div class="content-section">
+    <h2>2. O Comando <code>break</code></h2>
+
+    <div class="definicao">
+        <code>break</code> interrompe imediatamente a execução do bloco mais interno em que está contido (loop ou <code>switch</code>) e passa o controle para a primeira instrução após aquele bloco. Nenhuma linha restante do bloco é executada.
+    </div>
+
+    <div class="flow-diagram">
+        <div class="flow-block">Executa o bloco normalmente</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-condition">Encontra <code>break</code>?</div>
+        <div style="margin-top:8px;">
+            <span style="color:#dc3545">↓ sim → sai do loop imediatamente</span><br>
+            <span style="color:#28a745">→ não → continua a iteração normalmente</span>
+        </div>
+    </div>
+
+    <h3>Exemplo 1 — Busca linear com break</h3>
+    <p>O uso mais clássico de <code>break</code>: parar assim que encontrar o elemento procurado, sem continuar varrendo o array desnecessariamente.</p>
+<pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int v[] = {4, 7, 2, 9, 1, 5, 8};
+    int n = 7;
+    int alvo = 9;
+    int encontrado = 0;
+
+    for (int i = 0; i &lt; n; i++) {
+        if (v[i] == alvo) {
+            printf("Encontrado %d na posição %d.\n", alvo, i);
+            encontrado = 1;
+            break;          <span class="code-comment">// para o loop — não precisa continuar</span>
+        }
+    }
+
+    if (!encontrado)
+        printf("%d não está no vetor.\n", alvo);
+
+    return 0;
+}
+</pre>
+    <div class="terminal-output">Encontrado 9 na posição 3.</div>
+
+    <div class="tip-box">
+        Sem o <code>break</code>, o loop continuaria percorrendo os elementos 1, 5 e 8 mesmo após encontrar o 9 — trabalho desnecessário. Em arrays grandes, isso pode fazer diferença real de performance.
+    </div>
+
+    <h3>Exemplo 2 — break em loop infinito (padrão muito usado em C)</h3>
+    <p>O idioma <code>while(1)</code> com <code>break</code> interno é muito comum em C para loops cuja condição de saída é complexa ou ocorre no meio do bloco:</p>
+<pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int n;
+
+    while (1) {                           <span class="code-comment">// loop infinito intencional</span>
+        printf("Digite um número positivo: ");
+        scanf("%d", &amp;n);
+
+        if (n &gt; 0) break;                 <span class="code-comment">// saída no meio do bloco</span>
+
+        printf("Inválido! Tente novamente.\n");
+    }
+
+    printf("Você digitou: %d\n", n);
+    return 0;
+}
+</pre>
+    <div class="terminal-output">
+Digite um número positivo: -3<br>
+Inválido! Tente novamente.<br>
+Digite um número positivo: 0<br>
+Inválido! Tente novamente.<br>
+Digite um número positivo: 7<br>
+Você digitou: 7
+    </div>
+
+    <div class="dica">
+        Este padrão é equivalente a um <code>do-while</code> com condição de saída no meio. Muitos programadores C preferem o <code>while(1) + break</code> quando a condição de saída é mais complexa ou precisa ser verificada após algumas instruções.
+    </div>
+
+    <h3>Exemplo 3 — break em switch (revisão importante)</h3>
+    <p>O <code>break</code> é <strong>obrigatório</strong> no <code>switch</code> para evitar o <em>fall-through</em> — a execução "caindo" para o caso seguinte:</p>
+<pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int opcao = 2;
+
+    switch (opcao) {
+        case 1:
+            printf("Opção 1\n");
+            break;                 <span class="code-comment">// sem este break, continuaria no case 2!</span>
+        case 2:
+            printf("Opção 2\n");
+            break;
+        case 3:
+            printf("Opção 3\n");
+            break;
+        default:
+            printf("Opção inválida\n");
+    }
+    return 0;
+}
+</pre>
+    <div class="terminal-output">Opção 2</div>
+
+    <div class="warning-box">
+        <strong>Fall-through sem break:</strong> Se você esquecer o <code>break</code> em um <code>case</code>, a execução continua para o próximo <code>case</code> automaticamente — mesmo que a condição não corresponda. Isso é raramente o que se quer e é fonte frequente de bugs.
+<pre style="margin-top:10px;">
+switch (2) {
+    case 1: printf("um\n");
+    case 2: printf("dois\n");   <span class="code-comment">// executa (opcao == 2)</span>
+    case 3: printf("três\n");   <span class="code-comment">// também executa! (fall-through)</span>
+}
+</pre>
+        <div class="terminal-output" style="margin-top:5px;">dois<br>três</div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 3. CONTINUE -->
+<!-- ============================================================ -->
+<div class="content-section">
+    <h2>3. O Comando <code>continue</code></h2>
+
+    <div class="definicao">
+        <code>continue</code> abandona o restante do bloco da iteração <em>atual</em> e passa imediatamente para o próximo ciclo do loop: no <code>for</code>, executa o incremento e então testa a condição; no <code>while</code> e <code>do-while</code>, vai direto para o re-teste da condição.
+    </div>
+
+    <div class="flow-diagram">
+        <div class="flow-block">Início da iteração</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-condition">Encontra <code>continue</code>?</div>
+        <div style="margin-top:8px;">
+            <span style="color:#ff9800">↓ sim → pula o restante → próxima iteração</span><br>
+            <span style="color:#28a745">→ não → executa o bloco normalmente até o fim</span>
+        </div>
+    </div>
+
+    <h3>O que "próxima iteração" significa em cada loop</h3>
+    <table>
+        <tr>
+            <th>Loop</th>
+            <th>Após o <code>continue</code>, vai para...</th>
+        </tr>
+        <tr>
+            <td><code>for (init; cond; incr)</code></td>
+            <td>Executa <strong>incr</strong> primeiro, depois testa <strong>cond</strong></td>
+        </tr>
+        <tr>
+            <td><code>while (cond)</code></td>
+            <td>Vai direto para o re-teste de <strong>cond</strong></td>
+        </tr>
+        <tr>
+            <td><code>do { } while (cond)</code></td>
+            <td>Vai direto para o re-teste de <strong>cond</strong></td>
+        </tr>
+    </table>
+
+    <h3>Exemplo 4 — Imprimir apenas números ímpares</h3>
+<pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    for (int i = 1; i &lt;= 10; i++) {
+        if (i % 2 == 0) continue;      <span class="code-comment">// pula os pares</span>
+        printf("%d ", i);
+    }
+    printf("\n");
+    return 0;
+}
+</pre>
+    <div class="terminal-output">1 3 5 7 9</div>
+
+    <h3>Exemplo 5 — Somar apenas valores positivos de um vetor</h3>
+<pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int v[] = {3, -1, 7, -4, 2, -8, 5};
+    int n = 7, soma = 0;
+
+    for (int i = 0; i &lt; n; i++) {
+        if (v[i] &lt;= 0) continue;       <span class="code-comment">// ignora negativos e zero</span>
+        soma += v[i];
+        printf("Somando v[%d] = %d  →  soma = %d\n", i, v[i], soma);
+    }
+
+    printf("Soma dos positivos: %d\n", soma);
+    return 0;
+}
+</pre>
+    <div class="terminal-output">
+Somando v[0] = 3  →  soma = 3<br>
+Somando v[2] = 7  →  soma = 10<br>
+Somando v[4] = 2  →  soma = 12<br>
+Somando v[6] = 5  →  soma = 17<br>
+Soma dos positivos: 17
+    </div>
+
+    <h3>⚠️ Armadilha: continue em while pode causar loop infinito</h3>
+    <p>No <code>for</code>, o incremento (<code>i++</code>) é executado automaticamente mesmo após um <code>continue</code>. No <code>while</code>, o incremento está <em>dentro do bloco</em> — e se vier <em>depois</em> do <code>continue</code>, nunca será executado:</p>
+
+    <div class="grid-container">
+        <div class="grid-item">
+            <strong>❌ Loop infinito — incremento após continue:</strong>
+<pre>
+int i = 0;
+while (i &lt; 5) {
+    if (i % 2 == 0) continue;  <span class="code-comment">// pula...</span>
+    printf("%d ", i);
+    i++;   <span class="code-comment">// nunca chega aqui quando i é par!</span>
+}
+</pre>
+            <p style="color:#dc3545">i fica em 0 para sempre → loop infinito.</p>
+        </div>
+        <div class="grid-item">
+            <strong>✅ Correto — incremento antes do continue:</strong>
+<pre>
+int i = 0;
+while (i &lt; 5) {
+    i++;                        <span class="code-comment">// incrementa primeiro</span>
+    if (i % 2 == 0) continue;  <span class="code-comment">// aí pula</span>
+    printf("%d ", i);
+}
+</pre>
+            <div class="terminal-output">1 3 5</div>
+        </div>
+    </div>
+
+    <div class="warning-box">
+        <strong>Regra de ouro com continue em while:</strong> Sempre verifique se o incremento (ou qualquer atualização da variável de controle) está posicionado <em>antes</em> do <code>continue</code>. No <code>for</code>, isso não é problema porque o incremento fica fora do bloco.
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 4. LOOPS ANINHADOS -->
+<!-- ============================================================ -->
+<div class="content-section">
+    <h2>4. 🔍 Loops Aninhados — Break e Continue Afetam Apenas o Loop Mais Interno</h2>
+
+    <div class="definicao">
+        Esta é uma das pegadinhas mais comuns: <code>break</code> e <code>continue</code> afetam <strong>apenas o loop (ou switch) mais interno</strong> em que aparecem. Um <code>break</code> dentro de um <code>for</code> aninhado sai apenas daquele <code>for</code> interno — o <code>for</code> externo continua normalmente.
+    </div>
+
+    <h3>Exemplo 6 — break só sai do loop interno</h3>
+<pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    for (int i = 1; i &lt;= 3; i++) {
+        printf("i = %d: ", i);
+        for (int j = 1; j &lt;= 5; j++) {
+            if (j == 3) break;          <span class="code-comment">// sai apenas do for interno</span>
+            printf("%d ", j);
+        }
+        printf("\n");
+    }
+    return 0;
+}
+</pre>
+    <div class="terminal-output">
+i = 1: 1 2<br>
+i = 2: 1 2<br>
+i = 3: 1 2
+    </div>
+    <p>O <code>break</code> encerrou o loop de <code>j</code> a cada iteração de <code>i</code>, mas o loop externo (de <code>i</code>) continuou normalmente até o fim.</p>
+
+    <h3>Como sair de loops aninhados em C — a flag booleana</h3>
+    <p>C não tem uma sintaxe nativa para sair de múltiplos loops de uma vez (como o <code>break label</code> do Java). A solução idiomática em C é usar uma variável flag:</p>
+<pre>
+#include &lt;stdio.h&gt;
+#include &lt;stdbool.h&gt;
+
+int main() {
+    int m[3][3] = {{1,2,3},{4,0,6},{7,8,9}};
+    bool achou = false;
+    int li, lj;
+
+    for (int i = 0; i &lt; 3 &amp;&amp; !achou; i++) {    <span class="code-comment">// condição extra na própria linha</span>
+        for (int j = 0; j &lt; 3 &amp;&amp; !achou; j++) {
+            if (m[i][j] == 0) {
+                achou = true;
+                li = i; lj = j;
+            }
+        }
+    }
+
+    if (achou)
+        printf("Zero encontrado em [%d][%d]\n", li, lj);
+    return 0;
+}
+</pre>
+    <div class="terminal-output">Zero encontrado em [1][1]</div>
+
+    <div class="tip-box">
+        A técnica de colocar <code>&amp;&amp; !achou</code> diretamente na condição do <code>for</code> é mais elegante do que usar <code>break</code> + flag separada: assim que <code>achou</code> se torna <code>true</code>, ambos os loops param naturalmente no próximo teste de condição.
+    </div>
+
+    <h3>A alternativa: goto</h3>
+    <p>C possui a instrução <code>goto</code>, que permite saltar para um <em>label</em> dentro da mesma função. É uma das raras situações em que seu uso é considerado aceitável pela comunidade C:</p>
+<pre>
+for (int i = 0; i &lt; 3; i++) {
+    for (int j = 0; j &lt; 3; j++) {
+        if (m[i][j] == 0) goto fim;     <span class="code-comment">// sai de ambos os loops</span>
+    }
+}
+fim:
+    printf("Saiu dos dois loops.\n");
+</pre>
+    <div class="warning-box">
+        <strong>Sobre o goto:</strong> Em geral, <code>goto</code> torna o código difícil de ler e manter. Evite-o na maioria dos casos. A exceção mais aceita é exatamente esta — sair de loops profundamente aninhados. Para todo o resto, prefira flags ou refatoração em funções.
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 5. C vs JAVA -->
+<!-- ============================================================ -->
+<div class="content-section">
+    <h2>5. C vs Java — break e continue em Detalhe</h2>
+
+    <table class="comparison-table">
+        <tr>
+            <th>Aspecto</th>
+            <th>C</th>
+            <th>Java</th>
+        </tr>
+        <tr>
+            <td>Sintaxe básica</td>
+            <td>Idêntica: <code>break;</code> e <code>continue;</code></td>
+            <td>Idêntica: <code>break;</code> e <code>continue;</code></td>
+        </tr>
+        <tr>
+            <td>Escopo de atuação</td>
+            <td>Apenas o loop/switch mais interno</td>
+            <td>Apenas o loop/switch mais interno</td>
+        </tr>
+        <tr>
+            <td>Sair de loops aninhados</td>
+            <td>Flag booleana ou <code>goto label</code> (uso raro, mas válido)</td>
+            <td><code>break label;</code> e <code>continue label;</code> — sintaxe nativa</td>
+        </tr>
+        <tr>
+            <td>continue em switch</td>
+            <td><code>continue</code> não é válido dentro de <code>switch</code> isolado — precisa haver um loop externo</td>
+            <td>Mesmo comportamento</td>
+        </tr>
+        <tr>
+            <td>Fall-through no switch</td>
+            <td>Ocorre se <code>break</code> for omitido — comportamento padrão</td>
+            <td>Ocorre se <code>break</code> for omitido — mesmo comportamento</td>
+        </tr>
+        <tr>
+            <td>break fora de loop/switch</td>
+            <td>Erro de compilação</td>
+            <td>Erro de compilação</td>
+        </tr>
+        <tr>
+            <td>continue com incremento em while</td>
+            <td>Perigo de loop infinito se incremento vier depois do <code>continue</code></td>
+            <td>Mesmo perigo — comportamento idêntico</td>
+        </tr>
+    </table>
+
+    <h3>Break com label em Java (não existe em C)</h3>
+    <div class="grid-container">
+        <div class="grid-item">
+            <strong>Java — break com label:</strong>
+<pre>
+externo:
+for (int i = 0; i &lt; 3; i++) {
+    for (int j = 0; j &lt; 3; j++) {
+        if (m[i][j] == 0)
+            break externo;  <span class="code-comment">// sai de AMBOS</span>
+    }
+}
+</pre>
+            <p style="color:#28a745">✅ Sintaxe nativa em Java.</p>
+        </div>
+        <div class="grid-item">
+            <strong>C — equivalente com flag:</strong>
+<pre>
+bool achou = false;
+for (int i=0; i&lt;3 &amp;&amp; !achou; i++) {
+    for (int j=0; j&lt;3 &amp;&amp; !achou; j++) {
+        if (m[i][j] == 0)
+            achou = true;
+    }
+}
+</pre>
+            <p style="color:#ff9800">⚠️ Requer variável auxiliar.</p>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 6. EXEMPLO COMPLETO -->
+<!-- ============================================================ -->
+<div class="content-section">
+    <h2>6. Exemplo Completo — Menu com validação e filtro</h2>
+    <p>Um programa que combina <code>break</code> (para sair do menu) e <code>continue</code> (para filtrar entradas dentro de uma operação):</p>
+<pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int opcao, n, soma;
+
+    do {
+        printf("\n=== MENU ===\n");
+        printf("1. Somar apenas números positivos\n");
+        printf("2. Contar ímpares de 1 a N\n");
+        printf("0. Sair\n");
+        printf("Escolha: ");
+        scanf("%d", &amp;opcao);
+
+        if (opcao == 0) break;              <span class="code-comment">// sai do do-while</span>
+
+        if (opcao == 1) {
+            int v[] = {5, -2, 8, -1, 3, -7, 4};
+            soma = 0;
+            for (int i = 0; i &lt; 7; i++) {
+                if (v[i] &lt;= 0) continue;   <span class="code-comment">// pula negativos</span>
+                soma += v[i];
+            }
+            printf("Soma dos positivos: %d\n", soma);
+
+        } else if (opcao == 2) {
+            printf("Digite N: ");
+            scanf("%d", &amp;n);
+            int cont = 0;
+            for (int i = 1; i &lt;= n; i++) {
+                if (i % 2 == 0) continue;  <span class="code-comment">// pula pares</span>
+                cont++;
+            }
+            printf("Ímpares de 1 a %d: %d\n", n, cont);
+
+        } else {
+            printf("Opção inválida!\n");
+        }
+
+    } while (1);                            <span class="code-comment">// loop infinito — sai pelo break acima</span>
+
+    printf("Até logo!\n");
+    return 0;
+}
+</pre>
+    <div class="terminal-output">
+=== MENU ===<br>
+1. Somar apenas números positivos<br>
+2. Contar ímpares de 1 a N<br>
+0. Sair<br>
+Escolha: 1<br>
+Soma dos positivos: 20<br><br>
+=== MENU ===<br>
+...<br>
+Escolha: 2<br>
+Digite N: 10<br>
+Ímpares de 1 a 10: 5<br><br>
+=== MENU ===<br>
+...<br>
+Escolha: 0<br>
+Até logo!
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 7. EXERCÍCIOS -->
+<!-- ============================================================ -->
+<div class="exercise-section">
+    <h2>7. Exercícios de Fixação</h2>
+    <p>Responda às questões abaixo e clique em <strong>Verificar Respostas</strong> para conferir.</p>
+
+    <form class="quiz-form" id="quiz">
+
+        <div class="quiz-question">
+            <p><strong>1.</strong> Qual a diferença entre <code>break</code> e <code>continue</code>?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q1" value="a"> <code>break</code> pula a iteração atual; <code>continue</code> encerra o loop.</label></li>
+                <li><label><input type="radio" name="q1" value="b"> <code>break</code> encerra o loop; <code>continue</code> pula para a próxima iteração.</label></li>
+                <li><label><input type="radio" name="q1" value="c"> São sinônimos — ambos encerram o loop.</label></li>
+                <li><label><input type="radio" name="q1" value="d"> <code>break</code> só funciona em <code>switch</code>; <code>continue</code> só funciona em loops.</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>2.</strong> Qual é a saída do código abaixo?</p>
+<pre>for (int i = 0; i &lt; 5; i++) {
+    if (i == 3) break;
+    printf("%d ", i);
+}</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q2" value="a"> 0 1 2 3 4</label></li>
+                <li><label><input type="radio" name="q2" value="b"> 0 1 2 3</label></li>
+                <li><label><input type="radio" name="q2" value="c"> 0 1 2</label></li>
+                <li><label><input type="radio" name="q2" value="d"> 1 2 3 4</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>3.</strong> Qual é a saída do código abaixo?</p>
+<pre>for (int i = 0; i &lt; 5; i++) {
+    if (i == 3) continue;
+    printf("%d ", i);
+}</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q3" value="a"> 0 1 2 3 4</label></li>
+                <li><label><input type="radio" name="q3" value="b"> 0 1 2 3</label></li>
+                <li><label><input type="radio" name="q3" value="c"> 0 1 2 4</label></li>
+                <li><label><input type="radio" name="q3" value="d"> 1 2 4</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>4.</strong> Em loops aninhados, o <code>break</code> em C encerra:</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q4" value="a"> Todos os loops aninhados de uma vez</label></li>
+                <li><label><input type="radio" name="q4" value="b"> Apenas o loop mais interno em que está contido</label></li>
+                <li><label><input type="radio" name="q4" value="c"> O loop mais externo</label></li>
+                <li><label><input type="radio" name="q4" value="d"> Depende do tipo de loop</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>5.</strong> Qual é o risco no código abaixo?</p>
+<pre>int i = 0;
+while (i &lt; 5) {
+    if (i % 2 == 0) continue;
+    printf("%d ", i);
+    i++;
+}</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q5" value="a"> Nenhum — o código está correto e imprime 1 3.</label></li>
+                <li><label><input type="radio" name="q5" value="b"> Loop infinito: quando i=0, o <code>continue</code> pula o <code>i++</code> e i nunca muda.</label></li>
+                <li><label><input type="radio" name="q5" value="c"> Erro de compilação: <code>continue</code> não é permitido em <code>while</code>.</label></li>
+                <li><label><input type="radio" name="q5" value="d"> O programa imprime apenas 0 e para.</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>6.</strong> O que acontece no <code>switch</code> se o <code>break</code> for omitido em um <code>case</code>?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q6" value="a"> Erro de compilação</label></li>
+                <li><label><input type="radio" name="q6" value="b"> O <code>switch</code> encerra normalmente naquele <code>case</code></label></li>
+                <li><label><input type="radio" name="q6" value="c"> A execução continua para o próximo <code>case</code> (fall-through)</label></li>
+                <li><label><input type="radio" name="q6" value="d"> O <code>default</code> é executado automaticamente</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>7.</strong> Como C permite sair de dois loops aninhados de uma vez (algo que Java faz com <code>break label</code>)?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q7" value="a"> Usando <code>break break;</code></label></li>
+                <li><label><input type="radio" name="q7" value="b"> Não é possível em C</label></li>
+                <li><label><input type="radio" name="q7" value="c"> Com uma flag booleana na condição dos dois loops, ou com <code>goto</code></label></li>
+                <li><label><input type="radio" name="q7" value="d"> Usando <code>return</code> no loop externo</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>8.</strong> No <code>for</code>, após um <code>continue</code>, o que acontece com o incremento (<code>i++</code>)?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q8" value="a"> É ignorado — o loop testa a condição diretamente</label></li>
+                <li><label><input type="radio" name="q8" value="b"> É executado normalmente antes do próximo teste de condição</label></li>
+                <li><label><input type="radio" name="q8" value="c"> Causa erro de compilação</label></li>
+                <li><label><input type="radio" name="q8" value="d"> Depende do compilador</label></li>
+            </ul>
+        </div>
+
+        <button type="button" class="submit-btn" onclick="verificarRespostas()">Verificar Respostas</button>
+    </form>
+
+    <div id="quiz-results" style="display:none; margin-top:20px;"></div>
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align:center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education"
+                 style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+<script>
+function verificarRespostas() {
+    const gabarito = { q1:'b', q2:'c', q3:'c', q4:'b', q5:'b', q6:'c', q7:'c', q8:'b' };
+
+    const explicacoes = {
+        q1: "<code>break</code> termina o loop inteiramente; <code>continue</code> apenas pula o restante da iteração atual e vai para a próxima.",
+        q2: "Quando i=3, o <code>break</code> encerra o loop antes de imprimir. Os valores impressos são 0, 1 e 2.",
+        q3: "Quando i=3, o <code>continue</code> pula o <code>printf</code> mas o loop continua. O incremento <code>i++</code> do <code>for</code> é executado, i passa para 4 e é impresso normalmente. Saída: 0 1 2 4.",
+        q4: "<code>break</code> e <code>continue</code> afetam apenas o loop (ou switch) mais interno em que estão. Para sair de loops aninhados, use flags ou <code>goto</code>.",
+        q5: "Loop infinito clássico: quando i=0 (par), o <code>continue</code> é executado antes de <code>i++</code>. O incremento nunca acontece, i fica em 0 para sempre e o loop nunca termina.",
+        q6: "O <em>fall-through</em> é o comportamento padrão do <code>switch</code> em C (e Java) quando o <code>break</code> é omitido: a execução continua para o próximo <code>case</code> independentemente da condição.",
+        q7: "C não tem <code>break label</code>. As alternativas idiomáticas são: (1) adicionar <code>&& !flag</code> na condição dos dois loops, ou (2) usar <code>goto</code> — o único caso amplamente aceito para o <code>goto</code> em C.",
+        q8: "No <code>for</code>, o incremento faz parte do cabeçalho e é sempre executado após o bloco — mesmo após um <code>continue</code>. Por isso o <code>continue</code> em <code>for</code> não causa loops infinitos, ao contrário do <code>while</code>."
+    };
+
+    let acertos = 0;
+    const total = Object.keys(gabarito).length;
+    let html = '';
+
+    for (const [q, resp] of Object.entries(gabarito)) {
+        const num = q.replace('q', '');
+        const sel = document.querySelector(`input[name="${q}"]:checked`);
+        if (sel) {
+            if (sel.value === resp) {
+                acertos++;
+                html += `<p>Questão ${num}: <span style="color:green;font-weight:bold;">✅ Correto!</span> — ${explicacoes[q]}</p>`;
+            } else {
+                html += `<p>Questão ${num}: <span style="color:red;font-weight:bold;">❌ Incorreto.</span> Gabarito: <strong>${resp.toUpperCase()}</strong> — ${explicacoes[q]}</p>`;
+            }
+        } else {
+            html += `<p>Questão ${num}: <span style="color:orange;font-weight:bold;">⚠ Não respondida.</span></p>`;
+        }
+    }
+
+    const r = document.getElementById('quiz-results');
+    r.innerHTML = `<h3>Sua pontuação: ${acertos} de ${total}</h3>${html}`;
+    r.style.display = 'block';
+    r.scrollIntoView({ behavior: 'smooth' });
+}
+</script>
+
+</body>
+</html>

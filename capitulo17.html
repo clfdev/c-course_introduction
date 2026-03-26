@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 17 – Protótipos de Funções e Arquivos de Cabeçalho (.h)</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Aula 17 — Protótipos de Funções e Arquivos de Cabeçalho</h1>
+    <p>Declarações antecipadas, <code style="color:#aad4ff">.h</code> como interface e inclusion guards — a base da organização em C</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo16.html">← Aula 16</a>
+    <a href="capitulo18.html">Aula 18 →</a>
+</nav>
+
+<!-- ═══════════════════════════════════════ 1. O PROBLEMA -->
+<div class="content-section">
+    <h2>1. O Problema: Ordem das Funções Importa em C</h2>
+
+    <p>Em C, o compilador lê o arquivo de cima para baixo, linha por linha. Se você chamar uma função antes de defini-la, o compilador ainda não sabe que ela existe — e emite um aviso ou erro.</p>
+
+<pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int r = somar(3, 4);        <span class="code-comment">// ❌ PROBLEMA: somar ainda não foi declarada!</span>
+    printf("%d\n", r);
+    return 0;
+}
+
+int somar(int a, int b) {       <span class="code-comment">// definição vem DEPOIS da chamada</span>
+    return a + b;
+}
+</pre>
+
+    <p>Em versões antigas do C (C89/C90), o compilador <em>assumia</em> que a função retornava <code>int</code> e continuava — o que podia gerar bugs silenciosos. Em C99 e C11, isso gera um erro. A solução correta é o <strong>protótipo</strong>.</p>
+
+    <div class="info-box">
+        <strong>Duas soluções existem:</strong> (1) sempre definir as funções <em>antes</em> de usá-las — o que força uma ordem específica e pode ser impraticável em projetos grandes; ou (2) usar <strong>protótipos</strong>, que informam ao compilador a assinatura da função com antecedência, liberando você para organizar o código como quiser.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 2. PROTÓTIPOS -->
+<div class="content-section">
+    <h2>2. Protótipos de Função</h2>
+
+    <div class="definicao">
+        Um <strong>protótipo</strong> (ou declaração antecipada) é uma linha que informa ao compilador o <strong>nome</strong>, o <strong>tipo de retorno</strong> e os <strong>tipos dos parâmetros</strong> de uma função, antes de sua definição completa aparecer. Com essa informação, o compilador consegue verificar se as chamadas estão corretas em termos de tipos e quantidade de argumentos.
+    </div>
+
+    <h3>Sintaxe</h3>
+<pre>
+<span class="code-comment">/* Protótipo — assinatura completa, terminada com ponto-e-vírgula */</span>
+int somar(int a, int b);
+
+<span class="code-comment">/* Os nomes dos parâmetros são opcionais no protótipo: */</span>
+int somar(int, int);         <span class="code-comment">// equivalente — apenas os tipos são obrigatórios</span>
+
+<span class="code-comment">/* Outros exemplos: */</span>
+float calcularMedia(float, float, float);
+void exibirRelatorio(char *titulo, int linhas);
+int ehPrimo(int n);
+</pre>
+
+    <h3>O mesmo programa, corrigido com protótipo</h3>
+<pre>
+#include &lt;stdio.h&gt;
+
+<span class="code-comment">/* ── Protótipos ─────────────────────────────────── */</span>
+int somar(int a, int b);
+float calcularMedia(float a, float b);
+void classificarAluno(char *nome, float media);
+
+<span class="code-comment">/* ── main ──────────────────────────────────────── */</span>
+int main() {
+    float n1 = 7.5f, n2 = 8.5f;
+    float media = calcularMedia(n1, n2);
+    classificarAluno("Ana Souza", media);
+    printf("Soma de 3 e 4: %d\n", somar(3, 4));
+    return 0;
+}
+
+<span class="code-comment">/* ── Definições (podem vir em qualquer ordem) ───── */</span>
+int somar(int a, int b) {
+    return a + b;
+}
+
+float calcularMedia(float a, float b) {
+    return (a + b) / 2.0f;
+}
+
+void classificarAluno(char *nome, float media) {
+    printf("%s: %.1f — %s\n", nome, media,
+           media &gt;= 7.0f ? "Aprovado" : "Reprovado");
+}
+</pre>
+    <div class="terminal-output">Ana Souza: 8.0 — Aprovado<br>Soma de 3 e 4: 7</div>
+
+    <h3>O que o compilador verifica com o protótipo</h3>
+    <table>
+        <tr>
+            <th>Verificação</th>
+            <th>Sem protótipo</th>
+            <th>Com protótipo</th>
+        </tr>
+        <tr>
+            <td>Número correto de argumentos</td>
+            <td>❌ Não verifica</td>
+            <td>✅ Erro se errado</td>
+        </tr>
+        <tr>
+            <td>Tipos dos argumentos</td>
+            <td>❌ Assume sem checar</td>
+            <td>✅ Converte ou avisa se incompatível</td>
+        </tr>
+        <tr>
+            <td>Tipo do valor de retorno</td>
+            <td>❌ Assume <code>int</code></td>
+            <td>✅ Verifica e converte corretamente</td>
+        </tr>
+    </table>
+</div>
+
+<!-- ═══════════════════════════════════════ 3. PROTÓTIPOS E RECURSÃO MÚTUA -->
+<div class="content-section">
+    <h2>3. Caso Especial: Recursão Mútua</h2>
+
+    <p>Protótipos se tornam <strong>indispensáveis</strong> quando duas funções se chamam mutuamente — impossível resolver apenas com ordem de definição:</p>
+
+<pre>
+#include &lt;stdio.h&gt;
+
+<span class="code-comment">/* Sem esses protótipos, uma das funções sempre "veria" a outra antes dela */</span>
+int ehPar(int n);
+int ehImpar(int n);
+
+int ehPar(int n) {
+    if (n == 0) return 1;           <span class="code-comment">// 0 é par</span>
+    return ehImpar(n - 1);          <span class="code-comment">// chama ehImpar — precisa do protótipo acima</span>
+}
+
+int ehImpar(int n) {
+    if (n == 0) return 0;           <span class="code-comment">// 0 não é ímpar</span>
+    return ehPar(n - 1);            <span class="code-comment">// chama ehPar</span>
+}
+
+int main() {
+    for (int i = 0; i &lt;= 6; i++)
+        printf("%d é %s\n", i, ehPar(i) ? "par" : "ímpar");
+    return 0;
+}
+</pre>
+    <div class="terminal-output">0 é par<br>1 é ímpar<br>2 é par<br>3 é ímpar<br>4 é par<br>5 é ímpar<br>6 é par</div>
+
+    <div class="tip-box">
+        Este exemplo é didático. Na prática, verificar par/ímpar com <code>n % 2</code> é o caminho correto. Mas a <strong>estrutura de recursão mútua</strong> aparece em algoritmos reais como parsers de expressões matemáticas e máquinas de estado.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 4. ARQUIVOS .H -->
+<div class="content-section">
+    <h2>4. Arquivos de Cabeçalho (.h)</h2>
+
+    <p>Você já usa arquivos <code>.h</code> todo dia: <code>#include &lt;stdio.h&gt;</code> inclui o cabeçalho da biblioteca padrão de entrada/saída. Agora vamos entender o que há dentro deles — e criar os seus próprios.</p>
+
+    <div class="definicao">
+        Um <strong>arquivo de cabeçalho</strong> (<em>header file</em>, extensão <code>.h</code>) é um arquivo de texto que contém protótipos de funções, definições de constantes (<code>#define</code>), definições de tipos (<code>typedef</code>, <code>struct</code>) e qualquer outra coisa que precisa ser <em>compartilhada</em> entre diferentes arquivos <code>.c</code>. É a <strong>interface pública</strong> de um módulo.
+    </div>
+
+    <h3>O que vai no <code>.h</code> e o que vai no <code>.c</code></h3>
+    <table>
+        <tr>
+            <th>Elemento</th>
+            <th>Arquivo <code>.h</code></th>
+            <th>Arquivo <code>.c</code></th>
+        </tr>
+        <tr>
+            <td>Protótipos de funções públicas</td>
+            <td>✅ Sim</td>
+            <td>—</td>
+        </tr>
+        <tr>
+            <td>Constantes (<code>#define</code>)</td>
+            <td>✅ Sim</td>
+            <td>—</td>
+        </tr>
+        <tr>
+            <td>Definições de tipos (<code>typedef</code>, <code>struct</code>)</td>
+            <td>✅ Sim</td>
+            <td>—</td>
+        </tr>
+        <tr>
+            <td>Corpo/implementação das funções</td>
+            <td>❌ Não</td>
+            <td>✅ Sim</td>
+        </tr>
+        <tr>
+            <td>Funções auxiliares internas (<code>static</code>)</td>
+            <td>❌ Não</td>
+            <td>✅ Sim</td>
+        </tr>
+        <tr>
+            <td>Variáveis locais</td>
+            <td>❌ Não</td>
+            <td>✅ Sim</td>
+        </tr>
+    </table>
+
+    <h3>Exemplo de par <code>.h</code> / <code>.c</code> bem estruturado</h3>
+<pre>
+<span class="code-comment">/* ─── matematica.h ─── interface pública do módulo ─── */</span>
+
+#ifndef MATEMATICA_H        <span class="code-comment">// inclusion guard (explicado na próxima seção)</span>
+#define MATEMATICA_H
+
+#define PI 3.14159265f      <span class="code-comment">// constante compartilhada</span>
+
+<span class="code-comment">/* Protótipos das funções disponíveis ao usuário do módulo */</span>
+float calcularMedia(float a, float b);
+float areaCirculo(float raio);
+int   ehPrimo(int n);
+int   mdc(int a, int b);
+
+#endif  <span class="code-comment">/* MATEMATICA_H */</span>
+</pre>
+
+<pre>
+<span class="code-comment">/* ─── matematica.c ─── implementação do módulo ──────── */</span>
+
+#include "matematica.h"     <span class="code-comment">// aspas: arquivo local do projeto</span>
+#include &lt;math.h&gt;
+
+float calcularMedia(float a, float b) {
+    return (a + b) / 2.0f;
+}
+
+float areaCirculo(float raio) {
+    return PI * raio * raio;
+}
+
+int ehPrimo(int n) {
+    if (n &lt; 2) return 0;
+    for (int i = 2; i * i &lt;= n; i++)
+        if (n % i == 0) return 0;
+    return 1;
+}
+
+int mdc(int a, int b) {
+    if (b == 0) return a;
+    return mdc(b, a % b);
+}
+</pre>
+
+<pre>
+<span class="code-comment">/* ─── main.c ─── usa o módulo matematica ────────────── */</span>
+
+#include &lt;stdio.h&gt;
+#include "matematica.h"     <span class="code-comment">// inclui os protótipos e constantes</span>
+
+int main() {
+    printf("Média de 6 e 9:    %.1f\n", calcularMedia(6.0f, 9.0f));
+    printf("Área do círculo r=5: %.2f\n", areaCirculo(5.0f));
+    printf("7 é primo? %s\n",   ehPrimo(7)  ? "Sim" : "Não");
+    printf("MDC(48, 18) = %d\n", mdc(48, 18));
+    return 0;
+}
+</pre>
+    <div class="terminal-output">Média de 6 e 9:    7.5<br>Área do círculo r=5: 78.54<br>7 é primo? Sim<br>MDC(48, 18) = 6</div>
+
+    <div class="info-box">
+        <strong><code>#include "arquivo.h"</code> vs <code>#include &lt;arquivo.h&gt;</code></strong><br><br>
+        Aspas <code>""</code> → o compilador procura primeiro no <strong>diretório do projeto</strong>, depois nos caminhos do sistema. Use para seus próprios cabeçalhos.<br><br>
+        Ângulos <code>&lt;&gt;</code> → o compilador procura <strong>apenas</strong> nos diretórios padrão do sistema. Use para bibliotecas do sistema (<code>stdio.h</code>, <code>math.h</code>, etc.).
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 5. INCLUSION GUARD -->
+<div class="content-section">
+    <h2>5. Inclusion Guard — Evitando Inclusão Dupla</h2>
+
+    <p>Imagine que <code>main.c</code> inclui <code>matematica.h</code> e também inclui <code>geometria.h</code>, que por sua vez também inclui <code>matematica.h</code>. O preprocessador inseriria o conteúdo de <code>matematica.h</code> <strong>duas vezes</strong> no mesmo arquivo de compilação — causando erros de "redeclaração".</p>
+
+    <p>O <strong>inclusion guard</strong> resolve isso com três diretivas do preprocessador:</p>
+
+<pre>
+#ifndef MATEMATICA_H     <span class="code-comment">// "se MATEMATICA_H ainda NÃO foi definido..."</span>
+#define MATEMATICA_H     <span class="code-comment">// "...define-o agora (marca que este arquivo já foi lido)"</span>
+
+<span class="code-comment">/* todo o conteúdo do .h fica aqui */</span>
+float calcularMedia(float a, float b);
+float areaCirculo(float raio);
+
+#endif                   <span class="code-comment">// "fim do bloco condicional"</span>
+</pre>
+
+    <h3>Como o inclusion guard funciona na prática</h3>
+    <table>
+        <tr>
+            <th>Situação</th>
+            <th>O que acontece</th>
+        </tr>
+        <tr>
+            <td>1ª vez que o arquivo é incluído</td>
+            <td><code>MATEMATICA_H</code> não existe → o bloco é processado → <code>MATEMATICA_H</code> é definido</td>
+        </tr>
+        <tr>
+            <td>2ª vez que o arquivo é incluído</td>
+            <td><code>MATEMATICA_H</code> já existe → <code>#ifndef</code> é falso → todo o conteúdo é pulado</td>
+        </tr>
+    </table>
+
+    <div class="tip-box">
+        <strong>Convenção de nomenclatura:</strong> O símbolo do inclusion guard é o nome do arquivo em <strong>maiúsculas</strong> com <code>.</code> substituído por <code>_</code>. Exemplos: <code>matematica.h</code> → <code>MATEMATICA_H</code>, <code>lista_alunos.h</code> → <code>LISTA_ALUNOS_H</code>. Isso garante unicidade entre todos os arquivos do projeto.
+    </div>
+
+    <h3>Alternativa moderna: <code>#pragma once</code></h3>
+    <p>Muitos compiladores modernos (GCC, Clang, MSVC) suportam uma diretiva mais simples:</p>
+<pre>
+#pragma once             <span class="code-comment">// garante inclusão única — mais simples que o inclusion guard</span>
+
+float calcularMedia(float a, float b);
+float areaCirculo(float raio);
+</pre>
+    <div class="warning-box">
+        <strong>⚠️ <code>#pragma once</code> não é padrão ISO C</strong> — é uma extensão de compilador. Funciona em praticamente todos os compiladores modernos, mas para máxima portabilidade (ex: sistemas embarcados ou compiladores antigos), prefira o inclusion guard tradicional com <code>#ifndef / #define / #endif</code>.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 6. EXEMPLO COMPLETO -->
+<div class="content-section">
+    <h2>6. Exemplo Completo — Módulo de Notas Escolares</h2>
+
+    <p>Um módulo bem estruturado com três arquivos: <code>notas.h</code>, <code>notas.c</code> e <code>main.c</code>.</p>
+
+    <h3>Arquivo <code>notas.h</code></h3>
+<pre>
+/* notas.h — interface do módulo de notas escolares */
+
+#ifndef NOTAS_H
+#define NOTAS_H
+
+/* Constantes */
+#define MAX_ALUNOS  30
+#define NUM_NOTAS    4
+#define MEDIA_APROV  7.0f
+
+/* Tipo público */
+typedef struct {
+    char  nome[50];
+    float notas[NUM_NOTAS];
+} Aluno;
+
+/* Protótipos públicos */
+float calcularMedia(const Aluno *a);
+void  exibirAluno(const Aluno *a);
+void  exibirTurma(const Aluno turma[], int total);
+int   contarAprovados(const Aluno turma[], int total);
+void  encontrarMelhor(const Aluno turma[], int total, Aluno *melhor);
+
+#endif /* NOTAS_H */
+</pre>
+
+    <h3>Arquivo <code>notas.c</code></h3>
+<pre>
+/* notas.c — implementação do módulo */
+
+#include "notas.h"
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+/* ── Função auxiliar PRIVADA (static — invisível fora deste arquivo) ── */
+static float somarNotas(const float notas[], int n) {
+    float soma = 0.0f;
+    for (int i = 0; i &lt; n; i++)
+        soma += notas[i];
+    return soma;
+}
+
+/* ── Funções públicas ──────────────────────────────────────────────── */
+float calcularMedia(const Aluno *a) {
+    return somarNotas(a-&gt;notas, NUM_NOTAS) / NUM_NOTAS;
+}
+
+void exibirAluno(const Aluno *a) {
+    float media = calcularMedia(a);
+    printf("%-20s | Notas: %.1f %.1f %.1f %.1f | Media: %.1f | %s\n",
+           a-&gt;nome,
+           a-&gt;notas[0], a-&gt;notas[1], a-&gt;notas[2], a-&gt;notas[3],
+           media,
+           media &gt;= MEDIA_APROV ? "Aprovado" : "Reprovado");
+}
+
+void exibirTurma(const Aluno turma[], int total) {
+    printf("\n%-20s | %-28s | %-5s | %s\n",
+           "Nome", "Notas", "Media", "Situação");
+    printf("--------------------------------------------------------------------\n");
+    for (int i = 0; i &lt; total; i++)
+        exibirAluno(&turma[i]);
+}
+
+int contarAprovados(const Aluno turma[], int total) {
+    int aprovados = 0;
+    for (int i = 0; i &lt; total; i++)
+        if (calcularMedia(&turma[i]) &gt;= MEDIA_APROV)
+            aprovados++;
+    return aprovados;
+}
+
+void encontrarMelhor(const Aluno turma[], int total, Aluno *melhor) {
+    float melhorMedia = calcularMedia(&turma[0]);
+    *melhor = turma[0];
+    for (int i = 1; i &lt; total; i++) {
+        float m = calcularMedia(&turma[i]);
+        if (m &gt; melhorMedia) {
+            melhorMedia = m;
+            *melhor = turma[i];
+        }
+    }
+}
+</pre>
+
+    <h3>Arquivo <code>main.c</code></h3>
+<pre>
+/* main.c — programa principal: usa o módulo notas */
+
+#include &lt;stdio.h&gt;
+#include "notas.h"   <span class="code-comment">/* inclui apenas o .h — nunca o .c! */</span>
+
+int main() {
+    Aluno turma[] = {
+        {"Ana Oliveira",  {8.0f, 9.0f, 7.5f, 8.5f}},
+        {"Bruno Santos",  {5.0f, 6.0f, 4.5f, 5.5f}},
+        {"Carla Mendes",  {10.f, 9.5f, 9.0f, 9.5f}},
+        {"Diego Nunes",   {6.5f, 7.0f, 6.0f, 7.5f}},
+        {"Elena Torres",  {4.0f, 3.5f, 5.0f, 4.5f}}
+    };
+    int total = 5;
+
+    exibirTurma(turma, total);
+
+    int aprov = contarAprovados(turma, total);
+    printf("\nAprovados: %d de %d (%.0f%%)\n",
+           aprov, total, (float)aprov / total * 100);
+
+    Aluno melhor;
+    encontrarMelhor(turma, total, &melhor);
+    printf("Melhor aluno: %s (%.1f)\n",
+           melhor.nome, calcularMedia(&melhor));
+
+    return 0;
+}
+</pre>
+    <div class="terminal-output">
+Nome                 | Notas                        | Media | Situação<br>
+--------------------------------------------------------------------<br>
+Ana Oliveira         | Notas: 8.0 9.0 7.5 8.5 | Media: 8.2 | Aprovado<br>
+Bruno Santos         | Notas: 5.0 6.0 4.5 5.5 | Media: 5.2 | Reprovado<br>
+Carla Mendes         | Notas: 10.0 9.5 9.0 9.5 | Media: 9.5 | Aprovado<br>
+Diego Nunes          | Notas: 6.5 7.0 6.0 7.5 | Media: 6.8 | Reprovado<br>
+Elena Torres         | Notas: 4.0 3.5 5.0 4.5 | Media: 4.2 | Reprovado<br>
+<br>
+Aprovados: 2 de 5 (40%)<br>
+Melhor aluno: Carla Mendes (9.5)
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 7. ERROS COMUNS -->
+<div class="content-section">
+    <h2>7. Erros Comuns com Protótipos e Headers</h2>
+
+    <table>
+        <tr>
+            <th>Erro</th>
+            <th>Causa</th>
+            <th>Solução</th>
+        </tr>
+        <tr>
+            <td><code>implicit declaration of function 'f'</code></td>
+            <td>Função chamada sem protótipo visível</td>
+            <td>Adicionar protótipo antes da chamada ou incluir o <code>.h</code> correto</td>
+        </tr>
+        <tr>
+            <td><code>conflicting types for 'f'</code></td>
+            <td>O protótipo não bate com a definição (tipos diferentes)</td>
+            <td>Sincronizar o protótipo no <code>.h</code> com a definição no <code>.c</code></td>
+        </tr>
+        <tr>
+            <td><code>redefinition of struct / typedef</code></td>
+            <td>Arquivo <code>.h</code> incluído duas vezes sem inclusion guard</td>
+            <td>Adicionar <code>#ifndef / #define / #endif</code> no <code>.h</code></td>
+        </tr>
+        <tr>
+            <td><code>multiple definition of 'funcao'</code></td>
+            <td>Corpo da função definido no <code>.h</code> (incluído em vários <code>.c</code>)</td>
+            <td>Mover a definição para o <code>.c</code>; deixar apenas o protótipo no <code>.h</code></td>
+        </tr>
+        <tr>
+            <td>Protótipo e definição com nomes de parâmetros diferentes</td>
+            <td>C permite, mas é confuso e propenso a erro</td>
+            <td>Usar os mesmos nomes no protótipo e na definição — clareza</td>
+        </tr>
+    </table>
+
+    <h3>O erro mais clássico: definir função no .h</h3>
+    <div class="bad-practice">
+        <strong>❌ Errado — corpo da função no .h</strong>
+<pre>
+<span class="code-comment">/* matematica.h */</span>
+int somar(int a, int b) {    <span class="code-comment">// ❌ definição no .h!</span>
+    return a + b;            <span class="code-comment">// Se incluído em 2 arquivos .c → "multiple definition"</span>
+}
+</pre>
+    </div>
+
+    <div class="good-practice">
+        <strong>✅ Correto — apenas protótipo no .h</strong>
+<pre>
+<span class="code-comment">/* matematica.h */</span>
+int somar(int a, int b);     <span class="code-comment">// ✅ apenas protótipo — ponto-e-vírgula no final</span>
+
+<span class="code-comment">/* matematica.c */</span>
+#include "matematica.h"
+int somar(int a, int b) {    <span class="code-comment">// ✅ definição no .c</span>
+    return a + b;
+}
+</pre>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 8. C VS JAVA -->
+<div class="content-section">
+    <h2>8. C vs. Java — Protótipos e Módulos</h2>
+
+    <table>
+        <tr>
+            <th>Aspecto</th>
+            <th>C</th>
+            <th>Java</th>
+        </tr>
+        <tr>
+            <td>Ordem de declaração importa?</td>
+            <td>✅ Sim — sem protótipo, a ordem importa</td>
+            <td>❌ Não — o compilador Java resolve na segunda passagem</td>
+        </tr>
+        <tr>
+            <td>Interface pública do módulo</td>
+            <td>Arquivo <code>.h</code> com protótipos</td>
+            <td>Membros <code>public</code> da classe</td>
+        </tr>
+        <tr>
+            <td>Inclusão de módulo</td>
+            <td><code>#include "modulo.h"</code></td>
+            <td><code>import pacote.Classe;</code></td>
+        </tr>
+        <tr>
+            <td>Risco de inclusão dupla</td>
+            <td>⚠️ Existe — resolvido com inclusion guard</td>
+            <td>❌ Não existe — Java gerencia imports automaticamente</td>
+        </tr>
+        <tr>
+            <td>Separação interface/implementação</td>
+            <td>Manual — par <code>.h</code> / <code>.c</code></td>
+            <td>Automática — pares interface/classe ou classe pública/privada</td>
+        </tr>
+        <tr>
+            <td>Recursão mútua sem protótipo</td>
+            <td>❌ Impossível — protótipos obrigatórios</td>
+            <td>✅ Funciona — métodos podem se referenciar em qualquer ordem</td>
+        </tr>
+    </table>
+
+    <h3>Side-by-side: interface pública em C vs. Java</h3>
+    <div class="grid-container">
+        <div class="grid-item">
+            <strong>C — par .h / .c</strong>
+<pre>
+<span class="code-comment">/* notas.h */</span>
+#ifndef NOTAS_H
+#define NOTAS_H
+
+float calcularMedia(float, float);
+void  exibirAluno(const char *);
+
+#endif
+</pre>
+<pre>
+<span class="code-comment">/* notas.c */</span>
+#include "notas.h"
+
+float calcularMedia(float a, float b){
+    return (a + b) / 2.0f;
+}
+void exibirAluno(const char *nome){
+    printf("Aluno: %s\n", nome);
+}
+</pre>
+        </div>
+        <div class="grid-item">
+            <strong>Java — classe com membros public</strong>
+<pre>
+<span class="code-comment">/* Notas.java */</span>
+public class Notas {
+
+    public static float calcularMedia(
+            float a, float b) {
+        return (a + b) / 2.0f;
+    }
+
+    public static void exibirAluno(
+            String nome) {
+        System.out.println("Aluno: " + nome);
+    }
+}
+</pre>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ QUIZ -->
+<div class="content-section exercise-section">
+    <h2>Quiz — Aula 17</h2>
+    <form class="quiz-form" onsubmit="return false;">
+
+        <div class="content-section quiz-question">
+            <p><strong>1.</strong> Qual é o principal objetivo de um protótipo de função em C?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q1" value="a"> Executar a função antes da <code>main()</code></label></li>
+                <li><label><input type="radio" name="q1" value="b"> Informar ao compilador o nome, tipo de retorno e tipos dos parâmetros antes da definição completa</label></li>
+                <li><label><input type="radio" name="q1" value="c"> Criar uma cópia da função para uso em outros arquivos</label></li>
+                <li><label><input type="radio" name="q1" value="d"> Substituir o arquivo <code>.h</code> em programas de arquivo único</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>2.</strong> Qual das declarações abaixo é um protótipo válido em C?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q2" value="a"> <code>float media(float a, float b) { return (a+b)/2; }</code></label></li>
+                <li><label><input type="radio" name="q2" value="b"> <code>float media(float a, float b);</code></label></li>
+                <li><label><input type="radio" name="q2" value="c"> <code>float media;</code></label></li>
+                <li><label><input type="radio" name="q2" value="d"> <code>#define media(a,b) ((a+b)/2)</code></label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>3.</strong> Por que o inclusion guard (<code>#ifndef / #define / #endif</code>) é necessário num arquivo <code>.h</code>?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q3" value="a"> Para proteger o arquivo contra acesso não autorizado</label></li>
+                <li><label><input type="radio" name="q3" value="b"> Para evitar que o conteúdo do <code>.h</code> seja inserido mais de uma vez no mesmo arquivo de compilação, causando erros de redeclaração</label></li>
+                <li><label><input type="radio" name="q3" value="c"> Para definir constantes globais visíveis em todo o projeto</label></li>
+                <li><label><input type="radio" name="q3" value="d"> Para impedir que o arquivo <code>.h</code> seja modificado durante a compilação</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>4.</strong> Qual a diferença entre <code>#include "meuarquivo.h"</code> e <code>#include &lt;stdio.h&gt;</code>?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q4" value="a"> Aspas são para arquivos do sistema; ângulos para arquivos locais</label></li>
+                <li><label><input type="radio" name="q4" value="b"> Aspas buscam primeiro no diretório do projeto; ângulos buscam apenas nos diretórios do sistema</label></li>
+                <li><label><input type="radio" name="q4" value="c"> Não há diferença — é apenas questão de estilo</label></li>
+                <li><label><input type="radio" name="q4" value="d"> Aspas incluem o arquivo uma vez; ângulos podem incluir múltiplas vezes</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>5.</strong> O que pertence ao arquivo <code>.h</code> e o que pertence ao arquivo <code>.c</code>?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q5" value="a"> <code>.h</code> contém a implementação completa; <code>.c</code> contém os protótipos</label></li>
+                <li><label><input type="radio" name="q5" value="b"> <code>.h</code> contém protótipos, constantes e tipos; <code>.c</code> contém a implementação das funções</label></li>
+                <li><label><input type="radio" name="q5" value="c"> Ambos contêm exatamente as mesmas informações por redundância</label></li>
+                <li><label><input type="radio" name="q5" value="d"> Não há diferença — é uma divisão opcional por estilo</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>6.</strong> Por que recursão mútua (função A chama B, B chama A) exige protótipos obrigatoriamente em C?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q6" value="a"> Porque funções recursivas sempre precisam de protótipos por questão de performance</label></li>
+                <li><label><input type="radio" name="q6" value="b"> Porque qualquer uma das funções que vier primeiro no arquivo vai referenciar a outra antes de ela ser definida — impossível resolver apenas com ordem de escrita</label></li>
+                <li><label><input type="radio" name="q6" value="c"> Porque o compilador não suporta funções que se chamam mutuamente sem protótipos</label></li>
+                <li><label><input type="radio" name="q6" value="d"> Para que o linker saiba a ordem de execução das funções</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>7.</strong> O erro <code>multiple definition of 'somar'</code> ao compilar um projeto com vários arquivos indica que:</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q7" value="a"> A função <code>somar</code> foi declarada duas vezes no mesmo arquivo <code>.c</code></label></li>
+                <li><label><input type="radio" name="q7" value="b"> O corpo da função <code>somar</code> foi definido no arquivo <code>.h</code>, que foi incluído em mais de um <code>.c</code></label></li>
+                <li><label><input type="radio" name="q7" value="c"> O inclusion guard está faltando no <code>.h</code></label></li>
+                <li><label><input type="radio" name="q7" value="d"> O protótipo e a definição da função têm tipos de retorno diferentes</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>8.</strong> Em Java, os métodos de uma classe podem se referenciar em qualquer ordem sem necessidade de declarações antecipadas. Por que C não funciona assim por padrão?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q8" value="a"> Porque C é uma linguagem mais antiga e nunca foi atualizada</label></li>
+                <li><label><input type="radio" name="q8" value="b"> Porque o compilador C processa o arquivo em uma única passagem de cima para baixo, precisando conhecer a assinatura antes de qualquer chamada; o compilador Java faz múltiplas passagens</label></li>
+                <li><label><input type="radio" name="q8" value="c"> Porque C não suporta funções com mais de um parâmetro sem protótipo</label></li>
+                <li><label><input type="radio" name="q8" value="d"> Porque protótipos são obrigatórios pela norma ISO C em todas as situações</label></li>
+            </ul>
+        </div>
+
+        <button type="button" class="submit-btn" onclick="verificarRespostas()">Verificar Respostas</button>
+    </form>
+    <div id="quiz-results" style="display:none; margin-top:20px; padding:15px; background:#dff0d8; border-radius:5px;"></div>
+</div>
+
+<div class="navigation-buttons">
+    <a href="capitulo16.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">← Aula 16</a>
+    <a href="index.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">Índice</a>
+    <a href="capitulo18.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">Aula 18 →</a>
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align:center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education" style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+<script>
+function verificarRespostas() {
+    const gabarito = { q1:"b", q2:"b", q3:"b", q4:"b", q5:"b", q6:"b", q7:"b", q8:"b" };
+    const explicacoes = {
+        q1: "O protótipo informa ao compilador a assinatura da função (nome, tipo de retorno, tipos dos parâmetros) antes que a definição completa apareça no código. Isso permite ao compilador verificar chamadas e aceitar funções definidas em qualquer ordem — ou em outros arquivos .c.",
+        q2: "Um protótipo é apenas a assinatura da função seguida de ponto-e-vírgula: 'float media(float a, float b);'. A opção A é uma definição completa (com corpo), C é uma declaração de variável, e D é uma macro do preprocessador.",
+        q3: "Se dois arquivos .c incluem o mesmo .h, e um incluir o outro indiretamente, o preprocessador inseriria o conteúdo do .h duas vezes na mesma unidade de compilação, causando erros como 'redefinition of struct' ou 'redeclaration of typedef'. O inclusion guard usa um símbolo para rastrear se o arquivo já foi processado.",
+        q4: "Aspas fazem o compilador buscar no diretório do projeto primeiro, depois nos caminhos de sistema. Ângulos buscam apenas nos caminhos padrão do sistema (onde ficam stdio.h, math.h, etc.).",
+        q5: "O .h é a interface pública: protótipos, constantes (#define), tipos (typedef, struct). O .c é a implementação: código executável das funções. Essa separação permite compilar módulos independentemente e esconder detalhes de implementação.",
+        q6: "Em recursão mútua, se A vem antes de B no arquivo, A referencia B que ainda não foi declarada. Se B vem antes, B referencia A que ainda não foi declarada. Não existe ordem de escrita que resolva isso sem protótipos — os dois protótipos precisam ser declarados antes de qualquer definição.",
+        q7: "Quando o corpo de uma função é colocado no .h (em vez de apenas o protótipo), e esse .h é incluído em dois ou mais arquivos .c, o linker encontra a mesma função definida em múltiplos objetos .o e reporta 'multiple definition'. A solução é mover a definição para o .c.",
+        q8: "O compilador C é de passagem única (single-pass): ao encontrar uma chamada de função, verifica imediatamente se a assinatura é conhecida. O compilador Java é multi-passagem: primeiro coleta todas as declarações de métodos, depois verifica as chamadas — eliminando a necessidade de declarações antecipadas."
+    };
+
+    let acertos = 0, html = "";
+    const total = Object.keys(gabarito).length;
+    for (const q in gabarito) {
+        const sel = document.querySelector(`input[name="${q}"]:checked`);
+        const num = q.replace("q","");
+        if (sel) {
+            if (sel.value === gabarito[q]) {
+                acertos++;
+                html += `<p>Questão ${num}: <span style="color:green;font-weight:bold;">✅ Correto!</span> — ${explicacoes[q]}</p>`;
+            } else {
+                html += `<p>Questão ${num}: <span style="color:red;font-weight:bold;">❌ Incorreto.</span> Gabarito: <strong>${gabarito[q].toUpperCase()}</strong> — ${explicacoes[q]}</p>`;
+            }
+        } else {
+            html += `<p>Questão ${num}: <span style="color:orange;font-weight:bold;">⚠ Não respondida.</span></p>`;
+        }
+    }
+    const r = document.getElementById("quiz-results");
+    r.innerHTML = `<h3>Sua pontuação: ${acertos} de ${total}</h3>${html}`;
+    r.style.display = "block";
+    r.scrollIntoView({ behavior: "smooth" });
+}
+</script>
+
+</body>
+</html>

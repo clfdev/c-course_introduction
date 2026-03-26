@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 12b - Arrays (Vetores) em C — Parte 2</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Aula 12b — Arrays (Vetores) <span style="font-size:0.7em; opacity:0.85;">Parte 2 de 2</span></h1>
+    <p>sizeof e pointer decay, arrays multidimensionais, exemplo completo e C vs Java</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo12a.html">← Parte 1</a>
+    <a href="capitulo13.html">Próxima Aula →</a>
+</nav>
+
+<div class="info-box" style="margin-bottom:20px;">
+    Esta é a <strong>Parte 2</strong> da Aula 12. Se você ainda não viu a Parte 1 (declaração, acesso e verificação de limites), <a href="capitulo12a.html">comece por ela</a>.
+</div>
+
+<!-- ============================================================ -->
+<!-- 5. SIZEOF — COMO SABER O TAMANHO DO ARRAY -->
+<!-- ============================================================ -->
+<div class="content-section">
+    <h2>5. 🔍 Como Saber o Tamanho de um Array — o Truque do <code>sizeof</code></h2>
+
+    <p>Em Java, todo array tem a propriedade <code>.length</code>. Em C, arrays <strong>não carregam seu tamanho consigo</strong>. Você precisa rastrear o tamanho manualmente — ou usar um truque com <code>sizeof</code>.</p>
+
+    <div class="definicao">
+        <code>sizeof(array)</code> retorna o tamanho total em bytes ocupado pelo array inteiro. <code>sizeof(array[0])</code> retorna o tamanho em bytes de um único elemento. Dividindo um pelo outro, obtemos o número de elementos.
+    </div>
+
+<pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int v[] = {10, 20, 30, 40, 50};
+
+    int bytes_total   = sizeof(v);               <span class="code-comment">// 5 * 4 = 20 bytes</span>
+    int bytes_elem    = sizeof(v[0]);             <span class="code-comment">// 4 bytes (um int)</span>
+    int num_elementos = sizeof(v) / sizeof(v[0]);<span class="code-comment">// 20 / 4 = 5</span>
+
+    printf("Tamanho total: %d bytes\n",    bytes_total);
+    printf("Tamanho de um elemento: %d bytes\n", bytes_elem);
+    printf("Número de elementos: %d\n",    num_elementos);
+
+    for (int i = 0; i &lt; num_elementos; i++)
+        printf("%d ", v[i]);
+    printf("\n");
+    return 0;
+}
+</pre>
+    <div class="terminal-output">
+Tamanho total: 20 bytes<br>
+Tamanho de um elemento: 4 bytes<br>
+Número de elementos: 5<br>
+10 20 30 40 50
+    </div>
+
+    <h3>⚠️ Limitação crítica: o truque só funciona localmente</h3>
+
+    <div class="warning-box">
+        <strong>Esta é uma das pegadinhas mais famosas de C.</strong> O truque <code>sizeof(v)/sizeof(v[0])</code> funciona <strong>somente no mesmo escopo em que o array foi declarado</strong>. Quando você passa um array para uma função, ele se transforma em ponteiro — e o <code>sizeof</code> passa a retornar o tamanho do ponteiro (4 ou 8 bytes), não do array inteiro!
+    </div>
+
+<pre>
+#include &lt;stdio.h&gt;
+
+void imprimirArray(int arr[], int n) {
+    <span class="code-comment">// sizeof(arr) aqui retorna sizeof(int*) = 8 bytes (ponteiro!)</span>
+    <span class="code-comment">// NÃO use sizeof(arr)/sizeof(arr[0]) dentro de funções!</span>
+    printf("sizeof dentro da função: %zu\n", sizeof(arr)); <span class="code-comment">// imprime 8, não 20!</span>
+
+    for (int i = 0; i &lt; n; i++)      <span class="code-comment">// por isso passamos 'n' separadamente</span>
+        printf("%d ", arr[i]);
+    printf("\n");
+}
+
+int main() {
+    int v[] = {10, 20, 30, 40, 50};
+    int n = sizeof(v) / sizeof(v[0]); <span class="code-comment">// 5 — funciona aqui, onde v foi declarado</span>
+
+    printf("sizeof em main: %zu\n", sizeof(v)); <span class="code-comment">// imprime 20 (correto)</span>
+    imprimirArray(v, n);               <span class="code-comment">// passa o tamanho explicitamente!</span>
+    return 0;
+}
+</pre>
+    <div class="terminal-output">
+sizeof em main: 20<br>
+sizeof dentro da função: 8<br>
+10 20 30 40 50
+    </div>
+
+    <h3>Por que isso acontece? — Pointer Decay</h3>
+    <p>
+        Quando um array é passado para uma função, C não copia todos os elementos — isso seria lento e caro. Em vez disso, passa apenas o <strong>endereço do primeiro elemento</strong>: um ponteiro. Esse fenômeno chama-se <strong>pointer decay</strong> (decaimento de array para ponteiro). Com isso, o compilador perde a informação do tamanho original.
+    </p>
+
+    <div class="exemplo">
+        Pense assim: ao chamar <code>imprimirArray(v, n)</code>, C entrega à função apenas o endereço de <code>v[0]</code> — um número de 8 bytes que aponta para o início do array. A função recebe esse endereço, mas não sabe quantos elementos existem a partir daí. Por isso <strong>toda função em C que recebe um array precisa receber o tamanho como parâmetro separado</strong>.
+    </div>
+
+    <table>
+        <tr>
+            <th>Contexto</th>
+            <th>C</th>
+            <th>Java</th>
+        </tr>
+        <tr>
+            <td>Obter tamanho do array</td>
+            <td><code>sizeof(v)/sizeof(v[0])</code> — só funciona localmente</td>
+            <td><code>v.length</code> — funciona em qualquer lugar</td>
+        </tr>
+        <tr>
+            <td>Dentro de uma função</td>
+            <td>Deve receber <code>int n</code> como parâmetro separado</td>
+            <td><code>v.length</code> continua disponível</td>
+        </tr>
+        <tr>
+            <td>O que é passado à função</td>
+            <td>Apenas o endereço do 1º elemento (ponteiro)</td>
+            <td>Referência ao objeto array (que carrega o <code>length</code>)</td>
+        </tr>
+    </table>
+
+    <div class="info-box">
+        <strong>Consequência prática:</strong> Em C, toda função que recebe um array <em>precisa</em> receber também um parâmetro inteiro com o tamanho (<code>int n</code>). Você nunca consegue descobrir o tamanho de um array dentro da função que o recebeu. Essa é uma diferença fundamental em relação ao Java, onde <code>array.length</code> funciona em qualquer contexto.
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 6. ARRAYS MULTIDIMENSIONAIS -->
+<!-- ============================================================ -->
+<div class="content-section">
+    <h2>6. Arrays Multidimensionais</h2>
+
+    <p>C suporta arrays com mais de uma dimensão. O caso mais comum é o array bidimensional, útil para representar matrizes, tabelas e grades.</p>
+
+    <h3>Declaração e acesso</h3>
+<pre>
+<span class="code-comment">// Matriz 3x4: 3 linhas, 4 colunas</span>
+int matriz[3][4];
+
+<span class="code-comment">// Inicialização com listas aninhadas</span>
+int m[3][4] = {
+    {1,  2,  3,  4},   <span class="code-comment">// linha 0</span>
+    {5,  6,  7,  8},   <span class="code-comment">// linha 1</span>
+    {9, 10, 11, 12}    <span class="code-comment">// linha 2</span>
+};
+
+<span class="code-comment">// Acesso: m[linha][coluna]</span>
+printf("%d\n", m[1][2]);    <span class="code-comment">// 7 (linha 1, coluna 2)</span>
+</pre>
+
+    <h3>Percorrendo com loops aninhados</h3>
+<pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int m[3][4] = {
+        {1,  2,  3,  4},
+        {5,  6,  7,  8},
+        {9, 10, 11, 12}
+    };
+
+    for (int i = 0; i &lt; 3; i++) {          <span class="code-comment">// percorre linhas</span>
+        for (int j = 0; j &lt; 4; j++) {      <span class="code-comment">// percorre colunas</span>
+            printf("%4d", m[i][j]);         <span class="code-comment">// %4d: campo de 4 caracteres</span>
+        }
+        printf("\n");
+    }
+    return 0;
+}
+</pre>
+    <div class="terminal-output">
+&nbsp;&nbsp;&nbsp;1&nbsp;&nbsp;&nbsp;2&nbsp;&nbsp;&nbsp;3&nbsp;&nbsp;&nbsp;4<br>
+&nbsp;&nbsp;&nbsp;5&nbsp;&nbsp;&nbsp;6&nbsp;&nbsp;&nbsp;7&nbsp;&nbsp;&nbsp;8<br>
+&nbsp;&nbsp;&nbsp;9&nbsp;&nbsp;10&nbsp;&nbsp;11&nbsp;&nbsp;12
+    </div>
+
+    <h3>Armazenamento row-major (linha por linha)</h3>
+    <p>Em C, matrizes são armazenadas na memória <strong>linha por linha</strong> (<em>row-major order</em>): todos os elementos da linha 0 vêm primeiro, depois os da linha 1, e assim por diante. Isso é importante para performance: percorrer coluna por coluna é muito mais lento do que percorrer linha por linha, pois prejudica o cache do processador.</p>
+
+    <table>
+        <tr>
+            <th>Posição na memória</th>
+            <th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>11</th>
+        </tr>
+        <tr>
+            <td>Elemento</td>
+            <td>m[0][0]</td><td>m[0][1]</td><td>m[0][2]</td><td>m[0][3]</td>
+            <td>m[1][0]</td><td>m[1][1]</td><td>m[1][2]</td><td>m[1][3]</td>
+            <td>m[2][0]</td><td>m[2][1]</td><td>m[2][2]</td><td>m[2][3]</td>
+        </tr>
+        <tr>
+            <td>Valor</td>
+            <td>1</td><td>2</td><td>3</td><td>4</td>
+            <td>5</td><td>6</td><td>7</td><td>8</td>
+            <td>9</td><td>10</td><td>11</td><td>12</td>
+        </tr>
+    </table>
+</div>
+
+<!-- ============================================================ -->
+<!-- 7. EXEMPLO COMPLETO -->
+<!-- ============================================================ -->
+<div class="content-section">
+    <h2>7. Exemplo Completo — Estatísticas de um Vetor</h2>
+
+    <p>Vamos escrever um programa que lê um vetor de inteiros e calcula mínimo, máximo, soma e média:</p>
+
+<pre>
+#include &lt;stdio.h&gt;
+#define MAX 100
+
+int main() {
+    int v[MAX], n;
+
+    <span class="code-comment">/* lê o número de elementos */</span>
+    do {
+        printf("Quantos elementos? (1 a %d): ", MAX);
+        scanf("%d", &amp;n);
+    } while (n &lt; 1 || n &gt; MAX);
+
+    <span class="code-comment">/* lê os elementos */</span>
+    for (int i = 0; i &lt; n; i++) {
+        printf("v[%d]: ", i);
+        scanf("%d", &amp;v[i]);
+    }
+
+    <span class="code-comment">/* calcula estatísticas */</span>
+    int min = v[0], max = v[0];
+    long soma = 0;
+
+    for (int i = 0; i &lt; n; i++) {
+        if (v[i] &lt; min) min = v[i];
+        if (v[i] &gt; max) max = v[i];
+        soma += v[i];
+    }
+
+    printf("\nMínimo: %d\n", min);
+    printf("Máximo: %d\n", max);
+    printf("Soma:   %ld\n", soma);
+    printf("Média:  %.2f\n", (double)soma / n);   <span class="code-comment">// cast para não truncar</span>
+    return 0;
+}
+</pre>
+
+    <div class="terminal-output">
+Quantos elementos? (1 a 100): 5<br>
+v[0]: 8<br>
+v[1]: 3<br>
+v[2]: 15<br>
+v[3]: 7<br>
+v[4]: 12<br><br>
+Mínimo: 3<br>
+Máximo: 15<br>
+Soma:   45<br>
+Média:  9.00
+    </div>
+
+    <div class="exemplo">
+        Iniciamos <code>min</code> e <code>max</code> com <code>v[0]</code> — não com 0 ou com <code>INT_MAX</code>. Isso garante que o algoritmo funcione mesmo que todos os elementos sejam negativos (<code>min = 0</code> seria errado nesse caso) ou muito grandes (<code>max = 0</code> poderia ser menor que todos os elementos).
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 8. C vs JAVA -->
+<!-- ============================================================ -->
+<div class="content-section">
+    <h2>8. C vs Java — Comparação Completa de Arrays</h2>
+
+    <table class="comparison-table">
+        <tr>
+            <th>Aspecto</th>
+            <th>C</th>
+            <th>Java</th>
+        </tr>
+        <tr>
+            <td>Declaração</td>
+            <td><code>int v[5];</code></td>
+            <td><code>int[] v = new int[5];</code></td>
+        </tr>
+        <tr>
+            <td>Inicialização padrão</td>
+            <td class="bad">❌ Contém lixo de memória</td>
+            <td class="good">✅ Zeros automáticos (int), null (objetos)</td>
+        </tr>
+        <tr>
+            <td>Verificação de limites</td>
+            <td class="bad">❌ Nenhuma — UB silencioso</td>
+            <td class="good">✅ ArrayIndexOutOfBoundsException</td>
+        </tr>
+        <tr>
+            <td>Tamanho do array</td>
+            <td><code>sizeof(v)/sizeof(v[0])</code> — só localmente</td>
+            <td><code>v.length</code> — em qualquer lugar</td>
+        </tr>
+        <tr>
+            <td>Passagem para função</td>
+            <td>Decai para ponteiro; tamanho se perde — deve ser passado separado</td>
+            <td>Passa referência ao objeto; <code>.length</code> continua acessível</td>
+        </tr>
+        <tr>
+            <td>Tamanho variável</td>
+            <td>VLA (C99) — mas não recomendado; preferir <code>#define</code> ou parâmetro</td>
+            <td><code>new int[n]</code> — dinâmico e natural</td>
+        </tr>
+        <tr>
+            <td>Cópia de array</td>
+            <td><code>memcpy(dest, src, n*sizeof(int));</code> — manual</td>
+            <td><code>Arrays.copyOf(src, n);</code> — automático</td>
+        </tr>
+        <tr>
+            <td>Ordenação</td>
+            <td><code>qsort(v, n, sizeof(int), comparador);</code></td>
+            <td><code>Arrays.sort(v);</code></td>
+        </tr>
+        <tr>
+            <td>Array de strings</td>
+            <td><code>char nomes[10][50];</code> — matriz de char</td>
+            <td><code>String[] nomes = new String[10];</code></td>
+        </tr>
+        <tr>
+            <td>For-each</td>
+            <td class="bad">❌ Não existe — use <code>for (int i=0; i&lt;n; i++)</code></td>
+            <td class="good">✅ <code>for (int x : v)</code></td>
+        </tr>
+    </table>
+
+    <h3>Cópia de array em C — não use <code>=</code>!</h3>
+    <div class="grid-container">
+        <div class="grid-item">
+            <strong>❌ Errado — em C, <code>=</code> não copia arrays:</strong>
+<pre>
+int a[5] = {1,2,3,4,5};
+int b[5];
+b = a;    <span class="code-comment">// ERRO DE COMPILAÇÃO em C!</span>
+</pre>
+        </div>
+        <div class="grid-item">
+            <strong>✅ Correto — copiar elemento por elemento ou com memcpy:</strong>
+<pre>
+int a[5] = {1,2,3,4,5};
+int b[5];
+for (int i = 0; i &lt; 5; i++)
+    b[i] = a[i];         <span class="code-comment">// cópia manual</span>
+
+<span class="code-comment">/* ou usando memcpy de &lt;string.h&gt;: */</span>
+memcpy(b, a, 5 * sizeof(int));
+</pre>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- EXERCÍCIOS 12b -->
+<!-- ============================================================ -->
+<div class="exercise-section">
+    <h2>9. Exercícios de Fixação — Parte 2</h2>
+    <p>Questões sobre <code>sizeof</code>, pointer decay, matrizes e C vs Java.</p>
+
+    <form class="quiz-form" id="quiz">
+
+        <!-- Q1 -->
+        <div class="quiz-question">
+            <p><strong>1.</strong> Dado <code>int v[] = {3, 0, 0, 0, 0};</code>, qual é o resultado de <code>sizeof(v)/sizeof(v[0])</code>?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q1" value="a"> 1</label></li>
+                <li><label><input type="radio" name="q1" value="b"> 3</label></li>
+                <li><label><input type="radio" name="q1" value="c"> 5</label></li>
+                <li><label><input type="radio" name="q1" value="d"> 20</label></li>
+            </ul>
+        </div>
+
+        <!-- Q2 -->
+        <div class="quiz-question">
+            <p><strong>2.</strong> Uma função recebe <code>int arr[]</code>. Dentro dela, <code>sizeof(arr)</code> retorna:</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q2" value="a"> O tamanho total do array em bytes</label></li>
+                <li><label><input type="radio" name="q2" value="b"> O número de elementos do array</label></li>
+                <li><label><input type="radio" name="q2" value="c"> O tamanho de um ponteiro (4 ou 8 bytes)</label></li>
+                <li><label><input type="radio" name="q2" value="d"> Um erro de compilação</label></li>
+            </ul>
+        </div>
+
+        <!-- Q3 -->
+        <div class="quiz-question">
+            <p><strong>3.</strong> Em C, o que <code>b = a;</code> faz quando <code>a</code> e <code>b</code> são arrays do mesmo tipo e tamanho?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q3" value="a"> Copia todos os elementos de <code>a</code> para <code>b</code></label></li>
+                <li><label><input type="radio" name="q3" value="b"> Faz <code>b</code> apontar para o mesmo endereço de <code>a</code></label></li>
+                <li><label><input type="radio" name="q3" value="c"> Gera erro de compilação</label></li>
+                <li><label><input type="radio" name="q3" value="d"> Copia apenas o primeiro elemento</label></li>
+            </ul>
+        </div>
+
+        <!-- Q4 -->
+        <div class="quiz-question">
+            <p><strong>4.</strong> Numa matriz <code>int m[3][4]</code>, como os elementos são armazenados na memória em C?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q4" value="a"> Coluna por coluna (column-major), como no Fortran</label></li>
+                <li><label><input type="radio" name="q4" value="b"> Em ordem aleatória — o compilador decide</label></li>
+                <li><label><input type="radio" name="q4" value="c"> Linha por linha (row-major): m[0][0], m[0][1], ..., m[0][3], m[1][0], ...</label></li>
+                <li><label><input type="radio" name="q4" value="d"> Apenas as diagonais são contíguas</label></li>
+            </ul>
+        </div>
+
+        <button type="button" class="submit-btn" onclick="verificarRespostas()">Verificar Respostas</button>
+    </form>
+
+    <div id="quiz-results" style="display:none; margin-top:20px;"></div>
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align:center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education"
+                 style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+<script>
+function verificarRespostas() {
+    const gabarito = { q1:'c', q2:'c', q3:'c', q4:'c' };
+
+    const explicacoes = {
+        q1: "O array tem 5 elementos (3, 0, 0, 0, 0). <code>sizeof(v)</code> = 20 bytes, <code>sizeof(v[0])</code> = 4 bytes. 20/4 = 5. O valor do primeiro elemento não interfere no resultado — o que conta é o número de posições alocadas.",
+        q2: "Ao ser passado para uma função, o array sofre pointer decay — decai para um ponteiro para o primeiro elemento. Dentro da função, <code>sizeof(arr)</code> retorna o tamanho de um ponteiro (4 bytes em sistemas 32-bit, 8 bytes em 64-bit), não o tamanho do array. Por isso sempre passe o tamanho como parâmetro <code>int n</code>.",
+        q3: "Em C, arrays não podem ser atribuídos com <code>=</code>. O compilador gera erro de compilação porque o nome de um array é um endereço constante — não pode ser reatribuído. Para copiar arrays, use um loop <code>for</code> ou a função <code>memcpy</code> de <code>&lt;string.h&gt;</code>.",
+        q4: "C usa row-major order: os elementos são armazenados linha por linha na memória: m[0][0], m[0][1], m[0][2], m[0][3], m[1][0]... Isso é importante para performance: percorrer linha por linha aproveita o cache do processador; percorrer coluna por coluna não."
+    };
+
+    let acertos = 0;
+    const total = Object.keys(gabarito).length;
+    let html = '';
+
+    for (const [q, resp] of Object.entries(gabarito)) {
+        const num = q.replace('q', '');
+        const sel = document.querySelector(`input[name="${q}"]:checked`);
+        if (sel) {
+            if (sel.value === resp) {
+                acertos++;
+                html += `<p>Questão ${num}: <span style="color:green;font-weight:bold;">✅ Correto!</span> — ${explicacoes[q]}</p>`;
+            } else {
+                html += `<p>Questão ${num}: <span style="color:red;font-weight:bold;">❌ Incorreto.</span> Gabarito: <strong>${resp.toUpperCase()}</strong> — ${explicacoes[q]}</p>`;
+            }
+        } else {
+            html += `<p>Questão ${num}: <span style="color:orange;font-weight:bold;">⚠ Não respondida.</span></p>`;
+        }
+    }
+
+    const r = document.getElementById('quiz-results');
+    r.innerHTML = `<h3>Sua pontuação: ${acertos} de ${total}</h3>${html}`;
+    r.style.display = 'block';
+    r.scrollIntoView({ behavior: 'smooth' });
+}
+</script>
+
+</body>
+</html>

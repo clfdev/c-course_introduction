@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 30 – typedef: apelidos de tipo</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Aula 30 – <code style="color:#aad4ff">typedef</code>: Apelidos de Tipo</h1>
+    <p>Como criar nomes semânticos para tipos em C — e por que isso torna o código mais legível e fácil de manter</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo29.html">← Aula 29</a>
+    <a href="capitulo31.html">Aula 31 →</a>
+</nav>
+
+<!-- ═══════════════════════════════════════ O QUE É TYPEDEF -->
+<div class="content-section">
+    <h2>O que é <code>typedef</code>?</h2>
+    <p>Na aula anterior, cada vez que declarávamos uma variável do tipo aluno precisávamos escrever <code>struct Aluno a;</code>. O <code>typedef</code> elimina essa repetição — e faz muito mais.</p>
+
+    <div class="definicao">
+        <code>typedef</code> cria um <strong>apelido (alias)</strong> para um tipo já existente. Ele não cria um tipo novo "de verdade" — ele apenas dá um nome alternativo a um tipo, tornando o código mais legível e mais fácil de manter.
+    </div>
+
+    <p>Sintaxe básica:</p>
+
+    <pre>
+typedef  tipo_original  NomeDoApelido;</pre>
+
+    <p>Exemplos simples:</p>
+
+    <pre>
+typedef int    TIPOCHAVE;   <span class="code-comment">// TIPOCHAVE agora é um apelido para int</span>
+typedef float  NOTA;        <span class="code-comment">// NOTA agora é um apelido para float</span>
+typedef char   LETRA;       <span class="code-comment">// LETRA agora é um apelido para char</span>
+
+TIPOCHAVE matricula = 1001; <span class="code-comment">// equivale a: int matricula = 1001;</span>
+NOTA      media     = 8.5f; <span class="code-comment">// equivale a: float media = 8.5f;</span></pre>
+
+    <div class="info-box">
+        <strong>TIPOCHAVE ≠ variável:</strong> <code>TIPOCHAVE</code> é um <em>nome de tipo</em>, assim como <code>int</code> é um nome de tipo. Você ainda precisa de um nome de variável: <code>TIPOCHAVE chave;</code> — aqui <code>TIPOCHAVE</code> é o tipo e <code>chave</code> é a variável.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 3 UTILIDADES -->
+<div class="content-section">
+    <h2>As 3 Grandes Utilidades do <code>typedef</code></h2>
+
+    <h3>1. Semântica — dar significado ao tipo</h3>
+    <p>Comparar <code>int chave</code> com <code>TIPOCHAVE chave</code>: o segundo <em>comunica intenção</em>. Quem lê o código entende imediatamente que aquele inteiro é uma chave identificadora, não um contador, índice ou qualquer outro int.</p>
+
+    <div class="exemplo">
+        Imagine ler 200 linhas de código. Em qual versão fica mais óbvio o papel de cada variável?
+        <br><br>
+        <code>int busca(int v[], int n, int chave)</code> — ambíguo<br>
+        <code>int busca(LISTA *l, int n, TIPOCHAVE chave)</code> — autoexplicativo
+    </div>
+
+    <h3>2. Manutenção — trocar o tipo em um único lugar</h3>
+    <p>Hoje a chave é um <code>int</code>. Amanhã o sistema precisa de CPF (string de 12 caracteres). Sem <code>typedef</code>: você caça e substitui <code>int</code> em centenas de lugares, arriscando trocar ints que não são chave. Com <code>typedef</code>: uma linha muda:</p>
+
+    <pre>
+<span class="code-comment">// Antes</span>
+typedef int TIPOCHAVE;
+
+<span class="code-comment">// Depois — só esta linha muda!</span>
+typedef char TIPOCHAVE[12];   <span class="code-comment">// agora a chave é um CPF (11 dígitos + '\0')</span></pre>
+
+    <div class="warning-box">
+        <strong>Atenção ao trocar para string:</strong> Quando <code>TIPOCHAVE</code> vira <code>char[12]</code>, a comparação <code>==</code> não funciona mais para strings em C — você precisa usar <code>strcmp()</code>. Mas pelo menos o <em>tipo</em> já comunicava que era uma "chave", facilitando encontrar todos os pontos de comparação.
+    </div>
+
+    <h3>3. Eliminar o <code>struct</code> repetitivo</h3>
+    <p>Sem <code>typedef</code>, toda declaração precisa da palavra <code>struct</code>. Com <code>typedef</code>, o nome já é o tipo completo:</p>
+
+    <pre>
+<span class="code-comment">// Sem typedef — precisa repetir 'struct' sempre</span>
+struct Aluno { int matricula; float nota; };
+struct Aluno a;          <span class="code-comment">// obrigatório: struct Aluno</span>
+
+<span class="code-comment">// Com typedef — nome limpo</span>
+typedef struct {
+    int   matricula;
+    float nota;
+} ALUNO;
+
+ALUNO a;                 <span class="code-comment">// sem 'struct', direto ao ponto</span></pre>
+</div>
+
+<!-- ═══════════════════════════════════════ TYPEDEF COM STRUCT -->
+<div class="content-section">
+    <h2><code>typedef</code> com <code>struct</code>: o padrão do projeto</h2>
+    <p>Esta é a forma mais comum e mais usada nos projetos C de estrutura de dados. É exatamente o que aparece no nosso projeto de lista:</p>
+
+    <pre>
+#include &lt;stdio.h&gt;
+#define MAX 50
+#define ERRO -1
+
+<span class="code-comment">// 1. Tipo da chave — um apelido para int</span>
+typedef int TIPOCHAVE;
+
+<span class="code-comment">// 2. Um registro — contém pelo menos uma chave</span>
+typedef struct {
+    TIPOCHAVE chave;
+    <span class="code-comment">// outros campos possíveis: char nome[50], float salario, etc.</span>
+} REGISTRO;
+
+<span class="code-comment">// 3. A lista — array de registros + contador</span>
+typedef struct {
+    REGISTRO A[MAX + 1];  <span class="code-comment">// +1 para reservar espaço de sentinela (veremos depois)</span>
+    int      nroElem;     <span class="code-comment">// quantos elementos estão realmente na lista</span>
+} LISTA;</pre>
+
+    <div class="tip-box">
+        <strong>Por que <code>MAX + 1</code>?</strong> Reservamos uma posição extra no array para a técnica de <em>busca com sentinela</em> — um artifício que simplifica o loop de busca. Veremos isso na Aula 34.
+    </div>
+
+    <p>Agora, com esses três <code>typedef</code>s, o restante do código fica muito mais limpo:</p>
+
+    <pre>
+int main() {
+    LISTA   lista;          <span class="code-comment">// não precisa de "struct" na frente</span>
+    REGISTRO reg;           <span class="code-comment">// idem</span>
+    TIPOCHAVE chave = 42;   <span class="code-comment">// comunica que é uma chave, não um inteiro qualquer</span>
+    return 0;
+}</pre>
+</div>
+
+<!-- ═══════════════════════════════════════ COMPARAÇÃO JAVA -->
+<div class="content-section">
+    <h2>Comparação com Java</h2>
+    <p>Java não tem <code>typedef</code>, mas tem conceitos análogos:</p>
+
+    <table>
+        <tr>
+            <th>Necessidade</th>
+            <th>C (<code>typedef</code>)</th>
+            <th>Java (equivalente)</th>
+        </tr>
+        <tr>
+            <td>Dar nome semântico a um tipo primitivo</td>
+            <td><code>typedef int TIPOCHAVE;</code></td>
+            <td>Não existe (int é int). Às vezes usa-se uma classe wrapper ou constante.</td>
+        </tr>
+        <tr>
+            <td>Criar nome curto para tipo composto</td>
+            <td><code>typedef struct {...} LISTA;</code></td>
+            <td>O próprio nome da <code>class Lista</code> já serve.</td>
+        </tr>
+        <tr>
+            <td>Capacidade máxima fixa</td>
+            <td><code>#define MAX 50</code></td>
+            <td><code>static final int MAX = 50;</code></td>
+        </tr>
+        <tr>
+            <td>Tamanho atual / dinâmico</td>
+            <td>Campo <code>int nroElem</code> + manutenção manual</td>
+            <td><code>ArrayList.size()</code> — automático</td>
+        </tr>
+    </table>
+
+    <div class="info-box">
+        <strong>Resumo da diferença:</strong> Em Java, a própria classe já carrega semântica pelo seu nome (<code>Chave</code>, <code>Registro</code>, <code>Lista</code>). Em C, como não há classes, o <code>typedef</code> é o mecanismo para carregar essa semântica nos tipos primitivos e nas structs.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ EXERCÍCIOS -->
+<div class="exercise-section">
+    <h2>Exercícios — Aula 30</h2>
+
+    <form class="quiz-form" id="quiz-form">
+
+        <div class="quiz-question">
+            <p><strong>1. O que o comando <code>typedef int TIPOCHAVE;</code> faz?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q1" value="a"> Cria uma nova variável chamada TIPOCHAVE com valor int</label></li>
+                <li><label><input type="radio" name="q1" value="b"> Cria um novo tipo de dado que não é mais int</label></li>
+                <li><label><input type="radio" name="q1" value="c"> Cria um apelido: TIPOCHAVE passa a ser outro nome para int</label></li>
+                <li><label><input type="radio" name="q1" value="d"> Reserva memória para um inteiro chamado TIPOCHAVE</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>2. Qual das declarações abaixo está <em>errada</em> após <code>typedef int TIPOCHAVE;</code>?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q2" value="a"> <code>TIPOCHAVE chave = 5;</code></label></li>
+                <li><label><input type="radio" name="q2" value="b"> <code>TIPOCHAVE = 5;</code></label></li>
+                <li><label><input type="radio" name="q2" value="c"> <code>TIPOCHAVE x, y;</code></label></li>
+                <li><label><input type="radio" name="q2" value="d"> <code>int busca(TIPOCHAVE ch);</code></label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>3. Qual é a principal vantagem de usar <code>typedef int TIPOCHAVE</code> em vez de <code>int</code> diretamente para as chaves de busca?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q3" value="a"> O programa fica mais rápido</label></li>
+                <li><label><input type="radio" name="q3" value="b"> Se no futuro a chave mudar de tipo, basta alterar uma linha</label></li>
+                <li><label><input type="radio" name="q3" value="c"> TIPOCHAVE ocupa menos memória que int</label></li>
+                <li><label><input type="radio" name="q3" value="d"> Impede que a variável receba valores negativos</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>4. Após <code>typedef struct { int chave; } REGISTRO;</code>, qual declaração é válida?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q4" value="a"> <code>struct REGISTRO r;</code></label></li>
+                <li><label><input type="radio" name="q4" value="b"> <code>REGISTRO r;</code></label></li>
+                <li><label><input type="radio" name="q4" value="c"> <code>new REGISTRO();</code></label></li>
+                <li><label><input type="radio" name="q4" value="d"> <code>REGISTRO r = REGISTRO();</code></label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>5. Por que o array dentro de LISTA é declarado como <code>REGISTRO A[MAX+1]</code> e não <code>REGISTRO A[MAX]</code>?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q5" value="a"> Por um erro de digitação — deveria ser MAX</label></li>
+                <li><label><input type="radio" name="q5" value="b"> Para guardar o tamanho da lista na última posição</label></li>
+                <li><label><input type="radio" name="q5" value="c"> Para reservar uma posição extra usada pela busca com sentinela</label></li>
+                <li><label><input type="radio" name="q5" value="d"> Porque arrays em C sempre precisam de uma posição a mais</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>6. Qual seria a consequência de trocar <code>typedef int TIPOCHAVE</code> por <code>typedef char TIPOCHAVE[12]</code>?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q6" value="a"> Nenhuma — o programa continua funcionando igual</label></li>
+                <li><label><input type="radio" name="q6" value="b"> Erro de compilação imediato em todo o programa</label></li>
+                <li><label><input type="radio" name="q6" value="c"> A chave passa a ser um texto, e comparações com == precisam virar strcmp()</label></li>
+                <li><label><input type="radio" name="q6" value="d"> O tamanho da LISTA diminui automaticamente</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>7. Em Java, qual conceito mais se aproxima do papel que <code>typedef struct {...} LISTA</code> desempenha?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q7" value="a"> Uma interface</label></li>
+                <li><label><input type="radio" name="q7" value="b"> Um método estático</label></li>
+                <li><label><input type="radio" name="q7" value="c"> Uma classe que agrupa campos (atributos)</label></li>
+                <li><label><input type="radio" name="q7" value="d"> Um array primitivo</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>8. Analise o código. O que ele imprime?</strong></p>
+            <pre>typedef int METROS;
+typedef int KILOS;
+METROS distancia = 100;
+KILOS  peso = 100;
+printf("%d\n", distancia + peso);</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q8" value="a"> Erro: não se pode somar METROS com KILOS</label></li>
+                <li><label><input type="radio" name="q8" value="b"> 200</label></li>
+                <li><label><input type="radio" name="q8" value="c"> 100</label></li>
+                <li><label><input type="radio" name="q8" value="d"> Resultado indefinido</label></li>
+            </ul>
+        </div>
+
+        <button type="button" class="submit-btn" onclick="verificarRespostas()">Verificar Respostas</button>
+    </form>
+
+    <div id="quiz-results" style="display:none; margin-top:20px; padding:15px; background-color:#dff0d8; border-radius:5px;"></div>
+</div>
+
+<div class="navigation-buttons">
+    <a href="capitulo29.html">← Aula 29</a>
+    <a href="index.html">Índice</a>
+    <a href="capitulo31.html">Aula 31 →</a>
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align: center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education" style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+<script>
+    function verificarRespostas() {
+        const gabarito = { q1:"c", q2:"b", q3:"b", q4:"b", q5:"c", q6:"c", q7:"c", q8:"b" };
+        const explicacoes = {
+            q1: "typedef cria um apelido (alias). TIPOCHAVE não é variável — é um novo nome para o tipo int. O compilador trata TIPOCHAVE e int como a mesma coisa.",
+            q2: "'TIPOCHAVE = 5;' tenta usar o nome do tipo como variável — isso é um erro. TIPOCHAVE é tipo, não variável. Correto seria: TIPOCHAVE x = 5;",
+            q3: "A grande vantagem é a manutenção: se a chave mudar de int para char[12] (CPF), basta alterar a linha do typedef. Todo o resto do código que usa TIPOCHAVE não precisa ser alterado.",
+            q4: "Com typedef, o nome REGISTRO já é o tipo completo. Escreve-se apenas 'REGISTRO r;' — sem 'struct' na frente. 'struct REGISTRO r;' seria para structs sem typedef.",
+            q5: "A posição extra A[MAX] é usada pela técnica de busca com sentinela: colocamos a chave procurada nessa posição para simplificar o loop de busca (sem precisar checar o limite a cada iteração).",
+            q6: "typedef char TIPOCHAVE[12] muda o tipo da chave para string. Comparações com == não funcionam para strings em C — é preciso usar strcmp(). O compilador vai reclamar das comparações com ==.",
+            q7: "typedef struct {...} LISTA é o equivalente a uma classe Java que contém só atributos (campos), sem métodos. A diferença é que Java também permite adicionar métodos à classe.",
+            q8: "typedef cria apenas apelidos — METROS e KILOS continuam sendo int por baixo. C não distingue os dois tipos e soma normalmente: 100 + 100 = 200. Isso mostra que typedef não cria 'tipos de segurança' reais."
+        };
+
+        let acertos = 0, html = "";
+        const total = Object.keys(gabarito).length;
+        for (const q in gabarito) {
+            const sel = document.querySelector(`input[name="${q}"]:checked`);
+            const num = q.substring(1);
+            if (sel) {
+                if (sel.value === gabarito[q]) {
+                    acertos++;
+                    html += `<p>Questão ${num}: <span style="color:green;font-weight:bold;">✓ Correto!</span> — ${explicacoes[q]}</p>`;
+                } else {
+                    html += `<p>Questão ${num}: <span style="color:red;font-weight:bold;">✗ Incorreto.</span> — ${explicacoes[q]}</p>`;
+                }
+            } else {
+                html += `<p>Questão ${num}: <span style="color:orange;font-weight:bold;">⚠ Não respondida.</span></p>`;
+            }
+        }
+        const r = document.getElementById("quiz-results");
+        r.innerHTML = `<h3>Sua pontuação: ${acertos} de ${total}</h3>${html}`;
+        r.style.display = "block";
+        r.scrollIntoView({ behavior:"smooth" });
+    }
+</script>
+
+</body>
+</html>

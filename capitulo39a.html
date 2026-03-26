@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 39a — Arquivos em C: Fundamentos e Arquivos Texto</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Aula 39a — Arquivos em C <span style="font-size:0.7em; opacity:0.85;">Parte 1 de 2</span></h1>
+    <p>Persistência de dados — <code style="color:#aad4ff">fopen</code>, <code style="color:#aad4ff">fprintf</code>, <code style="color:#aad4ff">fscanf</code> e arquivos texto</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo38.html">← Aula 38</a>
+    <a href="capitulo39b.html">Parte 2 →</a>
+</nav>
+
+<!-- ═══════════════════════════════════════ 1. POR QUE ARQUIVOS -->
+<div class="content-section">
+    <h2>1. Por que Precisamos de Arquivos?</h2>
+
+    <p>Todos os programas criados até aqui têm um problema: quando a execução termina, todos os dados somem. Variáveis, structs, listas — tudo é destruído. A próxima vez que o usuário rodar o programa, começa do zero.</p>
+
+    <p><strong>Arquivos resolvem isso.</strong> Eles permitem que dados sejam gravados em disco e recuperados na próxima execução — tornando o programa genuinamente útil no mundo real.</p>
+
+    <div class="definicao">
+        Em C, operações com arquivos são feitas através da biblioteca padrão <code>&lt;stdio.h&gt;</code> — a mesma de <code>printf</code> e <code>scanf</code>. A abstração central é o tipo <strong><code>FILE *</code></strong>: um ponteiro que representa um arquivo aberto.
+    </div>
+
+    <h3>Dois tipos de arquivo</h3>
+    <table>
+        <tr>
+            <th>Tipo</th>
+            <th>Conteúdo</th>
+            <th>Quando usar</th>
+            <th>Abre no Bloco de Notas?</th>
+        </tr>
+        <tr>
+            <td><strong>Texto</strong></td>
+            <td>Caracteres legíveis (letras, números, quebras de linha)</td>
+            <td>Dados simples, configurações, logs</td>
+            <td>✅ Sim — legível</td>
+        </tr>
+        <tr>
+            <td><strong>Binário</strong></td>
+            <td>Bytes brutos (representação interna da memória)</td>
+            <td>Structs completas, dados grandes e eficientes</td>
+            <td>❌ Não — aparece como caracteres estranhos</td>
+        </tr>
+    </table>
+
+    <p>Esta aula cobre <strong>arquivos texto</strong>. A Aula 39b cobre arquivos binários — usados no projeto da Aula 40.</p>
+</div>
+
+<!-- ═══════════════════════════════════════ 2. FOPEN / FCLOSE -->
+<div class="content-section">
+    <h2>2. Abrindo e Fechando: <code>fopen</code> e <code>fclose</code></h2>
+
+    <div class="definicao">
+        <code>fopen(caminho, modo)</code> abre um arquivo e retorna um ponteiro <code>FILE *</code>. Se o arquivo não puder ser aberto, retorna <code>NULL</code>. <code>fclose(f)</code> fecha o arquivo e garante que os dados pendentes sejam gravados em disco.
+    </div>
+
+<pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    FILE *f;                                  <span class="code-comment">// ponteiro para arquivo</span>
+
+    f = fopen("dados.txt", "w");              <span class="code-comment">// abre para escrita</span>
+
+    if (f == NULL) {                          <span class="code-comment">// SEMPRE verificar!</span>
+        printf("Erro ao abrir o arquivo.\n");
+        return 1;
+    }
+
+    fprintf(f, "Olá, arquivo!\n");            <span class="code-comment">// escreve no arquivo</span>
+
+    fclose(f);                                <span class="code-comment">// SEMPRE fechar!</span>
+    printf("Arquivo gravado com sucesso.\n");
+    return 0;
+}
+</pre>
+
+    <h3>Modos de abertura</h3>
+    <table>
+        <tr>
+            <th>Modo</th>
+            <th>Significado</th>
+            <th>Arquivo não existe?</th>
+            <th>Apaga conteúdo anterior?</th>
+        </tr>
+        <tr><td><code>"r"</code></td><td>Leitura</td><td>Retorna NULL (erro)</td><td>Não apaga</td></tr>
+        <tr><td><code>"w"</code></td><td>Escrita</td><td>Cria o arquivo</td><td>✅ Apaga tudo</td></tr>
+        <tr><td><code>"a"</code></td><td>Append — acrescenta ao final</td><td>Cria o arquivo</td><td>Não apaga</td></tr>
+        <tr><td><code>"r+"</code></td><td>Leitura + escrita</td><td>Retorna NULL (erro)</td><td>Não apaga</td></tr>
+        <tr><td><code>"rb"</code>, <code>"wb"</code></td><td>Binário (leitura/escrita)</td><td>Igual, mas modo binário</td><td>Ver Aula 39b</td></tr>
+    </table>
+
+    <div class="warning-box">
+        <strong>⚠️ Dois erros clássicos com arquivos em C:</strong><br><br>
+        <strong>1. Não verificar se fopen retornou NULL.</strong> Se o caminho não existe ou o arquivo está bloqueado, fopen retorna NULL. Usar esse ponteiro sem verificar causa segfault imediato.<br><br>
+        <strong>2. Não chamar fclose.</strong> Sem fechar, os dados podem não ser gravados em disco (ficam no buffer de I/O) e o arquivo pode ficar corrompido.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 3. ESCRITA -->
+<div class="content-section">
+    <h2>3. Escrevendo em Arquivo Texto: <code>fprintf</code> e <code>fputs</code></h2>
+
+    <p><code>fprintf</code> funciona exatamente como <code>printf</code> — mas o primeiro argumento é o ponteiro de arquivo, não a tela.</p>
+
+<pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    FILE *f = fopen("alunos.txt", "w");
+    if (f == NULL) { printf("Erro!\n"); return 1; }
+
+    fprintf(f, "Nome: Ana Souza\n");
+    fprintf(f, "Matrícula: %d\n", 1001);
+    fprintf(f, "Nota: %.1f\n", 8.5f);
+    fprintf(f, "---\n");
+    fprintf(f, "Nome: Bruno Lima\n");
+    fprintf(f, "Matrícula: %d\n", 1002);
+    fprintf(f, "Nota: %.1f\n", 6.0f);
+
+    fclose(f);
+    printf("alunos.txt criado.\n");
+    return 0;
+}
+</pre>
+
+    <div class="terminal-output">
+        <em>Conteúdo gravado em alunos.txt:</em><br>
+        Nome: Ana Souza<br>Matrícula: 1001<br>Nota: 8.5<br>---<br>Nome: Bruno Lima<br>Matrícula: 1002<br>Nota: 6.0
+    </div>
+
+    <div class="grid-container">
+        <div class="grid-item">
+            <strong>C — escrita em arquivo</strong>
+<pre>
+FILE *f = fopen("out.txt", "w");
+fprintf(f, "valor: %d\n", 42);
+fclose(f);
+</pre>
+        </div>
+        <div class="grid-item">
+            <strong>Java — equivalente</strong>
+<pre>
+FileWriter fw =
+    new FileWriter("out.txt");
+fw.write("valor: 42\n");
+fw.close();
+</pre>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 4. LEITURA -->
+<div class="content-section">
+    <h2>4. Lendo Arquivo Texto: <code>fscanf</code> e <code>fgets</code></h2>
+
+    <p><code>fscanf</code> lê dados formatados de um arquivo — como <code>scanf</code> lê do teclado. <code>fgets</code> lê uma linha inteira, incluindo espaços.</p>
+
+    <h3>fscanf — leitura formatada</h3>
+
+<pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    FILE *f = fopen("numeros.txt", "r");
+    if (f == NULL) { printf("Arquivo não encontrado.\n"); return 1; }
+
+    int n;
+    <span class="code-comment">/* fscanf retorna o número de itens lidos — EOF (-1) quando o arquivo termina */</span>
+    while (fscanf(f, "%d", &n) == 1) {
+        printf("Lido: %d\n", n);
+    }
+
+    fclose(f);
+    return 0;
+}
+</pre>
+
+    <h3>fgets — leitura linha a linha (mais segura para strings)</h3>
+
+<pre>
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+int main() {
+    FILE *f = fopen("alunos.txt", "r");
+    if (f == NULL) { printf("Erro!\n"); return 1; }
+
+    char linha[200];
+
+    <span class="code-comment">/* fgets lê até 199 caracteres OU até \n — retorna NULL no fim do arquivo */</span>
+    while (fgets(linha, sizeof(linha), f) != NULL) {
+        linha[strcspn(linha, "\n")] = '\0'; <span class="code-comment">// remove o \n do final</span>
+        printf("[%s]\n", linha);
+    }
+
+    fclose(f);
+    return 0;
+}
+</pre>
+
+    <div class="tip-box">
+        <strong>fgets vs fscanf — quando usar:</strong> Use <code>fgets</code> para leitura linha a linha quando os dados têm espaços ou formato variável. Use <code>fscanf</code> para dados com formato fixo e conhecido. Para structs completas em formato eficiente, prefira arquivos binários (Aula 39b).
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 5. EXEMPLO COMPLETO -->
+<div class="content-section">
+    <h2>5. Exemplo Completo — Gravar e Reler um Cadastro</h2>
+
+<pre>
+#include &lt;stdio.h&gt;
+
+typedef struct {
+    int   matricula;
+    char  nome[50];
+    float nota;
+} Aluno;
+
+int gravarAlunos(const char *caminho, Aluno v[], int n) {
+    FILE *f = fopen(caminho, "w");
+    if (f == NULL) return 0;
+
+    fprintf(f, "%d\n", n);                   <span class="code-comment">// 1ª linha: quantidade</span>
+    for (int i = 0; i &lt; n; i++)
+        fprintf(f, "%d %s %.1f\n",
+                v[i].matricula, v[i].nome, v[i].nota);
+
+    fclose(f);
+    return 1;
+}
+
+int lerAlunos(const char *caminho, Aluno v[], int maxN) {
+    FILE *f = fopen(caminho, "r");
+    if (f == NULL) return -1;                <span class="code-comment">// -1 = arquivo não existe</span>
+
+    int n;
+    fscanf(f, "%d\n", &n);
+    if (n &gt; maxN) n = maxN;
+
+    for (int i = 0; i &lt; n; i++)
+        fscanf(f, "%d %s %f\n",
+               &v[i].matricula, v[i].nome, &v[i].nota);
+
+    fclose(f);
+    return n;
+}
+
+int main() {
+    Aluno turma[] = {
+        {1001, "Ana",   8.5f},
+        {1002, "Bruno", 6.0f},
+        {1003, "Carla", 9.5f}
+    };
+
+    if (gravarAlunos("turma.txt", turma, 3))
+        printf("Dados gravados em turma.txt\n");
+
+    Aluno recuperados[10];
+    int total = lerAlunos("turma.txt", recuperados, 10);
+
+    printf("\n=== Dados recuperados ===\n");
+    for (int i = 0; i &lt; total; i++)
+        printf("  %d | %-15s | %.1f\n",
+               recuperados[i].matricula,
+               recuperados[i].nome,
+               recuperados[i].nota);
+    return 0;
+}
+</pre>
+
+    <div class="terminal-output">
+Dados gravados em turma.txt<br><br>
+=== Dados recuperados ===<br>
+&nbsp;&nbsp;1001 | Ana             | 8.5<br>
+&nbsp;&nbsp;1002 | Bruno           | 6.0<br>
+&nbsp;&nbsp;1003 | Carla           | 9.5
+    </div>
+
+    <div class="warning-box">
+        <strong>⚠️ Limitação do arquivo texto com nomes compostos:</strong> <code>fscanf("%s")</code> para no primeiro espaço — "Ana Silva" seria lido apenas como "Ana". Para nomes com espaços, use <code>fgets</code> e parse manual, ou prefira arquivo binário (Aula 39b) que grava e lê a struct inteira de uma vez.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 6. APPEND -->
+<div class="content-section">
+    <h2>6. Acrescentando ao Final: modo <code>"a"</code></h2>
+
+    <p>O modo <code>"a"</code> (append) preserva o conteúdo existente e posiciona o cursor no final. Ideal para logs e históricos:</p>
+
+<pre>
+#include &lt;stdio.h&gt;
+
+void registrarLog(const char *mensagem) {
+    FILE *f = fopen("log.txt", "a");    <span class="code-comment">// abre ou cria sem apagar</span>
+    if (f == NULL) return;
+    fprintf(f, "%s\n", mensagem);
+    fclose(f);
+}
+
+int main() {
+    registrarLog("Programa iniciado");
+    registrarLog("Usuário fez login");
+    registrarLog("Busca realizada: matrícula 1001");
+    registrarLog("Programa encerrado");
+    printf("Log gravado em log.txt\n");
+    return 0;
+}
+</pre>
+
+    <p>A cada nova execução do programa, novas linhas são adicionadas ao final — o histórico se acumula sem perder dados anteriores.</p>
+</div>
+
+<!-- ═══════════════════════════════════════ 7. C VS JAVA -->
+<div class="content-section">
+    <h2>7. C vs. Java — Arquivos Texto</h2>
+
+    <table>
+        <tr><th>Aspecto</th><th>C</th><th>Java</th></tr>
+        <tr><td>Biblioteca</td><td><code>&lt;stdio.h&gt;</code> (inclusa por padrão)</td><td><code>java.io.*</code></td></tr>
+        <tr><td>Abrir</td><td><code>fopen(caminho, modo)</code></td><td><code>new FileWriter(...)</code> / <code>new BufferedReader(...)</code></td></tr>
+        <tr><td>Escrever</td><td><code>fprintf(f, "...")</code></td><td><code>fw.write("...")</code></td></tr>
+        <tr><td>Ler linha</td><td><code>fgets(buf, tam, f)</code></td><td><code>br.readLine()</code></td></tr>
+        <tr><td>Fechar</td><td><code>fclose(f)</code> — manual e obrigatório</td><td><code>try-with-resources</code> (automático)</td></tr>
+        <tr><td>Erro de abertura</td><td><code>fopen</code> retorna <code>NULL</code> — você verifica</td><td>Lança <code>IOException</code> — compilador força o tratamento</td></tr>
+    </table>
+
+    <div class="info-box">
+        <strong>A grande diferença:</strong> Em Java, o compilador <em>força</em> o tratamento de exceções de I/O. Em C, verificar o retorno de <code>fopen</code> e chamar <code>fclose</code> é responsabilidade exclusiva do programador — esquecer é um dos erros mais comuns em código C real.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ QUIZ -->
+<div class="content-section exercise-section">
+    <h2>Quiz — Aula 39a</h2>
+    <form class="quiz-form" onsubmit="return false;">
+
+        <div class="content-section quiz-question">
+            <p><strong>1.</strong> O que acontece quando <code>fopen("dados.txt", "w")</code> é chamado e o arquivo já existe?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q1" value="a"> O programa encerra com erro — não pode sobrescrever arquivos</label></li>
+                <li><label><input type="radio" name="q1" value="b"> O arquivo é apagado e recriado vazio — conteúdo anterior é perdido</label></li>
+                <li><label><input type="radio" name="q1" value="c"> O novo conteúdo é acrescentado ao final</label></li>
+                <li><label><input type="radio" name="q1" value="d"> O arquivo existente é renomeado como backup automaticamente</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>2.</strong> Por que é essencial verificar se <code>fopen</code> retornou <code>NULL</code>?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q2" value="a"> Por convenção de estilo — o compilador exige</label></li>
+                <li><label><input type="radio" name="q2" value="b"> NULL significa que o arquivo foi aberto no modo errado</label></li>
+                <li><label><input type="radio" name="q2" value="c"> Usar um ponteiro NULL causa comportamento indefinido (segfault) — fopen retorna NULL quando o arquivo não pode ser aberto</label></li>
+                <li><label><input type="radio" name="q2" value="d"> NULL indica que o arquivo está vazio</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>3.</strong> Qual a diferença entre os modos <code>"w"</code> e <code>"a"</code> ao abrir um arquivo que já existe?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q3" value="a"> Não há diferença — ambos apagam o conteúdo anterior</label></li>
+                <li><label><input type="radio" name="q3" value="b"> "w" apaga o conteúdo e começa do zero; "a" mantém o conteúdo e adiciona ao final</label></li>
+                <li><label><input type="radio" name="q3" value="c"> "w" adiciona ao final; "a" apaga e recomeça</label></li>
+                <li><label><input type="radio" name="q3" value="d"> "a" é mais rápido que "w" porque não relê o arquivo</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>4.</strong> Por que <code>fscanf(f, "%s", nome)</code> é problemático para nomes como "Ana Silva"?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q4" value="a"> %s não funciona com arquivos, apenas com scanf do teclado</label></li>
+                <li><label><input type="radio" name="q4" value="b"> fscanf com %s para no primeiro espaço — leria apenas "Ana", deixando "Silva" para a próxima leitura</label></li>
+                <li><label><input type="radio" name="q4" value="c"> %s não suporta letras acentuadas</label></li>
+                <li><label><input type="radio" name="q4" value="d"> fscanf não consegue ler strings de arquivos texto</label></li>
+            </ul>
+        </div>
+
+        <button type="button" class="submit-btn" onclick="verificarRespostas()">Verificar Respostas</button>
+    </form>
+    <div id="quiz-results" style="display:none; margin-top:20px; padding:15px; background:#dff0d8; border-radius:5px;"></div>
+</div>
+
+<div class="navigation-buttons">
+    <a href="capitulo38.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">← Aula 38</a>
+    <a href="index.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">Índice</a>
+    <a href="capitulo39b.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">Parte 2 →</a>
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align:center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education" style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+<script>
+function verificarRespostas() {
+    const gabarito = { q1:"b", q2:"c", q3:"b", q4:"b" };
+    const explicacoes = {
+        q1: "O modo \"w\" trunca o arquivo existente — apaga todo o conteúdo e começa vazio. Para preservar e adicionar ao final, use o modo \"a\" (append).",
+        q2: "fopen retorna NULL quando não consegue abrir o arquivo (caminho inexistente, permissão negada, disco cheio etc.). Usar NULL como ponteiro para FILE causa acesso inválido à memória — segmentation fault ou comportamento imprevisível.",
+        q3: "\"w\" (write) recria o arquivo do zero — conteúdo anterior é irrecuperável. \"a\" (append) posiciona o cursor no final, preservando tudo que já existia. Use \"a\" para logs, históricos e dados acumulativos.",
+        q4: "fscanf com %s lê até encontrar um espaço em branco. \"Ana Silva\" seria lido em duas chamadas separadas: primeira retornaria \"Ana\", segunda retornaria \"Silva\". Para nomes com espaços, use fgets ou arquivos binários (Aula 39b)."
+    };
+
+    let acertos = 0, html = "";
+    const total = Object.keys(gabarito).length;
+    for (const q in gabarito) {
+        const sel = document.querySelector(`input[name="${q}"]:checked`);
+        const num = q.replace("q","");
+        if (sel) {
+            if (sel.value === gabarito[q]) {
+                acertos++;
+                html += `<p>Questão ${num}: <span style="color:green;font-weight:bold;">✅ Correto!</span> — ${explicacoes[q]}</p>`;
+            } else {
+                html += `<p>Questão ${num}: <span style="color:red;font-weight:bold;">❌ Incorreto.</span> Gabarito: <strong>${gabarito[q].toUpperCase()}</strong> — ${explicacoes[q]}</p>`;
+            }
+        } else {
+            html += `<p>Questão ${num}: <span style="color:orange;font-weight:bold;">⚠ Não respondida.</span></p>`;
+        }
+    }
+    const r = document.getElementById("quiz-results");
+    r.innerHTML = `<h3>Sua pontuação: ${acertos} de ${total}</h3>${html}`;
+    r.style.display = "block";
+    r.scrollIntoView({ behavior: "smooth" });
+}
+</script>
+</body>
+</html>

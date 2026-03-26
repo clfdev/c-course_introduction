@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 04 – Operadores Aritméticos e Relacionais</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Aula 04 – Operadores Aritméticos e Relacionais</h1>
+    <p>Cálculos, comparações, incremento, decremento e precedência de operadores em C</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo03.html">← Aula 03</a>
+    <a href="capitulo05.html">Aula 05 →</a>
+</nav>
+
+<!-- ═══════════════════════════════════════ ARITMÉTICOS -->
+<div class="content-section">
+    <h2>Operadores Aritméticos</h2>
+    <p>Os operadores aritméticos realizam as quatro operações matemáticas básicas, mais o resto da divisão. Em C, eles funcionam de forma idêntica ao Java para tipos numéricos:</p>
+
+    <table>
+        <tr>
+            <th>Operador</th>
+            <th>Nome</th>
+            <th>Exemplo</th>
+            <th>Resultado</th>
+        </tr>
+        <tr>
+            <td><code>+</code></td>
+            <td>Adição</td>
+            <td><code>10 + 3</code></td>
+            <td><code>13</code></td>
+        </tr>
+        <tr>
+            <td><code>-</code></td>
+            <td>Subtração</td>
+            <td><code>10 - 3</code></td>
+            <td><code>7</code></td>
+        </tr>
+        <tr>
+            <td><code>*</code></td>
+            <td>Multiplicação</td>
+            <td><code>10 * 3</code></td>
+            <td><code>30</code></td>
+        </tr>
+        <tr>
+            <td><code>/</code></td>
+            <td>Divisão</td>
+            <td><code>10 / 3</code></td>
+            <td><code>3</code> (inteira!)</td>
+        </tr>
+        <tr>
+            <td><code>%</code></td>
+            <td>Módulo (resto)</td>
+            <td><code>10 % 3</code></td>
+            <td><code>1</code></td>
+        </tr>
+    </table>
+
+    <pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int a = 10, b = 3;
+
+    printf("Adição:       %d\n", a + b);  <span class="code-comment">// 13</span>
+    printf("Subtração:    %d\n", a - b);  <span class="code-comment">// 7</span>
+    printf("Multiplicação:%d\n", a * b);  <span class="code-comment">// 30</span>
+    printf("Divisão:      %d\n", a / b);  <span class="code-comment">// 3  (divisão inteira)</span>
+    printf("Módulo:       %d\n", a % b);  <span class="code-comment">// 1  (resto de 10 ÷ 3)</span>
+
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>Adição:       13</p>
+        <p>Subtração:    7</p>
+        <p>Multiplicação:30</p>
+        <p>Divisão:      3</p>
+        <p>Módulo:       1</p>
+    </div>
+
+    <div class="warning-box">
+        <strong>Divisão inteira — cuidado fundamental:</strong> Quando <strong>ambos</strong> os operandos de <code>/</code> são inteiros, C realiza <strong>divisão inteira</strong> — o resultado é truncado para o inteiro mais próximo de zero, sem arredondamento. Para obter o resultado real com casas decimais, ao menos um dos operandos precisa ser <code>float</code> ou <code>double</code>:
+        <pre>int   a = 7, b = 2;
+printf("%d\n",   a / b);         <span class="code-comment">// 3   — divisão inteira</span>
+printf("%.1f\n", (double)a / b); <span class="code-comment">// 3.5 — cast força divisão real</span>
+printf("%.1f\n", 7.0 / b);       <span class="code-comment">// 3.5 — literal 7.0 já é double</span></pre>
+    </div>
+
+    <h3>O operador módulo (%)</h3>
+    <p>O operador <code>%</code> retorna o <strong>resto</strong> da divisão inteira. Só funciona com inteiros (<code>int</code>, <code>long</code>, etc.) — não é válido com <code>float</code> ou <code>double</code>. Ele tem usos clássicos muito importantes:</p>
+
+    <pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    <span class="code-comment">// Verificar se um número é par ou ímpar</span>
+    int n = 17;
+    if (n % 2 == 0)
+        printf("%d é par\n", n);
+    else
+        printf("%d é ímpar\n", n);   <span class="code-comment">// imprime este</span>
+
+    <span class="code-comment">// Limitar um valor a um intervalo (ex: relógio circular)</span>
+    int segundos = 65;
+    printf("Segundos restantes: %d\n", segundos % 60);  <span class="code-comment">// 5</span>
+
+    <span class="code-comment">// Verificar divisibilidade</span>
+    int x = 100;
+    if (x % 5 == 0)
+        printf("%d é divisível por 5\n", x);  <span class="code-comment">// imprime este</span>
+
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>17 é ímpar</p>
+        <p>Segundos restantes: 5</p>
+        <p>100 é divisível por 5</p>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ ATRIBUIÇÃO COMPOSTA -->
+<div class="content-section">
+    <h2>Operadores de Atribuição Composta</h2>
+    <p>C (assim como Java) oferece atalhos que combinam uma operação aritmética com a atribuição do resultado à própria variável. Eles tornam o código mais conciso e são amplamente usados em loops:</p>
+
+    <table>
+        <tr>
+            <th>Operador</th>
+            <th>Equivalente a</th>
+            <th>Exemplo</th>
+            <th>Resultado (dado <code>x = 10</code>)</th>
+        </tr>
+        <tr>
+            <td><code>+=</code></td>
+            <td><code>x = x + n</code></td>
+            <td><code>x += 3</code></td>
+            <td><code>x = 13</code></td>
+        </tr>
+        <tr>
+            <td><code>-=</code></td>
+            <td><code>x = x - n</code></td>
+            <td><code>x -= 3</code></td>
+            <td><code>x = 7</code></td>
+        </tr>
+        <tr>
+            <td><code>*=</code></td>
+            <td><code>x = x * n</code></td>
+            <td><code>x *= 3</code></td>
+            <td><code>x = 30</code></td>
+        </tr>
+        <tr>
+            <td><code>/=</code></td>
+            <td><code>x = x / n</code></td>
+            <td><code>x /= 3</code></td>
+            <td><code>x = 3</code></td>
+        </tr>
+        <tr>
+            <td><code>%=</code></td>
+            <td><code>x = x % n</code></td>
+            <td><code>x %= 3</code></td>
+            <td><code>x = 1</code></td>
+        </tr>
+    </table>
+
+    <pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int saldo = 1000;
+
+    saldo += 500;   <span class="code-comment">// depósito</span>
+    printf("Após depósito:  %d\n", saldo);  <span class="code-comment">// 1500</span>
+
+    saldo -= 200;   <span class="code-comment">// saque</span>
+    printf("Após saque:     %d\n", saldo);  <span class="code-comment">// 1300</span>
+
+    saldo *= 2;     <span class="code-comment">// dobra o saldo</span>
+    printf("Após dobrar:    %d\n", saldo);  <span class="code-comment">// 2600</span>
+
+    saldo /= 4;     <span class="code-comment">// divide por 4</span>
+    printf("Após dividir:   %d\n", saldo);  <span class="code-comment">// 650</span>
+
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>Após depósito:  1500</p>
+        <p>Após saque:     1300</p>
+        <p>Após dobrar:    2600</p>
+        <p>Após dividir:   650</p>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ INCREMENTO / DECREMENTO -->
+<div class="content-section">
+    <h2>Incremento e Decremento</h2>
+    <p>Os operadores <code>++</code> e <code>--</code> somam ou subtraem 1 de uma variável. São usados extensivamente em loops e existem em duas formas: <strong>pré-fixada</strong> e <strong>pós-fixada</strong>.</p>
+
+    <table>
+        <tr>
+            <th>Operador</th>
+            <th>Nome</th>
+            <th>Comportamento</th>
+        </tr>
+        <tr>
+            <td><code>++x</code></td>
+            <td>Pré-incremento</td>
+            <td>Incrementa <code>x</code> <strong>antes</strong> de usar o valor na expressão</td>
+        </tr>
+        <tr>
+            <td><code>x++</code></td>
+            <td>Pós-incremento</td>
+            <td>Usa o valor atual de <code>x</code> na expressão e <strong>depois</strong> incrementa</td>
+        </tr>
+        <tr>
+            <td><code>--x</code></td>
+            <td>Pré-decremento</td>
+            <td>Decrementa <code>x</code> <strong>antes</strong> de usar o valor</td>
+        </tr>
+        <tr>
+            <td><code>x--</code></td>
+            <td>Pós-decremento</td>
+            <td>Usa o valor atual e <strong>depois</strong> decrementa</td>
+        </tr>
+    </table>
+
+    <pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int a = 5, b = 5;
+
+    <span class="code-comment">// Pós-incremento: usa 5, depois vira 6</span>
+    printf("a++: %d\n", a++);  <span class="code-comment">// imprime 5</span>
+    printf("a agora: %d\n", a); <span class="code-comment">// imprime 6</span>
+
+    <span class="code-comment">// Pré-incremento: vira 6 primeiro, depois usa 6</span>
+    printf("++b: %d\n", ++b);  <span class="code-comment">// imprime 6</span>
+    printf("b agora: %d\n", b); <span class="code-comment">// imprime 6</span>
+
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>a++: 5</p>
+        <p>a agora: 6</p>
+        <p>++b: 6</p>
+        <p>b agora: 6</p>
+    </div>
+
+    <div class="tip-box">
+        <strong>DICA prática:</strong> Quando <code>++</code> ou <code>--</code> são usados <em>sozinhos</em> em uma linha (como em loops: <code>i++</code>), a diferença entre pré e pós não tem efeito prático. A distinção importa apenas quando o operador aparece <em>dentro</em> de uma expressão maior como <code>printf("a: %d", a++)</code>.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ RELACIONAIS -->
+<div class="content-section">
+    <h2>Operadores Relacionais</h2>
+    <p>Os operadores relacionais <strong>comparam dois valores</strong> e retornam um resultado booleano — em C, esse resultado é um inteiro: <code>1</code> para verdadeiro e <code>0</code> para falso. Eles são a base de toda estrutura de decisão (<code>if</code>) e de repetição (<code>while</code>, <code>for</code>).</p>
+
+    <table>
+        <tr>
+            <th>Operador</th>
+            <th>Significado</th>
+            <th>Exemplo</th>
+            <th>Resultado</th>
+        </tr>
+        <tr>
+            <td><code>==</code></td>
+            <td>Igual a</td>
+            <td><code>5 == 5</code></td>
+            <td><code>1</code> (verdadeiro)</td>
+        </tr>
+        <tr>
+            <td><code>!=</code></td>
+            <td>Diferente de</td>
+            <td><code>5 != 3</code></td>
+            <td><code>1</code> (verdadeiro)</td>
+        </tr>
+        <tr>
+            <td><code>&gt;</code></td>
+            <td>Maior que</td>
+            <td><code>5 &gt; 8</code></td>
+            <td><code>0</code> (falso)</td>
+        </tr>
+        <tr>
+            <td><code>&lt;</code></td>
+            <td>Menor que</td>
+            <td><code>3 &lt; 8</code></td>
+            <td><code>1</code> (verdadeiro)</td>
+        </tr>
+        <tr>
+            <td><code>&gt;=</code></td>
+            <td>Maior ou igual a</td>
+            <td><code>5 &gt;= 5</code></td>
+            <td><code>1</code> (verdadeiro)</td>
+        </tr>
+        <tr>
+            <td><code>&lt;=</code></td>
+            <td>Menor ou igual a</td>
+            <td><code>3 &lt;= 2</code></td>
+            <td><code>0</code> (falso)</td>
+        </tr>
+    </table>
+
+    <pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int x = 10, y = 20;
+
+    printf("x == y: %d\n", x == y);  <span class="code-comment">// 0 (falso)</span>
+    printf("x != y: %d\n", x != y);  <span class="code-comment">// 1 (verdadeiro)</span>
+    printf("x &lt;  y: %d\n", x &lt; y);   <span class="code-comment">// 1 (verdadeiro)</span>
+    printf("x &gt;  y: %d\n", x &gt; y);   <span class="code-comment">// 0 (falso)</span>
+    printf("x &lt;= y: %d\n", x &lt;= y);  <span class="code-comment">// 1 (verdadeiro)</span>
+    printf("x &gt;= y: %d\n", x &gt;= y);  <span class="code-comment">// 0 (falso)</span>
+
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>x == y: 0</p>
+        <p>x != y: 1</p>
+        <p>x &lt;  y: 1</p>
+        <p>x &gt;  y: 0</p>
+        <p>x &lt;= y: 1</p>
+        <p>x &gt;= y: 0</p>
+    </div>
+
+    <div class="warning-box">
+        <strong>Armadilha clássica — <code>=</code> versus <code>==</code>:</strong> Em C, <code>=</code> é o operador de <strong>atribuição</strong> e <code>==</code> é o operador de <strong>comparação</strong>. Confundi-los é um dos erros mais comuns — e mais perigosos — em C, pois o compilador não gera erro:
+        <pre>int x = 5;
+if (x = 10)    <span class="code-comment">// ⚠ ATRIBUI 10 a x e testa se 10 é verdadeiro (sempre true!)</span>
+    printf("nunca falso\n");
+
+if (x == 10)   <span class="code-comment">// ✓ COMPARA x com 10</span>
+    printf("x é dez\n");</pre>
+        O mesmo vale em Java, mas lá o compilador alerta quando um <code>int</code> aparece em contexto booleano.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ PRECEDÊNCIA -->
+<div class="content-section">
+    <h2>Precedência de Operadores</h2>
+    <p>Quando vários operadores aparecem em uma mesma expressão, o C define uma ordem de avaliação — a <strong>precedência</strong> — semelhante à matemática (multiplicação antes da adição). Operadores com a mesma precedência são avaliados da esquerda para a direita (<strong>associatividade</strong>).</p>
+
+    <table>
+        <tr>
+            <th>Prioridade</th>
+            <th>Operadores</th>
+            <th>Descrição</th>
+        </tr>
+        <tr>
+            <td>1 (maior)</td>
+            <td><code>++</code> <code>--</code> (pós)</td>
+            <td>Incremento/decremento pós-fixado</td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td><code>++</code> <code>--</code> (pré) <code>-</code> (unário)</td>
+            <td>Incremento/decremento pré-fixado, negação</td>
+        </tr>
+        <tr>
+            <td>3</td>
+            <td><code>*</code> &nbsp;<code>/</code> &nbsp;<code>%</code></td>
+            <td>Multiplicação, divisão, módulo</td>
+        </tr>
+        <tr>
+            <td>4</td>
+            <td><code>+</code> &nbsp;<code>-</code></td>
+            <td>Adição e subtração</td>
+        </tr>
+        <tr>
+            <td>5</td>
+            <td><code>&lt;</code> &nbsp;<code>&lt;=</code> &nbsp;<code>&gt;</code> &nbsp;<code>&gt;=</code></td>
+            <td>Operadores relacionais de comparação de ordem</td>
+        </tr>
+        <tr>
+            <td>6</td>
+            <td><code>==</code> &nbsp;<code>!=</code></td>
+            <td>Igualdade e diferença</td>
+        </tr>
+        <tr>
+            <td>7</td>
+            <td><code>&&</code></td>
+            <td>E lógico (AND)</td>
+        </tr>
+        <tr>
+            <td>8</td>
+            <td><code>||</code></td>
+            <td>OU lógico (OR)</td>
+        </tr>
+        <tr>
+            <td>9 (menor)</td>
+            <td><code>=</code> <code>+=</code> <code>-=</code> ...</td>
+            <td>Atribuição e atribuição composta</td>
+        </tr>
+    </table>
+
+    <pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int resultado;
+
+    resultado = 2 + 3 * 4;
+    printf("%d\n", resultado);   <span class="code-comment">// 14 — * antes de +</span>
+
+    resultado = (2 + 3) * 4;
+    printf("%d\n", resultado);   <span class="code-comment">// 20 — () força a adição primeiro</span>
+
+    resultado = 10 - 4 - 2;
+    printf("%d\n", resultado);   <span class="code-comment">// 4  — associatividade esquerda: (10-4)-2</span>
+
+    resultado = 10 > 5 + 3;
+    printf("%d\n", resultado);   <span class="code-comment">// 1  — 5+3=8, depois 10>8 = verdadeiro (1)</span>
+
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>14</p>
+        <p>20</p>
+        <p>4</p>
+        <p>1</p>
+    </div>
+
+    <div class="tip-box">
+        <strong>DICA:</strong> Em caso de dúvida sobre a precedência, use <strong>parênteses</strong>. Além de garantir o resultado correto, eles tornam a intenção do código muito mais clara para quem vai ler depois.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ MATEMÁTICA COM math.h -->
+<div class="content-section">
+    <h2>Funções Matemáticas: &lt;math.h&gt;</h2>
+    <p>Para operações além das quatro básicas — como potência, raiz quadrada, seno, logaritmo — o C fornece a biblioteca <code>&lt;math.h&gt;</code>, equivalente à classe <code>Math</code> do Java:</p>
+
+    <table>
+        <tr>
+            <th>Função em C</th>
+            <th>Equivalente em Java</th>
+            <th>Descrição</th>
+        </tr>
+        <tr>
+            <td><code>sqrt(x)</code></td>
+            <td><code>Math.sqrt(x)</code></td>
+            <td>Raiz quadrada</td>
+        </tr>
+        <tr>
+            <td><code>pow(x, y)</code></td>
+            <td><code>Math.pow(x, y)</code></td>
+            <td>x elevado a y</td>
+        </tr>
+        <tr>
+            <td><code>fabs(x)</code></td>
+            <td><code>Math.abs(x)</code></td>
+            <td>Valor absoluto (double)</td>
+        </tr>
+        <tr>
+            <td><code>abs(x)</code></td>
+            <td><code>Math.abs(x)</code></td>
+            <td>Valor absoluto (int) — requer <code>&lt;stdlib.h&gt;</code></td>
+        </tr>
+        <tr>
+            <td><code>ceil(x)</code></td>
+            <td><code>Math.ceil(x)</code></td>
+            <td>Teto (arredonda para cima)</td>
+        </tr>
+        <tr>
+            <td><code>floor(x)</code></td>
+            <td><code>Math.floor(x)</code></td>
+            <td>Piso (arredonda para baixo)</td>
+        </tr>
+        <tr>
+            <td><code>round(x)</code></td>
+            <td><code>Math.round(x)</code></td>
+            <td>Arredondamento convencional</td>
+        </tr>
+        <tr>
+            <td><code>log(x)</code></td>
+            <td><code>Math.log(x)</code></td>
+            <td>Logaritmo natural (base e)</td>
+        </tr>
+        <tr>
+            <td><code>log10(x)</code></td>
+            <td><code>Math.log10(x)</code></td>
+            <td>Logaritmo base 10</td>
+        </tr>
+        <tr>
+            <td><code>sin(x)</code> <code>cos(x)</code> <code>tan(x)</code></td>
+            <td><code>Math.sin/cos/tan(x)</code></td>
+            <td>Funções trigonométricas (x em radianos)</td>
+        </tr>
+    </table>
+
+    <pre>
+#include &lt;stdio.h&gt;
+#include &lt;math.h&gt;   <span class="code-comment">// necessário para funções matemáticas</span>
+
+int main() {
+    double x = 9.0;
+
+    printf("Raiz de %.0f:     %.2f\n", x, sqrt(x));    <span class="code-comment">// 3.00</span>
+    printf("2 elevado a 8:  %.0f\n",   pow(2, 8));     <span class="code-comment">// 256</span>
+    printf("Teto de 4.3:    %.0f\n",   ceil(4.3));     <span class="code-comment">// 5</span>
+    printf("Piso de 4.9:    %.0f\n",   floor(4.9));    <span class="code-comment">// 4</span>
+    printf("|−7.5|:          %.1f\n",  fabs(-7.5));    <span class="code-comment">// 7.5</span>
+
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>Raiz de 9:     3.00</p>
+        <p>2 elevado a 8:  256</p>
+        <p>Teto de 4.3:    5</p>
+        <p>Piso de 4.9:    4</p>
+        <p>|−7.5|:          7.5</p>
+    </div>
+
+    <div class="info-box">
+        <strong>Compilando com math.h no GCC:</strong> Ao compilar programas que usam <code>&lt;math.h&gt;</code> diretamente pela linha de comando, é preciso adicionar o flag <code>-lm</code> para vincular a biblioteca matemática:<br>
+        <code>gcc programa.c -o programa -lm</code><br>
+        No Code::Blocks com MinGW, essa vinculação costuma ocorrer automaticamente.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ EXEMPLO COMPLETO -->
+<div class="content-section">
+    <h2>Exemplo Completo: Calculadora de IMC</h2>
+    <p>Vamos combinar operadores aritméticos e relacionais em um programa real — o cálculo do Índice de Massa Corporal (IMC):</p>
+
+    <pre>
+#include &lt;stdio.h&gt;
+#include &lt;math.h&gt;
+
+int main() {
+    double peso, altura, imc;
+
+    printf("Digite seu peso (kg): ");
+    scanf("%lf", &amp;peso);
+
+    printf("Digite sua altura (m): ");
+    scanf("%lf", &amp;altura);
+
+    imc = peso / (altura * altura);   <span class="code-comment">// fórmula do IMC</span>
+
+    printf("\nSeu IMC: %.2f\n", imc);
+
+    if (imc &lt; 18.5)
+        printf("Classificação: Abaixo do peso\n");
+    else if (imc &lt; 25.0)
+        printf("Classificação: Peso normal\n");
+    else if (imc &lt; 30.0)
+        printf("Classificação: Sobrepeso\n");
+    else
+        printf("Classificação: Obesidade\n");
+
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>Digite seu peso (kg): 70</p>
+        <p>Digite sua altura (m): 1.75</p>
+        <p>&nbsp;</p>
+        <p>Seu IMC: 22.86</p>
+        <p>Classificação: Peso normal</p>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ C VS JAVA -->
+<div class="content-section">
+    <h2>Operadores em C versus Java</h2>
+    <p>Os operadores aritméticos e relacionais são praticamente idênticos nas duas linguagens. As diferenças estão nos detalhes de comportamento:</p>
+
+    <table>
+        <tr>
+            <th>Aspecto</th>
+            <th>C</th>
+            <th>Java</th>
+        </tr>
+        <tr>
+            <td>Operadores aritméticos (<code>+ - * / %</code>)</td>
+            <td>Idênticos</td>
+            <td>Idênticos</td>
+        </tr>
+        <tr>
+            <td>Operadores relacionais (<code>== != &lt; &gt; &lt;= &gt;=</code>)</td>
+            <td>Idênticos</td>
+            <td>Idênticos para primitivos; <code>==</code> em objetos compara referência, não valor</td>
+        </tr>
+        <tr>
+            <td>Divisão inteira (<code>7 / 2</code>)</td>
+            <td><code>3</code> — trunca</td>
+            <td><code>3</code> — trunca (mesma regra)</td>
+        </tr>
+        <tr>
+            <td>Resultado de comparação</td>
+            <td><code>int</code>: <code>0</code> ou <code>1</code></td>
+            <td><code>boolean</code>: <code>false</code> ou <code>true</code></td>
+        </tr>
+        <tr>
+            <td>Inteiro em condição (<code>if (x)</code>)</td>
+            <td>Válido: 0 = falso, outros = verdadeiro</td>
+            <td>Inválido: exige <code>boolean</code> explícito</td>
+        </tr>
+        <tr>
+            <td>Atribuição composta (<code>+= -= *=</code>)</td>
+            <td>Idênticos</td>
+            <td>Idênticos</td>
+        </tr>
+        <tr>
+            <td>Incremento/decremento (<code>++ --</code>)</td>
+            <td>Idênticos</td>
+            <td>Idênticos</td>
+        </tr>
+        <tr>
+            <td>Funções matemáticas</td>
+            <td><code>#include &lt;math.h&gt;</code> + flag <code>-lm</code></td>
+            <td>Classe <code>Math</code> (nativa, sem import)</td>
+        </tr>
+        <tr>
+            <td><code>=</code> dentro de <code>if</code></td>
+            <td>Compilador aceita sem erro — bug silencioso</td>
+            <td>Compilador alerta (tipo incompatível com boolean)</td>
+        </tr>
+    </table>
+</div>
+
+<!-- ═══════════════════════════════════════ EXERCÍCIOS -->
+<div class="exercise-section">
+    <h2>Exercícios — Aula 04</h2>
+    <p>Teste seus conhecimentos sobre operadores aritméticos e relacionais em C:</p>
+
+    <form class="quiz-form" id="quiz-form">
+
+        <div class="quiz-question">
+            <p><strong>1. Qual será o resultado de <code>17 % 5</code> em C?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q1" value="a"> 3</label></li>
+                <li><label><input type="radio" name="q1" value="b"> 2</label></li>
+                <li><label><input type="radio" name="q1" value="c"> 0</label></li>
+                <li><label><input type="radio" name="q1" value="d"> 3.4</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>2. Analise o código abaixo. Qual será a saída?</strong></p>
+            <pre>int a = 5;
+printf("%d\n", a++);
+printf("%d\n", a);</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q2" value="a"> 6 e 6</label></li>
+                <li><label><input type="radio" name="q2" value="b"> 5 e 5</label></li>
+                <li><label><input type="radio" name="q2" value="c"> 5 e 6</label></li>
+                <li><label><input type="radio" name="q2" value="d"> 6 e 5</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>3. Por que <code>int a = 7; int b = 2; printf("%d", a / b);</code> imprime <code>3</code> e não <code>3.5</code>?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q3" value="a"> Porque o especificador <code>%d</code> arredonda para baixo automaticamente</label></li>
+                <li><label><input type="radio" name="q3" value="b"> Porque a divisão entre dois <code>int</code> em C é inteira — o resto é descartado</label></li>
+                <li><label><input type="radio" name="q3" value="c"> Porque o C arredonda divisões para o inteiro mais próximo</label></li>
+                <li><label><input type="radio" name="q3" value="d"> Porque <code>7</code> não é divisível por <code>2</code>, então o resultado é sempre zero</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>4. Qual será o resultado da expressão <code>2 + 3 * 4 - 1</code> em C?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q4" value="a"> 19</label></li>
+                <li><label><input type="radio" name="q4" value="b"> 13</label></li>
+                <li><label><input type="radio" name="q4" value="c"> 20</label></li>
+                <li><label><input type="radio" name="q4" value="d"> 11</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>5. O código abaixo tem um erro clássico. O que está errado?</strong></p>
+            <pre>int x = 5;
+if (x = 0)
+    printf("zero\n");
+else
+    printf("não zero\n");</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q5" value="a"> Nada — o código está correto e imprime "zero"</label></li>
+                <li><label><input type="radio" name="q5" value="b"> O <code>=</code> deveria ser <code>==</code>; como está, atribui 0 a x e o <code>if</code> sempre vai para o <code>else</code></label></li>
+                <li><label><input type="radio" name="q5" value="c"> Erro de compilação: não é possível usar atribuição dentro de <code>if</code> em C</label></li>
+                <li><label><input type="radio" name="q5" value="d"> O <code>if</code> precisa de chaves <code>{}</code> para funcionar corretamente</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>6. Qual header deve ser incluído para usar a função <code>sqrt()</code> em C?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q6" value="a"> <code>&lt;stdio.h&gt;</code></label></li>
+                <li><label><input type="radio" name="q6" value="b"> <code>&lt;stdlib.h&gt;</code></label></li>
+                <li><label><input type="radio" name="q6" value="c"> <code>&lt;math.h&gt;</code></label></li>
+                <li><label><input type="radio" name="q6" value="d"> <code>&lt;stdbool.h&gt;</code></label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>7. Qual é o valor de <code>resultado</code> após executar <code>int resultado = 10; resultado %= 3;</code>?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q7" value="a"> 3</label></li>
+                <li><label><input type="radio" name="q7" value="b"> 1</label></li>
+                <li><label><input type="radio" name="q7" value="c"> 0</label></li>
+                <li><label><input type="radio" name="q7" value="d"> 30</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>8. Qual é a principal diferença entre o operador <code>==</code> em C e em Java quando aplicado a objetos?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q8" value="a"> Em C e Java, <code>==</code> sempre compara o conteúdo dos dados</label></li>
+                <li><label><input type="radio" name="q8" value="b"> Em C, <code>==</code> compara valores; em Java, <code>==</code> aplicado a objetos compara referências de memória, não o conteúdo</label></li>
+                <li><label><input type="radio" name="q8" value="c"> Em C, <code>==</code> é inválido para variáveis do tipo <code>char</code></label></li>
+                <li><label><input type="radio" name="q8" value="d"> Em Java, <code>==</code> não existe — usa-se sempre o método <code>equals()</code></label></li>
+            </ul>
+        </div>
+
+        <button type="button" class="submit-btn" onclick="verificarRespostas()">Verificar Respostas</button>
+    </form>
+
+    <div id="quiz-results" style="display:none; margin-top:20px; padding:15px; background-color:#dff0d8; border-radius:5px;"></div>
+</div>
+
+<div class="navigation-buttons">
+    <a href="capitulo03.html">← Aula 03</a>
+    <a href="index.html">Índice</a>
+    <a href="capitulo05.html">Aula 05 →</a>
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align: center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education" style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+<script>
+    function verificarRespostas() {
+        const gabarito = {
+            q1: "b",
+            q2: "c",
+            q3: "b",
+            q4: "b",
+            q5: "b",
+            q6: "c",
+            q7: "b",
+            q8: "b"
+        };
+
+        const explicacoes = {
+            q1: "17 % 5 = 2, pois 17 = 5×3 + 2. O operador % retorna o resto da divisão inteira: 5 cabe 3 vezes em 17, sobra 2.",
+            q2: "a++ é pós-incremento: usa o valor atual (5) no printf, depois incrementa para 6. Na segunda linha, a já vale 6.",
+            q3: "Em C, quando ambos os operandos de / são int, a divisão é inteira — a parte decimal é descartada. 7 / 2 = 3 (resto 1 é perdido). Para obter 3.5, use (double)a / b.",
+            q4: "Por precedência, * é avaliado antes de + e -. Então: 2 + (3*4) - 1 = 2 + 12 - 1 = 13.",
+            q5: "x = 0 é uma atribuição (não comparação), que atribui 0 a x e retorna 0. Como 0 é falso, o if sempre executa o else e imprime 'não zero'. O correto seria x == 0.",
+            q6: "sqrt() e outras funções matemáticas estão declaradas em <math.h>. Ao compilar pela linha de comando, adicione o flag -lm: gcc prog.c -lm.",
+            q7: "resultado %= 3 é equivalente a resultado = resultado % 3. Como 10 % 3 = 1 (10 = 3×3 + 1), resultado passa a valer 1.",
+            q8: "Em C, não existem objetos — == sempre compara valores. Em Java, == aplicado a objetos (String, arrays, etc.) compara o endereço de memória (referência), não o conteúdo. Para comparar conteúdo em Java, usa-se .equals()."
+        };
+
+        let acertos = 0;
+        let html = "";
+        const total = Object.keys(gabarito).length;
+
+        for (const q in gabarito) {
+            const selecionada = document.querySelector(`input[name="${q}"]:checked`);
+            const num = q.substring(1);
+            if (selecionada) {
+                if (selecionada.value === gabarito[q]) {
+                    acertos++;
+                    html += `<p>Questão ${num}: <span style="color:green; font-weight:bold;">✓ Correto!</span> — ${explicacoes[q]}</p>`;
+                } else {
+                    html += `<p>Questão ${num}: <span style="color:red; font-weight:bold;">✗ Incorreto.</span> — ${explicacoes[q]}</p>`;
+                }
+            } else {
+                html += `<p>Questão ${num}: <span style="color:orange; font-weight:bold;">⚠ Não respondida.</span></p>`;
+            }
+        }
+
+        const resultado = document.getElementById("quiz-results");
+        resultado.innerHTML = `<h3>Sua pontuação: ${acertos} de ${total}</h3>${html}`;
+        resultado.style.display = "block";
+        resultado.scrollIntoView({ behavior: "smooth" });
+    }
+</script>
+
+</body>
+</html>

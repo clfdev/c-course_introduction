@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 00 – Introdução ao C e Configuração do Ambiente</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <style>
+        /* Paleta extra para C (azul-escuro → laranja accent igual ao projeto Java) */
+        .memory-diagram {
+            display: flex;
+            align-items: stretch;
+            gap: 0;
+            margin: 25px auto;
+            max-width: 520px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1em;
+        }
+        .memory-labels {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+        .mem-label {
+            width: 80px;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            font-weight: bold;
+            color: rgb(7,7,115);
+            font-size: 0.95em;
+        }
+        .memory-cells {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            border: 2px solid rgb(7,7,115);
+        }
+        .mem-cell {
+            width: 160px;
+            height: 52px;
+            border-bottom: 1px solid #aaa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #fff;
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #c0392b;
+            position: relative;
+        }
+        .mem-cell:last-child { border-bottom: none; }
+        .mem-cell.highlighted {
+            background-color: #fdebd0;
+            border-left: 4px solid #e67e22;
+        }
+        .memory-vars {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+        .mem-var {
+            width: 120px;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            padding-left: 12px;
+            font-style: italic;
+            color: #555;
+            font-size: 0.95em;
+        }
+        .stats-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            margin: 30px 0;
+        }
+        .stat-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            flex: 1 1 260px;
+            margin: 10px;
+            text-align: center;
+            border-top: 5px solid rgb(7,7,115);
+        }
+        .stat-number {
+            font-size: 2.2em;
+            font-weight: bold;
+            color: rgb(7,7,115);
+            margin: 8px 0;
+        }
+        .progress-bar-container {
+            background-color: #e0e0e0;
+            height: 18px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: rgb(7,7,115);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.75em;
+            font-weight: bold;
+        }
+        .features-list {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .features-list li {
+            position: relative;
+            padding-left: 28px;
+            margin-bottom: 12px;
+        }
+        .features-list li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: rgb(7,7,115);
+            font-weight: bold;
+        }
+        .step-container { counter-reset: step-counter; margin: 25px 0; }
+        .step {
+            position: relative;
+            padding-left: 60px;
+            margin-bottom: 25px;
+            min-height: 50px;
+        }
+        .step::before {
+            content: counter(step-counter);
+            counter-increment: step-counter;
+            position: absolute;
+            left: 0; top: 0;
+            background-color: rgb(7,7,115);
+            color: white;
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        .arrow-annotation {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 6px 0 6px 20px;
+            color: #555;
+            font-size: 0.95em;
+        }
+        .arrow-annotation::before { content: "→"; color: #e67e22; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Aula 00 – Introdução ao C e Configuração do Ambiente</h1>
+    <p>Conheça a linguagem que está por trás de sistemas operacionais, compiladores e hardware</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Menu Principal</a>
+    <a href="#oqueec">O que é C?</a>
+    <a href="#ambiente">Ambiente</a>
+    <a href="#ponteiros">Ponteiros</a>
+    <a href="#exercicios">Exercícios</a>
+    <a href="capitulo01.html">Próxima Aula →</a>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════ O QUE É C -->
+<div class="content-section" id="oqueec">
+    <h2>O que é a Linguagem C?</h2>
+    <p>C é uma linguagem de programação de propósito geral criada por <strong>Dennis Ritchie</strong> entre 1969 e 1973 nos laboratórios Bell, nos Estados Unidos. Ela foi desenvolvida para criar o sistema operacional UNIX e rapidamente se tornou uma das linguagens mais influentes da história da computação.</p>
+
+    <div class="info-box">
+        <p>Praticamente todas as linguagens modernas — Java, Python, JavaScript, C++, Rust — foram direta ou indiretamente influenciadas pela linguagem C. Aprender C é como aprender a "falar" com o computador de perto.</p>
+    </div>
+
+    <h3>Principais características do C</h3>
+    <ul class="features-list">
+        <li><strong>Baixo nível de abstração:</strong> C permite manipular diretamente endereços de memória por meio de ponteiros, dando ao programador controle total sobre os recursos do sistema.</li>
+        <li><strong>Alto desempenho:</strong> O código C compilado é extremamente eficiente, sendo amplamente usado em sistemas embarcados, sistemas operacionais e drivers.</li>
+        <li><strong>Tipagem estática:</strong> Variáveis precisam ter seu tipo declarado antes de serem usadas, o que reduz erros em tempo de execução.</li>
+        <li><strong>Portabilidade:</strong> Um programa C pode ser compilado e executado em praticamente qualquer plataforma com pouca ou nenhuma modificação.</li>
+        <li><strong>Linguagem procedural:</strong> C organiza o código em funções, seguindo o paradigma de programação procedural/estruturada.</li>
+        <li><strong>Pequena biblioteca padrão:</strong> O núcleo da linguagem é enxuto; funcionalidades extras vêm de bibliotecas como <code>stdio.h</code>, <code>stdlib.h</code> e <code>math.h</code>.</li>
+    </ul>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ C vs JAVA/PYTHON -->
+<div class="content-section">
+    <h2>C versus Java e Python</h2>
+    <table>
+        <tr>
+            <th>Característica</th>
+            <th>C</th>
+            <th>Java</th>
+            <th>Python</th>
+        </tr>
+        <tr>
+            <td>Paradigma principal</td>
+            <td>Procedural</td>
+            <td>Orientado a Objetos</td>
+            <td>Multi-paradigma</td>
+        </tr>
+        <tr>
+            <td>Compilação</td>
+            <td>Compilada para código nativo</td>
+            <td>Compilada para bytecode (JVM)</td>
+            <td>Interpretada</td>
+        </tr>
+        <tr>
+            <td>Gerenciamento de memória</td>
+            <td>Manual (malloc / free)</td>
+            <td>Automático (Garbage Collector)</td>
+            <td>Automático (GC)</td>
+        </tr>
+        <tr>
+            <td>Ponteiros</td>
+            <td>Sim (explícito)</td>
+            <td>Não (referências gerenciadas)</td>
+            <td>Não</td>
+        </tr>
+        <tr>
+            <td>Desempenho</td>
+            <td>Muito alto</td>
+            <td>Alto</td>
+            <td>Moderado</td>
+        </tr>
+        <tr>
+            <td>Uso típico</td>
+            <td>SO, drivers, embarcados, jogos</td>
+            <td>Back-end web, Android, corporativo</td>
+            <td>Ciência de dados, scripts, web</td>
+        </tr>
+    </table>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ MERCADO -->
+<div class="content-section">
+    <h2>C no Mercado de Trabalho</h2>
+    <p>Apesar de ser uma linguagem de 1972, C continua sendo extremamente relevante em 2025. Sua presença é dominante em áreas onde desempenho e controle de hardware são críticos.</p>
+
+    <div class="stats-container">
+        <div class="stat-card">
+            <h3>Sistemas Operacionais</h3>
+            <div class="stat-number">~95%</div>
+            <p>do kernel do Linux e grandes partes do Windows e macOS são escritos em C</p>
+            <div class="progress-bar-container">
+                <div class="progress-bar" style="width:95%">95%</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <h3>Sistemas Embarcados</h3>
+            <div class="stat-number">#1</div>
+            <p>C é a linguagem mais usada em microcontroladores e hardware embarcado no mundo</p>
+            <div class="progress-bar-container">
+                <div class="progress-bar" style="width:90%">90%</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <h3>Índice TIOBE</h3>
+            <div class="stat-number">Top 3</div>
+            <p>C aparece consistentemente entre as 3 linguagens mais populares do mundo</p>
+            <div class="progress-bar-container">
+                <div class="progress-bar" style="width:75%">Top 3</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ DIFERENCIAL DO C -->
+<div class="content-section" id="diferencial">
+    <h2>O Diferencial do C: controle de baixo nível com alta eficiência</h2>
+
+    <p>Estruturas de dados são uma grande força do C, mas não é esse o diferencial único da linguagem. O diferencial mais marcante do C é outro:</p>
+
+    <div class="definicao">
+        <strong>C é a linguagem do controle, da eficiência e da proximidade com a máquina.</strong>
+        Em nenhuma outra linguagem de uso geral você consegue combinar simplicidade de sintaxe com tanto poder de baixo nível.
+    </div>
+
+    <p>Em outras palavras, C se destaca porque permite:</p>
+
+    <table>
+        <tr>
+            <th>Capacidade</th>
+            <th>O que isso significa na prática</th>
+        </tr>
+        <tr>
+            <td>Acesso direto à memória por ponteiros</td>
+            <td>Você pode ler e escrever em endereços específicos de RAM — algo que Java, Python e JavaScript escondem completamente</td>
+        </tr>
+        <tr>
+            <td>Controle fino sobre alocação e liberação de memória</td>
+            <td><code>malloc</code> e <code>free</code>: você decide quando a memória é reservada e quando é devolvida ao sistema</td>
+        </tr>
+        <tr>
+            <td>Pouca "camada intermediária" entre código e hardware</td>
+            <td>Não há máquina virtual (como a JVM do Java) nem garbage collector que pause o programa</td>
+        </tr>
+        <tr>
+            <td>Execução muito rápida</td>
+            <td>O código C compilado é, em geral, próximo ao desempenho do Assembly — sem overhead de runtime</td>
+        </tr>
+        <tr>
+            <td>Base para construção de sistemas</td>
+            <td>Compiladores, drivers, sistemas operacionais e bibliotecas são escritos em C porque a linguagem permite esse nível de controle</td>
+        </tr>
+    </table>
+
+    <h3>Onde C é usado — aplicações reais</h3>
+
+    <div class="grid-container">
+        <div class="grid-item">
+            <strong>Sistemas operacionais</strong>
+            <p>Linux, macOS (kernel XNU), Windows NT — seus núcleos são escritos majoritariamente em C</p>
+        </div>
+        <div class="grid-item">
+            <strong>Compiladores e interpretadores</strong>
+            <p>GCC, Clang, o interpretador CPython (Python), o motor V8 (JavaScript) têm núcleos em C ou C++</p>
+        </div>
+        <div class="grid-item">
+            <strong>Firmware e embarcados</strong>
+            <p>Microcontroladores (Arduino, ESP32), sistemas automotivos, equipamentos médicos — C é a linguagem padrão</p>
+        </div>
+        <div class="grid-item">
+            <strong>Bancos de dados</strong>
+            <p>SQLite, PostgreSQL, MySQL — seus kernels de alto desempenho são implementados em C</p>
+        </div>
+    </div>
+
+    <h3>Comparando as linguagens do curso</h3>
+
+    <table>
+        <tr>
+            <th>Linguagem</th>
+            <th>Identidade principal</th>
+            <th>Ponto forte</th>
+        </tr>
+        <tr>
+            <td><strong>Java</strong></td>
+            <td>Orientação a objetos, ecossistema corporativo</td>
+            <td>Portabilidade (JVM), robustez, produtividade em sistemas grandes</td>
+        </tr>
+        <tr>
+            <td><strong>Python</strong></td>
+            <td>Produtividade, automação, ciência de dados, IA</td>
+            <td>Sintaxe concisa, bibliotecas ricas, prototipagem rápida</td>
+        </tr>
+        <tr>
+            <td><strong>JavaScript</strong></td>
+            <td>Interatividade web e aplicações full stack</td>
+            <td>Onipresença no browser, ecosistema Node.js</td>
+        </tr>
+        <tr>
+            <td><strong>C</strong></td>
+            <td>Desempenho, controle de memória, baixo nível</td>
+            <td>Proximidade com o hardware, velocidade de execução, base de sistemas</td>
+        </tr>
+    </table>
+
+    <h3>E onde entram as estruturas de dados?</h3>
+
+    <p>C é excelente para <em>ensinar</em> e <em>implementar</em> estruturas de dados porque nele você vê de forma explícita o que outras linguagens escondem:</p>
+
+    <ul class="features-list">
+        <li>Como um vetor ocupa posições contíguas na memória</li>
+        <li>Como listas encadeadas realmente ligam nós por ponteiros</li>
+        <li>Como pilhas, filas, árvores e tabelas hash funcionam internamente</li>
+        <li>Como o custo de memória e de tempo aparecem na prática</li>
+    </ul>
+
+    <p>Por isso C é muito usado em disciplinas de Estrutura de Dados e Algoritmos. Mas isso acontece porque <strong>a linguagem expõe bem os mecanismos internos</strong> — não porque ela "foi feita principalmente para estruturas de dados".</p>
+
+    <div class="dica">
+        <strong>Em uma frase:</strong> Estruturas de dados são uma grande aplicação didática e prática do C, mas o maior diferencial da linguagem é a <strong>combinação única entre simplicidade da sintaxe + poder de baixo nível + eficiência próxima do hardware</strong>.
+        <br><br>
+        Outras linguagens ou escondem demais a memória, ou têm runtime pesado, ou sacrificam desempenho bruto, ou são mais complexas. C fica num ponto muito especial: simples o bastante para ser pequeno, poderoso o bastante para construir quase tudo fundamental.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ AMBIENTE -->
+<div class="content-section" id="ambiente">
+    <h2>Configuração do Ambiente de Desenvolvimento</h2>
+
+    <h3>Opção online (sem instalação): OnlineGDB</h3>
+    <p>Para começar de forma rápida, sem instalar nada, use o <strong>OnlineGDB</strong>:</p>
+    <ol>
+        <li>Acesse: <a href="https://www.onlinegdb.com/online_c_compiler" target="_blank">https://www.onlinegdb.com/online_c_compiler</a></li>
+        <li>Selecione a linguagem <strong>C</strong> no menu superior direito.</li>
+        <li>Digite seu código na área de edição.</li>
+        <li>Clique em <strong>Run</strong> para compilar e executar.</li>
+    </ol>
+
+    <div class="tip-box">
+        <strong>DICA:</strong> O OnlineGDB permite inclusive usar o depurador (debugger) online, o que é ótimo para visualizar ponteiros e memória passo a passo.
+    </div>
+
+    <h3>Instalação local: WinLibs (MinGW-w64) + VS Code</h3>
+    <div class="step-container">
+        <div class="step">
+            <h3>Instalar o compilador (WinLibs – MinGW-w64)</h3>
+            <p>Abra o site do WinLibs (distribuição pronta do MinGW-w64):</p>
+            <div class="arrow-annotation">Pesquise por <strong>"WinLibs GCC MinGW-w64"</strong> — o domínio normalmente é <strong>winlibs.com</strong></div>
+            <p>Baixe a versão <strong>UCRT + x86_64 (64-bit)</strong>.</p>
+            <p>Extraia o ZIP para:</p>
+            <pre>C:\mingw64\</pre>
+            <p>Depois disso, o executável do compilador deve estar em:</p>
+            <pre>C:\mingw64\bin\gcc.exe</pre>
+        </div>
+
+        <div class="step">
+            <h3>Adicionar a pasta <code>bin</code> no PATH do Windows</h3>
+            <ol>
+                <li>No Windows, pesquise: <strong>"Editar as variáveis de ambiente do sistema"</strong></li>
+                <li>Clique em <strong>Variáveis de Ambiente…</strong></li>
+                <li>Em <strong>"Variáveis do sistema"</strong>, selecione <strong>Path</strong> → <strong>Editar</strong></li>
+                <li>Clique <strong>Novo</strong> e adicione:</li>
+            </ol>
+            <pre>C:\mingw64\bin</pre>
+            <p>Confirme com <strong>OK → OK → OK</strong>.</p>
+            <div class="warning-box">
+                <strong>Importante:</strong> Feche e reabra o VSCode depois disso para que ele enxergue o PATH atualizado.
+            </div>
+        </div>
+
+        <div class="step">
+            <h3>Testar no terminal do VSCode</h3>
+            <p>No VSCode: <strong>Terminal → New Terminal</strong> e execute:</p>
+            <pre>gcc --version
+g++ --version</pre>
+            <p>Se aparecer a versão do compilador, está tudo certo:</p>
+            <div class="terminal-output">gcc (MinGW-w64) 13.2.0 ou similar</div>
+        </div>
+
+        <div class="step">
+            <h3>Criar e compilar um programa C no VSCode</h3>
+            <p>Crie um arquivo <code>main.c</code> com o seguinte conteúdo:</p>
+            <pre>#include &lt;stdio.h&gt;
+
+int main() {
+    printf("Olá, C!\n");
+    return 0;
+}</pre>
+            <p>Compile e rode no terminal integrado:</p>
+            <pre>gcc main.c -o main
+./main</pre>
+            <p>No Windows, se necessário, execute diretamente:</p>
+            <pre>main.exe</pre>
+        </div>
+
+        <div class="step">
+            <h3>Deixar "Executar" com um atalho (opcional)</h3>
+            <p>Para rodar seus programas C com um atalho de teclado no VSCode, instale a extensão <strong>Code Runner</strong>:</p>
+            <ol>
+                <li>Pressione <strong>Ctrl+Shift+X</strong> e pesquise <strong>"Code Runner"</strong></li>
+                <li>Instale a extensão (autor: Jun Han)</li>
+                <li>Com o arquivo <code>.c</code> aberto, pressione <strong>Ctrl+Alt+N</strong> para compilar e executar</li>
+            </ol>
+            <div class="tip-box">
+                <strong>DICA:</strong> Também instale a extensão <strong>C/C++</strong> (da Microsoft) para ter destaque de sintaxe e IntelliSense no VSCode.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ PRIMEIRO PROGRAMA -->
+<div class="content-section">
+    <h2>A Estrutura Básica de um Programa C</h2>
+    <p>Todo programa C segue uma estrutura mínima. Veja o programa mais famoso da história da computação:</p>
+
+    <pre>
+<span class="code-comment">// hello.c — Meu primeiro programa em C</span>
+#include &lt;stdio.h&gt;      <span class="code-comment">// Inclui a biblioteca de entrada e saída padrão</span>
+
+int main() {            <span class="code-comment">// Função principal — todo programa começa aqui</span>
+    printf("Olá, Mundo!\n");  <span class="code-comment">// Imprime uma mensagem na tela</span>
+    return 0;           <span class="code-comment">// Retorna 0 ao sistema operacional (sucesso)</span>
+}
+    </pre>
+
+    <div class="terminal-output">Olá, Mundo!</div>
+
+    <div class="info-box">
+        <p><strong>Anatomia do programa:</strong></p>
+        <ul>
+            <li><code>#include &lt;stdio.h&gt;</code> — diretiva de pré-processador que importa funções como <code>printf</code> e <code>scanf</code>.</li>
+            <li><code>int main()</code> — ponto de entrada obrigatório de todo programa C. O <code>int</code> indica que a função retorna um número inteiro.</li>
+            <li><code>return 0;</code> — sinaliza ao sistema operacional que o programa terminou com sucesso.</li>
+        </ul>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ PONTEIROS -->
+<div class="content-section" id="ponteiros">
+    <h2>Ponteiros e Alocação de Memória — Uma Prévia</h2>
+    <p>Um dos conceitos mais poderosos (e exclusivos) do C é o <strong>ponteiro</strong>. Um ponteiro é uma variável que armazena o <strong>endereço de memória</strong> de outra variável, em vez de armazenar um valor diretamente.</p>
+
+    <div class="definicao">
+        Um <strong>ponteiro</strong> é uma variável especial que guarda um <em>endereço de memória</em>. Por meio dele, é possível ler ou modificar o valor de outra variável de forma indireta.
+    </div>
+
+    <h3>Exemplo 1 — Modificando uma variável via ponteiro</h3>
+    <pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int x = 25;           <span class="code-comment">// x armazena o valor 25 no endereço 0940 (exemplo)</span>
+    int* y = &amp;x;          <span class="code-comment">// y guarda o ENDEREÇO de x (y aponta para x)</span>
+    *y = 30;              <span class="code-comment">// *y modifica o valor na posição apontada por y (= x)</span>
+
+    printf("Valor atual de x: %i\n", x);  <span class="code-comment">// Imprime 30</span>
+    return 0;
+}
+    </pre>
+
+    <div class="terminal-output">$ Valor atual de x: 30</div>
+
+     
+
+<div class="navigation-buttons">
+    <span></span>
+    <a href="index.html">Voltar ao Menu</a>
+    <a href="capitulo01.html">Próxima Aula →</a>
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align: center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education" style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+
+
+</body>
+</html>

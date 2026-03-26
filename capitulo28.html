@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 28 – Ponteiros para Structs: operador seta (->) e alocação dinâmica</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Aula 28 — Ponteiros para Structs</h1>
+    <p>Operador <code style="color:#aad4ff">-&gt;</code>, alocação dinâmica com <code style="color:#aad4ff">malloc</code> e o padrão construtor/destrutor em C</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo27b.html">← Aula 27b</a>
+    <a href="capitulo29.html">Aula 29 →</a>
+</nav>
+
+<!-- ═══════════════════════════════════════ 1. REVISÃO RÁPIDA -->
+<div class="content-section">
+    <h2>1. Revisão Rápida: Por que Ponteiro para Struct?</h2>
+
+    <p>Na Aula 27 você aprendeu que structs podem ser passadas por valor ou por ponteiro. Esta aula aprofunda o segundo caso — que é o mais usado em código C real — e acrescenta a alocação dinâmica de structs no heap.</p>
+
+    <table>
+        <tr>
+            <th>Cenário</th>
+            <th>Mecanismo</th>
+            <th>Custo</th>
+            <th>Modifica original?</th>
+        </tr>
+        <tr>
+            <td>Leitura de struct pequena</td>
+            <td>Por valor: <code>void f(Ponto p)</code></td>
+            <td>Copia todos os bytes</td>
+            <td>❌</td>
+        </tr>
+        <tr>
+            <td>Leitura de struct grande</td>
+            <td>Ponteiro const: <code>void f(const Aluno *p)</code></td>
+            <td>8 bytes (o ponteiro)</td>
+            <td>❌ (protegido por const)</td>
+        </tr>
+        <tr>
+            <td>Modificar a struct original</td>
+            <td>Ponteiro: <code>void f(Aluno *p)</code></td>
+            <td>8 bytes</td>
+            <td>✅</td>
+        </tr>
+        <tr>
+            <td>Struct criada no heap</td>
+            <td><code>Aluno *p = malloc(sizeof(Aluno))</code></td>
+            <td>Só existe via ponteiro</td>
+            <td>✅</td>
+        </tr>
+    </table>
+
+    <div class="grid-container">
+        <div class="grid-item">
+            <strong>Java — new sempre aloca no heap</strong>
+<pre>
+// Em Java, new sempre aloca no heap
+// e retorna uma referência:
+Aluno a = new Aluno();
+a.nome = "Ana";
+
+// Quando 'a' sai de escopo,
+// o GC libera automaticamente
+</pre>
+        </div>
+        <div class="grid-item">
+            <strong>C — você escolhe onde alocar</strong>
+<pre>
+// Na stack (automático):
+Aluno a;
+strcpy(a.nome, "Ana");
+
+// No heap (manual):
+Aluno *p = malloc(sizeof(Aluno));
+strcpy(p->nome, "Ana");
+free(p); // obrigatório!
+</pre>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 2. OPERADOR SETA REVISITADO -->
+<div class="content-section">
+    <h2>2. O Operador <code>-&gt;</code> em Profundidade</h2>
+
+    <p>O operador seta é simplesmente um atalho para desreferenciar um ponteiro e acessar um campo. Conhecê-lo bem é essencial — ele aparece em <em>todas</em> as funções que trabalham com structs alocadas dinamicamente ou passadas por ponteiro.</p>
+
+    <div class="definicao">
+        <code>ptr-&gt;campo</code> é exatamente equivalente a <code>(*ptr).campo</code>. O operador <code>-&gt;</code> foi criado para tornar esse padrão ubíquo mais legível. Sempre que você vir <code>-&gt;</code>, leia mentalmente "acesse o campo X do objeto apontado por este ponteiro".
+    </div>
+
+<pre>
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+typedef struct {
+    char  nome[40];
+    int   idade;
+    float salario;
+} Funcionario;
+
+int main() {
+    Funcionario f = {"Maria Silva", 32, 6500.0f};
+    Funcionario *p = &amp;f;
+
+    <span class="code-comment">/* As quatro formas são idênticas */</span>
+    printf("Nome (var):        %s\n",  f.nome);
+    printf("Nome (ptr seta):   %s\n",  p-&gt;nome);
+    printf("Nome (deref+ponto):%s\n", (*p).nome);
+
+    <span class="code-comment">/* Modificar via ponteiro */</span>
+    p-&gt;salario *= 1.10f;    <span class="code-comment">// reajuste de 10% — modifica f diretamente</span>
+    p-&gt;idade++;
+
+    printf("\nApós modificação via ponteiro:\n");
+    printf("  Salário: R$ %.2f\n", f.salario);   <span class="code-comment">// f já reflete a mudança</span>
+    printf("  Idade:   %d\n",      f.idade);
+
+    return 0;
+}
+</pre>
+    <div class="terminal-output">Nome (var):        Maria Silva<br>Nome (ptr seta):   Maria Silva<br>Nome (deref+ponto):Maria Silva<br><br>Após modificação via ponteiro:<br>&nbsp;&nbsp;Salário: R$ 7150.00<br>&nbsp;&nbsp;Idade:   33</div>
+
+    <h3>Precedência: cuidado com <code>*ptr.campo</code></h3>
+<pre>
+Funcionario *p = &amp;f;
+
+p-&gt;salario = 5000.0f;    <span class="code-comment">// ✅ acessa campo salario via ponteiro</span>
+(*p).salario = 5000.0f;  <span class="code-comment">// ✅ equivalente</span>
+
+*p.salario = 5000.0f;    <span class="code-comment">// ❌ ERRADO! Equivale a *(p.salario)</span>
+                          <span class="code-comment">//    ponto tem precedência maior que *</span>
+                          <span class="code-comment">//    e p não é uma struct — é um ponteiro</span>
+</pre>
+
+    <div class="warning-box">
+        <strong>⚠️ O ponto (<code>.</code>) tem precedência maior que o asterisco (<code>*</code>).</strong> Por isso <code>*ptr.campo</code> tenta aplicar o ponto em <code>ptr</code> (que é ponteiro, não struct) — erro de compilação. Use sempre <code>ptr-&gt;campo</code> ou <code>(*ptr).campo</code> com parênteses explícitos.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 3. ALOCAÇÃO DINÂMICA -->
+<div class="content-section">
+    <h2>3. Alocando uma Struct no Heap com <code>malloc</code></h2>
+
+    <p>Quando a struct precisa sobreviver além da função que a criou, ou quando o número de structs só é conhecido em tempo de execução, a alocação dinâmica é a solução.</p>
+
+    <div class="grid-container">
+        <div class="grid-item">
+            <strong>Java — new retorna referência</strong>
+<pre>
+Aluno a = new Aluno();
+// JVM aloca no heap,
+// retorna referência
+a.matricula = 1001;
+a.nota = 8.5f;
+
+// GC libera quando não há
+// mais referências
+</pre>
+        </div>
+        <div class="grid-item">
+            <strong>C — malloc retorna ponteiro</strong>
+<pre>
+Aluno *a = malloc(sizeof(Aluno));
+if (a == NULL) { /* tratar erro */ }
+// você aloca no heap,
+// recebe ponteiro
+a->matricula = 1001;
+a->nota = 8.5f;
+
+free(a); // você libera
+</pre>
+        </div>
+    </div>
+
+<pre>
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+typedef struct {
+    int   matricula;
+    char  nome[50];
+    float nota;
+} Aluno;
+
+int main() {
+    <span class="code-comment">/* Alocar UMA struct no heap */</span>
+    Aluno *a = (Aluno *) malloc(sizeof(Aluno));
+    if (a == NULL) {
+        fprintf(stderr, "Erro: sem memória!\n");
+        return 1;
+    }
+
+    <span class="code-comment">/* Preencher via operador seta */</span>
+    a-&gt;matricula = 1001;
+    strncpy(a-&gt;nome, "Ana Oliveira", sizeof(a-&gt;nome) - 1);
+    a-&gt;nome[sizeof(a-&gt;nome) - 1] = '\0';
+    a-&gt;nota = 8.5f;
+
+    printf("Aluno: %d | %s | %.1f\n",
+           a-&gt;matricula, a-&gt;nome, a-&gt;nota);
+
+    <span class="code-comment">/* Liberar — obrigatório! */</span>
+    free(a);
+    a = NULL;
+
+    return 0;
+}
+</pre>
+    <div class="terminal-output">Aluno: 1001 | Ana Oliveira | 8.5</div>
+
+    <h3>Alocar um array de structs no heap</h3>
+<pre>
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+typedef struct {
+    char  nome[40];
+    float preco;
+} Produto;
+
+int main() {
+    int n;
+    printf("Quantos produtos? ");
+    scanf("%d", &amp;n);
+
+    <span class="code-comment">/* Array dinâmico de structs */</span>
+    Produto *catalogo = (Produto *) malloc(n * sizeof(Produto));
+    if (catalogo == NULL) return 1;
+
+    for (int i = 0; i &lt; n; i++) {
+        printf("Nome do produto %d: ", i + 1);
+        scanf(" %39[^\n]", catalogo[i].nome);
+        printf("Preço: ");
+        scanf("%f", &amp;catalogo[i].preco);
+    }
+
+    printf("\n--- Catálogo ---\n");
+    for (int i = 0; i &lt; n; i++)
+        printf("%-20s R$ %.2f\n", catalogo[i].nome, catalogo[i].preco);
+
+    free(catalogo);    <span class="code-comment">// libera tudo com um free só</span>
+    return 0;
+}
+</pre>
+    <div class="terminal-output">Quantos produtos? 2<br>Nome do produto 1: Caneta<br>Preço: 2.50<br>Nome do produto 2: Caderno<br>Preço: 12.90<br><br>--- Catálogo ---<br>Caneta               R$ 2.50<br>Caderno              R$ 12.90</div>
+</div>
+
+<!-- ═══════════════════════════════════════ 4. PADRÃO CONSTRUTOR/DESTRUTOR -->
+<div class="content-section">
+    <h2>4. Padrão Construtor / Destrutor em C</h2>
+
+    <p>C não tem construtores ou destrutores como Java. O padrão equivalente é criar funções explícitas de criação e liberação — por convenção chamadas <code>criar</code>/<code>destruir</code> ou <code>init</code>/<code>free</code>:</p>
+
+    <div class="grid-container">
+        <div class="grid-item">
+            <strong>Java — construtor e GC</strong>
+<pre>
+class Aluno {
+    String nome;
+    float  nota;
+
+    // Construtor:
+    Aluno(String nome, float nota) {
+        this.nome = nome;
+        this.nota = nota;
+    }
+    // Destrutor: não existe
+    // GC cuida da liberação
+}
+
+Aluno a = new Aluno("Ana", 8.5f);
+</pre>
+        </div>
+        <div class="grid-item">
+            <strong>C — funções criar/destruir</strong>
+<pre>
+typedef struct {
+    char  nome[50];
+    float nota;
+} Aluno;
+
+// "Construtor":
+Aluno *aluno_criar(const char *nome,
+                    float nota);
+
+// "Destrutor":
+void aluno_destruir(Aluno *a);
+
+Aluno *a = aluno_criar("Ana", 8.5f);
+aluno_destruir(a);
+</pre>
+        </div>
+    </div>
+
+<pre>
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+typedef struct {
+    char  *nome;     <span class="code-comment">// ponteiro — tamanho dinâmico</span>
+    int    idade;
+    float  salario;
+} Funcionario;
+
+<span class="code-comment">/* "Construtor" — aloca e inicializa */</span>
+Funcionario *funcionario_criar(const char *nome, int idade, float salario) {
+    Funcionario *f = (Funcionario *) malloc(sizeof(Funcionario));
+    if (f == NULL) return NULL;
+
+    f-&gt;nome = (char *) malloc(strlen(nome) + 1);
+    if (f-&gt;nome == NULL) {
+        free(f);       <span class="code-comment">// limpa o que já foi alocado antes de retornar NULL</span>
+        return NULL;
+    }
+    strcpy(f-&gt;nome, nome);
+    f-&gt;idade   = idade;
+    f-&gt;salario = salario;
+    return f;
+}
+
+<span class="code-comment">/* "Destrutor" — libera na ordem inversa da criação */</span>
+void funcionario_destruir(Funcionario *f) {
+    if (f == NULL) return;
+    free(f-&gt;nome);    <span class="code-comment">// libera o nome primeiro (campo interno)</span>
+    free(f);          <span class="code-comment">// depois libera a struct em si</span>
+}
+
+void funcionario_exibir(const Funcionario *f) {
+    printf("%-20s | Idade: %3d | R$ %.2f\n",
+           f-&gt;nome, f-&gt;idade, f-&gt;salario);
+}
+
+void funcionario_reajuste(Funcionario *f, float pct) {
+    f-&gt;salario *= (1.0f + pct / 100.0f);
+}
+
+int main() {
+    Funcionario *f1 = funcionario_criar("Ana Oliveira",  30, 6000.0f);
+    Funcionario *f2 = funcionario_criar("Carlos Mota",   45, 9500.0f);
+    Funcionario *f3 = funcionario_criar("Beatriz Lima",  28, 5200.0f);
+
+    if (!f1 || !f2 || !f3) {
+        fprintf(stderr, "Erro de alocação!\n");
+        return 1;
+    }
+
+    printf("=== Antes do reajuste ===\n");
+    funcionario_exibir(f1);
+    funcionario_exibir(f2);
+    funcionario_exibir(f3);
+
+    funcionario_reajuste(f1, 10.0f);
+    funcionario_reajuste(f2,  8.0f);
+    funcionario_reajuste(f3, 12.0f);
+
+    printf("\n=== Após reajuste ===\n");
+    funcionario_exibir(f1);
+    funcionario_exibir(f2);
+    funcionario_exibir(f3);
+
+    funcionario_destruir(f1);
+    funcionario_destruir(f2);
+    funcionario_destruir(f3);
+
+    return 0;
+}
+</pre>
+    <div class="terminal-output">
+=== Antes do reajuste ===<br>
+Ana Oliveira         | Idade:  30 | R$ 6000.00<br>
+Carlos Mota          | Idade:  45 | R$ 9500.00<br>
+Beatriz Lima         | Idade:  28 | R$ 5200.00<br>
+<br>
+=== Após reajuste ===<br>
+Ana Oliveira         | Idade:  30 | R$ 6600.00<br>
+Carlos Mota          | Idade:  45 | R$ 10260.00<br>
+Beatriz Lima         | Idade:  28 | R$ 5824.00
+    </div>
+
+    <div class="tip-box">
+        <strong>Ordem de liberação importa:</strong> Quando uma struct contém campos que são ponteiros para memória alocada dinamicamente (como <code>char *nome</code>), sempre libere os campos internos <em>antes</em> de liberar a struct. Inverter a ordem causa acesso a memória já liberada.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 5. ARRAY DINÂMICO DE PONTEIROS -->
+<div class="content-section">
+    <h2>5. Array Dinâmico de Ponteiros para Struct</h2>
+
+    <p>Uma abordagem mais flexível é manter um array de <em>ponteiros</em> para structs, em vez de um array de structs diretamente. Isso permite structs de tamanhos variados e facilita reordenação sem copiar dados:</p>
+
+    <div class="grid-container">
+        <div class="grid-item">
+            <strong>Array de structs direto</strong>
+<pre>
+// Copia toda a struct ao trocar
+Produto catalogo[5];
+// Trocar catalogo[0] e [1]:
+Produto tmp = catalogo[0];
+catalogo[0] = catalogo[1];
+catalogo[1] = tmp;
+// copia ~50 bytes cada troca
+</pre>
+        </div>
+        <div class="grid-item">
+            <strong>Array de ponteiros para struct</strong>
+<pre>
+// Troca apenas ponteiros (8 bytes)
+Produto *catalogo[5];
+// Trocar catalogo[0] e [1]:
+Produto *tmp = catalogo[0];
+catalogo[0]  = catalogo[1];
+catalogo[1]  = tmp;
+// copia apenas 8 bytes cada troca
+</pre>
+        </div>
+    </div>
+
+<pre>
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+typedef struct {
+    char  nome[40];
+    float nota;
+    int   matricula;
+} Aluno;
+
+<span class="code-comment">/* Compara dois alunos por nota (decrescente) */</span>
+int comparar(const Aluno *a, const Aluno *b) {
+    if (a-&gt;nota &gt; b-&gt;nota) return -1;
+    if (a-&gt;nota &lt; b-&gt;nota) return  1;
+    return 0;
+}
+
+int main() {
+    int n = 4;
+
+    <span class="code-comment">/* Array dinâmico de ponteiros */</span>
+    Aluno **turma = (Aluno **) malloc(n * sizeof(Aluno *));
+    if (!turma) return 1;
+
+    <span class="code-comment">/* Aloca cada aluno individualmente */</span>
+    const char *nomes[] = {"Ana","Bruno","Carla","Diego"};
+    float notas[] = {8.5f, 6.0f, 9.5f, 7.0f};
+    int mats[]    = {1001, 1002, 1003, 1004};
+
+    for (int i = 0; i &lt; n; i++) {
+        turma[i] = (Aluno *) malloc(sizeof(Aluno));
+        if (!turma[i]) return 1;
+        strncpy(turma[i]-&gt;nome, nomes[i], 39);
+        turma[i]-&gt;nota       = notas[i];
+        turma[i]-&gt;matricula  = mats[i];
+    }
+
+    <span class="code-comment">/* Ordenar por nota (troca apenas ponteiros) */</span>
+    for (int i = 0; i &lt; n - 1; i++)
+        for (int j = i + 1; j &lt; n; j++)
+            if (comparar(turma[i], turma[j]) &gt; 0) {
+                Aluno *tmp = turma[i];
+                turma[i]   = turma[j];
+                turma[j]   = tmp;
+            }
+
+    printf("Ranking por nota:\n");
+    for (int i = 0; i &lt; n; i++)
+        printf("  %dº  %-10s  %.1f\n",
+               i + 1, turma[i]-&gt;nome, turma[i]-&gt;nota);
+
+    <span class="code-comment">/* Liberar cada aluno e depois o array de ponteiros */</span>
+    for (int i = 0; i &lt; n; i++)
+        free(turma[i]);
+    free(turma);
+
+    return 0;
+}
+</pre>
+    <div class="terminal-output">Ranking por nota:<br>&nbsp;&nbsp;1º  Carla      9.5<br>&nbsp;&nbsp;2º  Ana        8.5<br>&nbsp;&nbsp;3º  Diego      7.0<br>&nbsp;&nbsp;4º  Bruno      6.0</div>
+
+    <div class="info-box">
+        <strong>Vantagem do array de ponteiros:</strong> Reordenar custa apenas a troca de ponteiros (8 bytes cada), independente do tamanho da struct. Para structs grandes com muitos campos, a diferença de desempenho é significativa. Em Java, arrays de objetos funcionam exatamente assim internamente — você nunca manipula os objetos diretamente, apenas referências.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 6. ERROS COMUNS -->
+<div class="content-section">
+    <h2>6. Erros Comuns com Ponteiros para Struct</h2>
+
+    <h3>Erro 1 — Usar ponto em vez de seta com ponteiro</h3>
+<pre>
+Aluno *p = malloc(sizeof(Aluno));
+
+p.nota = 8.5f;      <span class="code-comment">// ❌ ERRO: p é ponteiro, não struct — use -></span>
+p-&gt;nota = 8.5f;     <span class="code-comment">// ✅ correto</span>
+</pre>
+
+    <h3>Erro 2 — Esquecer de alocar antes de usar</h3>
+<pre>
+Aluno *p;            <span class="code-comment">// ❌ ponteiro não inicializado</span>
+p-&gt;nota = 8.5f;     <span class="code-comment">// ❌ segfault! p aponta para lugar inválido</span>
+
+Aluno *p = malloc(sizeof(Aluno));  <span class="code-comment">// ✅ aloca primeiro</span>
+if (p) p-&gt;nota = 8.5f;            <span class="code-comment">// ✅ usa após verificar</span>
+</pre>
+
+    <h3>Erro 3 — Não liberar campos dinâmicos antes da struct</h3>
+<pre>
+typedef struct { char *nome; float nota; } Aluno;
+
+Aluno *a = malloc(sizeof(Aluno));
+a-&gt;nome  = malloc(50);
+strcpy(a-&gt;nome, "Ana");
+
+free(a);             <span class="code-comment">// ❌ libera a struct mas vaza a->nome!</span>
+
+free(a-&gt;nome);       <span class="code-comment">// ✅ libera o campo interno primeiro</span>
+free(a);             <span class="code-comment">// ✅ depois libera a struct</span>
+</pre>
+
+    <h3>Erro 4 — Retornar ponteiro para struct local</h3>
+<pre>
+<span class="code-comment">/* ❌ ERRADO — struct local é destruída ao retornar */</span>
+Aluno *criarLocal() {
+    Aluno a = {1001, "Ana", 8.5f};
+    return &amp;a;    <span class="code-comment">// dangling pointer!</span>
+}
+
+<span class="code-comment">/* ✅ CORRETO — aloca no heap e retorna o ponteiro */</span>
+Aluno *criarHeap() {
+    Aluno *p = malloc(sizeof(Aluno));
+    if (p) {
+        p-&gt;matricula = 1001;
+        strcpy(p-&gt;nome, "Ana");
+        p-&gt;nota = 8.5f;
+    }
+    return p;    <span class="code-comment">// ponteiro para heap — persiste após o retorno</span>
+}
+</pre>
+
+    <table>
+        <tr>
+            <th>Erro</th>
+            <th>Sintoma</th>
+            <th>Solução</th>
+        </tr>
+        <tr>
+            <td>Usar <code>.</code> em ponteiro</td>
+            <td>Erro de compilação</td>
+            <td>Usar <code>-&gt;</code></td>
+        </tr>
+        <tr>
+            <td>Usar ponteiro sem alocar</td>
+            <td>Segfault imediato</td>
+            <td>Sempre <code>malloc</code> antes de usar</td>
+        </tr>
+        <tr>
+            <td>Liberar struct antes dos campos</td>
+            <td>Memory leak dos campos internos</td>
+            <td>Liberar campos primeiro, struct depois</td>
+        </tr>
+        <tr>
+            <td>Retornar <code>&amp;variavel_local</code></td>
+            <td>Comportamento indefinido (dangling pointer)</td>
+            <td>Alocar no heap com <code>malloc</code></td>
+        </tr>
+    </table>
+</div>
+
+<!-- ═══════════════════════════════════════ 7. EXEMPLO INTEGRADOR -->
+<div class="content-section">
+    <h2>7. Exemplo Integrador — Cadastro com Alocação Dinâmica</h2>
+
+    <p>Um mini-sistema de cadastro que une todos os conceitos desta aula: alocação dinâmica de struct, campos com ponteiro interno, padrão criar/destruir e array dinâmico de ponteiros:</p>
+
+<pre>
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+typedef struct {
+    int    codigo;
+    char  *descricao;   <span class="code-comment">// ponteiro — tamanho exato no heap</span>
+    float  preco;
+    int    estoque;
+} Produto;
+
+<span class="code-comment">/* Cria produto no heap */</span>
+Produto *produto_criar(int cod, const char *desc,
+                        float preco, int estoque) {
+    Produto *p = (Produto *) malloc(sizeof(Produto));
+    if (!p) return NULL;
+
+    p-&gt;descricao = (char *) malloc(strlen(desc) + 1);
+    if (!p-&gt;descricao) { free(p); return NULL; }
+
+    p-&gt;codigo   = cod;
+    strcpy(p-&gt;descricao, desc);
+    p-&gt;preco    = preco;
+    p-&gt;estoque  = estoque;
+    return p;
+}
+
+<span class="code-comment">/* Libera produto do heap */</span>
+void produto_destruir(Produto *p) {
+    if (!p) return;
+    free(p-&gt;descricao);
+    free(p);
+}
+
+<span class="code-comment">/* Exibe produto */</span>
+void produto_exibir(const Produto *p) {
+    printf("  [%04d] %-25s R$%8.2f  Estoque: %d\n",
+           p-&gt;codigo, p-&gt;descricao, p-&gt;preco, p-&gt;estoque);
+}
+
+<span class="code-comment">/* Aplica desconto */</span>
+void produto_desconto(Produto *p, float pct) {
+    p-&gt;preco *= (1.0f - pct / 100.0f);
+}
+
+<span class="code-comment">/* Busca por código — retorna ponteiro ou NULL */</span>
+Produto *catalogo_buscar(Produto **cat, int n, int codigo) {
+    for (int i = 0; i &lt; n; i++)
+        if (cat[i]-&gt;codigo == codigo)
+            return cat[i];
+    return NULL;
+}
+
+int main() {
+    int n = 5;
+    Produto **catalogo = (Produto **) malloc(n * sizeof(Produto *));
+    if (!catalogo) return 1;
+
+    catalogo[0] = produto_criar(1001, "Notebook Lenovo",   3499.90f, 10);
+    catalogo[1] = produto_criar(1002, "Mouse sem fio",        89.90f, 50);
+    catalogo[2] = produto_criar(1003, "Teclado mecânico",    299.00f, 25);
+    catalogo[3] = produto_criar(1004, "Monitor 24\"",        1199.00f,  8);
+    catalogo[4] = produto_criar(1005, "Headset gamer",        249.90f, 30);
+
+    printf("=== Catálogo original ===\n");
+    for (int i = 0; i &lt; n; i++)
+        produto_exibir(catalogo[i]);
+
+    <span class="code-comment">/* Aplicar 15% de desconto nos itens acima de R$500 */</span>
+    for (int i = 0; i &lt; n; i++)
+        if (catalogo[i]-&gt;preco &gt; 500.0f)
+            produto_desconto(catalogo[i], 15.0f);
+
+    printf("\n=== Após desconto de 15%% em itens > R$500 ===\n");
+    for (int i = 0; i &lt; n; i++)
+        produto_exibir(catalogo[i]);
+
+    <span class="code-comment">/* Busca por código */</span>
+    Produto *encontrado = catalogo_buscar(catalogo, n, 1003);
+    if (encontrado)
+        printf("\nProduto 1003: %s\n", encontrado-&gt;descricao);
+
+    <span class="code-comment">/* Liberar tudo */</span>
+    for (int i = 0; i &lt; n; i++)
+        produto_destruir(catalogo[i]);
+    free(catalogo);
+
+    return 0;
+}
+</pre>
+    <div class="terminal-output">
+=== Catálogo original ===<br>
+&nbsp;&nbsp;[1001] Notebook Lenovo           R$ 3499.90  Estoque: 10<br>
+&nbsp;&nbsp;[1002] Mouse sem fio              R$   89.90  Estoque: 50<br>
+&nbsp;&nbsp;[1003] Teclado mecânico           R$  299.00  Estoque: 25<br>
+&nbsp;&nbsp;[1004] Monitor 24"                R$ 1199.00  Estoque:  8<br>
+&nbsp;&nbsp;[1005] Headset gamer              R$  249.90  Estoque: 30<br>
+<br>
+=== Após desconto de 15% em itens > R$500 ===<br>
+&nbsp;&nbsp;[1001] Notebook Lenovo           R$ 2974.92  Estoque: 10<br>
+&nbsp;&nbsp;[1002] Mouse sem fio              R$   89.90  Estoque: 50<br>
+&nbsp;&nbsp;[1003] Teclado mecânico           R$  299.00  Estoque: 25<br>
+&nbsp;&nbsp;[1004] Monitor 24"                R$ 1019.15  Estoque:  8<br>
+&nbsp;&nbsp;[1005] Headset gamer              R$  249.90  Estoque: 30<br>
+<br>
+Produto 1003: Teclado mecânico
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 8. C VS JAVA -->
+<div class="content-section">
+    <h2>8. Comparação Geral — C vs. Java</h2>
+
+    <table>
+        <tr>
+            <th>Aspecto</th>
+            <th>C</th>
+            <th>Java</th>
+        </tr>
+        <tr>
+            <td>Criar objeto no heap</td>
+            <td><code>Tipo *p = malloc(sizeof(Tipo));</code></td>
+            <td><code>Tipo p = new Tipo();</code></td>
+        </tr>
+        <tr>
+            <td>Acessar campo via referência</td>
+            <td><code>p-&gt;campo</code> (operador seta)</td>
+            <td><code>p.campo</code> (sempre ponto)</td>
+        </tr>
+        <tr>
+            <td>Liberar memória</td>
+            <td>Manual — <code>free(p);</code></td>
+            <td>Automático — Garbage Collector</td>
+        </tr>
+        <tr>
+            <td>Campo nulo / não inicializado</td>
+            <td>⚠️ Contém lixo — precisa inicializar explicitamente</td>
+            <td>✅ Inicializado com 0/null automaticamente</td>
+        </tr>
+        <tr>
+            <td>Campos com alocação interna</td>
+            <td>Deve liberar campos antes da struct (<code>free(p-&gt;nome); free(p);</code>)</td>
+            <td>GC cuida de toda a cadeia de referências</td>
+        </tr>
+        <tr>
+            <td>Verificar referência nula</td>
+            <td><code>if (p == NULL)</code></td>
+            <td><code>if (p == null)</code></td>
+        </tr>
+        <tr>
+            <td>Padrão construtor</td>
+            <td>Função: <code>Tipo *tipo_criar(...)</code></td>
+            <td>Construtor da classe: <code>new Tipo(...)</code></td>
+        </tr>
+        <tr>
+            <td>Padrão destrutor</td>
+            <td>Função: <code>void tipo_destruir(Tipo *p)</code></td>
+            <td>Não existe — GC gerencia</td>
+        </tr>
+    </table>
+
+    <div class="dica">
+        <strong>Resumo mental para quem vem do Java:</strong> <code>malloc(sizeof(Tipo))</code> é o equivalente de <code>new Tipo()</code>, e <code>free(p)</code> é o que o GC faz automaticamente em Java. O operador <code>-&gt;</code> é o que Java usa internamente quando você escreve <code>obj.campo</code> — a diferença é que Java esconde essa indireção de você.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ QUIZ -->
+<div class="content-section exercise-section">
+    <h2>Quiz — Aula 28</h2>
+    <form class="quiz-form" onsubmit="return false;">
+
+        <div class="content-section quiz-question">
+            <p><strong>1.</strong> Qual é a saída?</p>
+<pre>
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+typedef struct { int x; int y; } Ponto;
+int main() {
+    Ponto *p = malloc(sizeof(Ponto));
+    p->x = 3;
+    p->y = 4;
+    printf("%d %d", p->x, p->y);
+    free(p);
+}
+</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q1" value="a"> 0 0</label></li>
+                <li><label><input type="radio" name="q1" value="b"> 3 4</label></li>
+                <li><label><input type="radio" name="q1" value="c"> Endereços de memória</label></li>
+                <li><label><input type="radio" name="q1" value="d"> Comportamento indefinido — ponteiro não foi verificado</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>2.</strong> Por que <code>*p.campo</code> gera erro de compilação quando <code>p</code> é um ponteiro para struct?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q2" value="a"> Porque <code>*</code> não pode ser usado com structs</label></li>
+                <li><label><input type="radio" name="q2" value="b"> Porque o operador ponto tem precedência maior que <code>*</code>, então a expressão é interpretada como <code>*(p.campo)</code> — tentando aplicar ponto a um ponteiro</label></li>
+                <li><label><input type="radio" name="q2" value="c"> Porque o compilador não suporta desreferência de ponteiros para structs</label></li>
+                <li><label><input type="radio" name="q2" value="d"> Porque <code>campo</code> não é um ponteiro</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>3.</strong> Em Java, <code>new Tipo()</code> aloca no heap e o GC libera automaticamente. O equivalente mais próximo em C é:</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q3" value="a"> <code>Tipo t;</code> — aloca na stack automaticamente</label></li>
+                <li><label><input type="radio" name="q3" value="b"> <code>Tipo *p = malloc(sizeof(Tipo));</code> seguido de <code>free(p)</code> quando não for mais necessário</label></li>
+                <li><label><input type="radio" name="q3" value="c"> <code>Tipo *p = &amp;t;</code> — ponteiro para variável local</label></li>
+                <li><label><input type="radio" name="q3" value="d"> <code>calloc(1, Tipo);</code> — sem necessidade de free</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>4.</strong> Uma struct tem <code>char *nome</code> como campo (alocado com malloc). Na hora de liberar, qual é a ordem correta?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q4" value="a"> <code>free(p)</code> — libera tudo de uma vez</label></li>
+                <li><label><input type="radio" name="q4" value="b"> <code>free(p-&gt;nome)</code> primeiro, depois <code>free(p)</code></label></li>
+                <li><label><input type="radio" name="q4" value="c"> <code>free(p)</code> primeiro, depois <code>free(p-&gt;nome)</code></label></li>
+                <li><label><input type="radio" name="q4" value="d"> Não precisa liberar <code>nome</code> — o <code>free(p)</code> já cuida de campos internos</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>5.</strong> Qual a vantagem de usar um array de <em>ponteiros</em> para struct em vez de um array de structs diretamente?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q5" value="a"> Ocupa menos memória total</label></li>
+                <li><label><input type="radio" name="q5" value="b"> Reordenar o array troca apenas ponteiros (8 bytes), não os dados completos da struct — mais eficiente para structs grandes</label></li>
+                <li><label><input type="radio" name="q5" value="c"> Permite usar <code>.</code> em vez de <code>-&gt;</code></label></li>
+                <li><label><input type="radio" name="q5" value="d"> Elimina a necessidade de <code>free</code></label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>6.</strong> Qual é o erro no código abaixo?</p>
+<pre>
+typedef struct { int x; } S;
+S *criar() {
+    S local = {42};
+    return &local;
+}
+</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q6" value="a"> <code>typedef struct</code> não pode ser combinado assim</label></li>
+                <li><label><input type="radio" name="q6" value="b"> Retorna o endereço de uma variável local que é destruída ao retornar — <em>dangling pointer</em></label></li>
+                <li><label><input type="radio" name="q6" value="c"> Funções não podem retornar ponteiros para structs</label></li>
+                <li><label><input type="radio" name="q6" value="d"> O inicializador <code>{42}</code> não funciona com structs</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>7.</strong> No padrão construtor/destrutor de C, quando uma função <code>tipo_destruir</code> recebe <code>NULL</code>, ela deve:</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q7" value="a"> Causar segfault — o chamador nunca deve passar NULL</label></li>
+                <li><label><input type="radio" name="q7" value="b"> Verificar <code>if (!p) return;</code> e retornar imediatamente — chamar <code>free(NULL)</code> é seguro mas verificar é boa prática</label></li>
+                <li><label><input type="radio" name="q7" value="c"> Alocar uma nova struct e retornar o ponteiro</label></li>
+                <li><label><input type="radio" name="q7" value="d"> Imprimir uma mensagem de erro e encerrar o programa</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>8.</strong> Em Java, <code>obj.campo</code> sempre acessa via referência implícita. Em C, quando você escreve <code>p-&gt;campo</code>:</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q8" value="a"> É diferente — Java copia o objeto, C usa ponteiro</label></li>
+                <li><label><input type="radio" name="q8" value="b"> É conceitualmente o mesmo que Java faz internamente — a diferença é que Java esconde a indireção do ponteiro, enquanto C exige o <code>-&gt;</code> explícito</label></li>
+                <li><label><input type="radio" name="q8" value="c"> É mais lento que <code>.</code> porque exige uma desreferência extra</label></li>
+                <li><label><input type="radio" name="q8" value="d"> Só funciona quando a struct foi alocada com <code>malloc</code></label></li>
+            </ul>
+        </div>
+
+        <button type="button" class="submit-btn" onclick="verificarRespostas()">Verificar Respostas</button>
+    </form>
+    <div id="quiz-results" style="display:none; margin-top:20px; padding:15px; background:#dff0d8; border-radius:5px;"></div>
+</div>
+
+<div class="navigation-buttons">
+    <a href="capitulo27b.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">← Aula 27b</a>
+    <a href="index.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">Índice</a>
+    <a href="capitulo29.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">Aula 29 →</a>
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align:center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education"
+                 style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+<script>
+function verificarRespostas() {
+    const gabarito = { q1:"b", q2:"b", q3:"b", q4:"b", q5:"b", q6:"b", q7:"b", q8:"b" };
+    const explicacoes = {
+        q1: "malloc aloca sizeof(Ponto) bytes no heap e retorna o ponteiro. p->x = 3 e p->y = 4 escrevem nos campos via operador seta. printf imprime 3 4. O código está correto — em um programa real deveria verificar se malloc retornou NULL, mas o comportamento esperado é 3 4.",
+        q2: "O operador ponto (.) tem precedência maior que o asterisco (*). Assim, *p.campo é interpretado como *(p.campo): tenta aplicar ponto a p que é ponteiro (não struct), causando erro de compilação. Use sempre p->campo ou (*p).campo com parênteses explícitos.",
+        q3: "malloc(sizeof(Tipo)) aloca o bloco no heap e retorna um ponteiro — equivalente ao new em Java. A diferença crucial é que o GC de Java libera automaticamente quando não há mais referências, enquanto em C você deve chamar free(p) explicitamente.",
+        q4: "Quando uma struct contém campos que são ponteiros para memória alocada dinamicamente, a liberação deve seguir a ordem inversa da criação: primeiro os campos internos (free(p->nome)), depois a struct em si (free(p)). Inverter a ordem causa acesso a memória já liberada ao tentar liberar p->nome.",
+        q5: "Reordenar um array de structs diretamente copia todos os bytes de cada struct (pode ser dezenas ou centenas de bytes por troca). Reordenar um array de ponteiros copia apenas 8 bytes por troca, independente do tamanho da struct. Em Java, arrays de objetos funcionam exatamente assim — você nunca manipula os objetos diretamente, apenas as referências.",
+        q6: "local é uma variável local — existe apenas no frame de pilha de criar(). Ao retornar, esse frame é destruído e &local aponta para memória inválida — um dangling pointer. Usar esse ponteiro é comportamento indefinido. A solução é alocar no heap: 'S *p = malloc(sizeof(S));'",
+        q7: "A função destruir deve verificar se o ponteiro é NULL antes de tentar liberar, retornando imediatamente nesse caso. Isso torna o código defensivo — o chamador pode passar NULL sem causar problemas. O padrão free(NULL) do C é seguro por definição, mas a verificação explícita documenta a intenção.",
+        q8: "Quando você escreve obj.campo em Java, a JVM internamente faz exatamente o que C faz com p->campo: segue a referência (ponteiro) para o objeto no heap e acessa o campo. A diferença é puramente sintática e de nível de abstração — Java esconde o ponteiro; C exige que você escreva ->"
+    };
+
+    let acertos = 0, html = "";
+    const total = Object.keys(gabarito).length;
+    for (const q in gabarito) {
+        const sel = document.querySelector(`input[name="${q}"]:checked`);
+        const num = q.replace("q","");
+        if (sel) {
+            if (sel.value === gabarito[q]) {
+                acertos++;
+                html += `<p>Questão ${num}: <span style="color:green;font-weight:bold;">✅ Correto!</span> — ${explicacoes[q]}</p>`;
+            } else {
+                html += `<p>Questão ${num}: <span style="color:red;font-weight:bold;">❌ Incorreto.</span> Gabarito: <strong>${gabarito[q].toUpperCase()}</strong> — ${explicacoes[q]}</p>`;
+            }
+        } else {
+            html += `<p>Questão ${num}: <span style="color:orange;font-weight:bold;">⚠ Não respondida.</span></p>`;
+        }
+    }
+    const r = document.getElementById("quiz-results");
+    r.innerHTML = `<h3>Sua pontuação: ${acertos} de ${total}</h3>${html}`;
+    r.style.display = "block";
+    r.scrollIntoView({ behavior: "smooth" });
+}
+</script>
+
+</body>
+</html>

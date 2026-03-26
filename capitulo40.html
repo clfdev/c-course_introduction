@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 40 — Projeto Integrador: Sistema de Cadastro</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Aula 40 — Projeto Integrador</h1>
+    <p>Sistema de Cadastro de Alunos — struct · lista encadeada · arquivo binário · menu interativo</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo39b.html">← Aula 39b</a>
+</nav>
+
+<!-- ═══════════════════════════════════════ INTRODUÇÃO -->
+<div class="content-section">
+    <h2>1. O Projeto</h2>
+
+    <p>Esta aula une tudo que foi estudado nas 39 aulas anteriores em um único programa funcional: um <strong>sistema de cadastro de alunos para console</strong> que roda no Windows (ou em qualquer terminal).</p>
+
+    <div class="definicao">
+        O programa mantém uma lista de alunos em memória (lista encadeada dinâmica), oferece um menu interativo de operações, e <strong>persiste os dados em arquivo binário</strong> — carregando automaticamente ao iniciar e salvando ao encerrar. Os dados sobrevivem entre execuções.
+    </div>
+
+    <h3>Funcionalidades</h3>
+    <table>
+        <tr><th>Opção</th><th>Operação</th><th>Conceitos usados</th></tr>
+        <tr><td>1</td><td>Inserir aluno</td><td>malloc, lista encadeada, struct</td></tr>
+        <tr><td>2</td><td>Listar todos</td><td>percurso da lista, printf formatado</td></tr>
+        <tr><td>3</td><td>Buscar por matrícula</td><td>busca sequencial, ponteiros</td></tr>
+        <tr><td>4</td><td>Remover aluno</td><td>remoção em lista encadeada, free</td></tr>
+        <tr><td>5</td><td>Salvar em arquivo</td><td>fwrite, arquivo binário</td></tr>
+        <tr><td>6</td><td>Carregar de arquivo</td><td>fread, fseek, ftell</td></tr>
+        <tr><td>0</td><td>Salvar e sair</td><td>liberação de memória, fclose</td></tr>
+    </table>
+
+    <div class="info-box">
+        <strong>Como ler esta aula:</strong> O código é apresentado em blocos, cada um com explicação detalhada. No final, o código completo é reunido para facilitar a cópia e execução. Recomenda-se digitar cada bloco manualmente para assimilar melhor.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ BLOCO 1 - TIPOS -->
+<div class="content-section">
+    <h2>2. Bloco 1 — Tipos e Estruturas de Dados</h2>
+
+    <p>O programa define dois tipos: a struct que representa um aluno e o nó da lista encadeada.</p>
+
+<pre>
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+<span class="code-comment">/* ─── Dados de um aluno ──────────────────────────────────────── */</span>
+typedef struct {
+    int   matricula;     <span class="code-comment">// chave de busca e ordenação</span>
+    char  nome[60];      <span class="code-comment">// nome com espaços — funciona em binário</span>
+    float nota;          <span class="code-comment">// 0.0 a 10.0</span>
+} Aluno;
+
+<span class="code-comment">/* ─── Nó da lista encadeada ─────────────────────────────────── */</span>
+typedef struct No {
+    Aluno      aluno;    <span class="code-comment">// os dados</span>
+    struct No *prox;     <span class="code-comment">// ponteiro para o próximo nó</span>
+} No;
+
+<span class="code-comment">/* ─── Cabeça da lista ───────────────────────────────────────── */</span>
+No *lista = NULL;        <span class="code-comment">// começa vazia</span>
+
+<span class="code-comment">/* ─── Nome do arquivo de persistência ──────────────────────── */</span>
+const char *ARQUIVO = "cadastro.bin";
+</pre>
+
+    <table>
+        <tr><th>Elemento</th><th>Por que assim</th></tr>
+        <tr><td><code>nome[60]</code></td><td>Tamanho fixo dentro da struct → fwrite/fread gravam o nome completo, com espaços, sem complicação</td></tr>
+        <tr><td><code>No *lista = NULL</code></td><td>Lista começa vazia — NULL é o sentinela de fim de lista</td></tr>
+        <tr><td><code>const char *ARQUIVO</code></td><td>Nome do arquivo em uma constante — fácil de mudar em um só lugar</td></tr>
+    </table>
+</div>
+
+<!-- ═══════════════════════════════════════ BLOCO 2 - INSERIR -->
+<div class="content-section">
+    <h2>3. Bloco 2 — Inserção na Lista</h2>
+
+    <p>Novos alunos são inseridos <strong>em ordem crescente de matrícula</strong> — a lista sempre fica ordenada, o que facilita a exibição e a busca.</p>
+
+<pre>
+<span class="code-comment">/* Insere um aluno mantendo a lista ordenada por matrícula.
+   Retorna 1 em sucesso, 0 se a matrícula já existe. */</span>
+int inserir(Aluno a) {
+    <span class="code-comment">/* 1. Verifica duplicata */</span>
+    No *atual = lista;
+    while (atual != NULL) {
+        if (atual->aluno.matricula == a.matricula) {
+            printf("Matrícula %d já cadastrada.\n", a.matricula);
+            return 0;
+        }
+        atual = atual->prox;
+    }
+
+    <span class="code-comment">/* 2. Aloca novo nó */</span>
+    No *novo = (No *)malloc(sizeof(No));
+    if (novo == NULL) { printf("Memória insuficiente.\n"); return 0; }
+    novo->aluno = a;
+    novo->prox  = NULL;
+
+    <span class="code-comment">/* 3. Inserção na posição correta (ordem crescente de matrícula) */</span>
+    if (lista == NULL || a.matricula &lt; lista->aluno.matricula) {
+        <span class="code-comment">// inserir na cabeça</span>
+        novo->prox = lista;
+        lista = novo;
+    } else {
+        <span class="code-comment">// encontra o nó antes da posição de inserção</span>
+        No *ant = lista;
+        while (ant->prox != NULL &&
+               ant->prox->aluno.matricula &lt; a.matricula) {
+            ant = ant->prox;
+        }
+        novo->prox = ant->prox;
+        ant->prox  = novo;
+    }
+    return 1;
+}
+</pre>
+
+    <div class="tip-box">
+        <strong>Por que manter a lista ordenada?</strong> A listagem fica sempre organizada para o usuário sem precisar ordenar na hora de exibir. Em um cadastro real, isso é muito mais importante do que a pequena complexidade extra na inserção.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ BLOCO 3 - LISTAR / BUSCAR -->
+<div class="content-section">
+    <h2>4. Bloco 3 — Listar e Buscar</h2>
+
+<pre>
+<span class="code-comment">/* Exibe todos os alunos com cabeçalho formatado */</span>
+void listar() {
+    if (lista == NULL) {
+        printf("Nenhum aluno cadastrado.\n");
+        return;
+    }
+
+    printf("\n%-8s | %-25s | %-5s | %s\n",
+           "Matr.", "Nome", "Nota", "Situação");
+    printf("%-8s-+-%-25s-+-%-5s-+-%s\n",
+           "--------", "-------------------------", "-----", "---------");
+
+    No *atual = lista;
+    while (atual != NULL) {
+        Aluno *a = &atual->aluno;
+        printf("%-8d | %-25s | %-5.1f | %s\n",
+               a->matricula, a->nome, a->nota,
+               a->nota >= 5.0f ? "Aprovado" : "Reprovado");
+        atual = atual->prox;
+    }
+    printf("\n");
+}
+
+<span class="code-comment">/* Retorna ponteiro para o nó com a matrícula buscada, ou NULL */</span>
+No *buscarPorMatricula(int matricula) {
+    No *atual = lista;
+    while (atual != NULL) {
+        if (atual->aluno.matricula == matricula)
+            return atual;
+        atual = atual->prox;
+    }
+    return NULL;
+}
+</pre>
+
+    <div class="info-box">
+        <strong>Retornar o ponteiro, não uma cópia:</strong> <code>buscarPorMatricula</code> retorna <code>No *</code> em vez de <code>Aluno</code>. Isso permite tanto ler quanto modificar os dados do nó encontrado — e é também necessário para a remoção, que precisa do nó anterior.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ BLOCO 4 - REMOVER -->
+<div class="content-section">
+    <h2>5. Bloco 4 — Remoção</h2>
+
+    <p>A remoção em lista encadeada exige encontrar o nó <em>anterior</em> ao que será removido para reparar o elo:</p>
+
+<pre>
+<span class="code-comment">/* Remove o aluno com a matrícula indicada.
+   Retorna 1 se removido, 0 se não encontrado. */</span>
+int remover(int matricula) {
+    if (lista == NULL) return 0;
+
+    <span class="code-comment">/* Caso especial: remover a cabeça */</span>
+    if (lista->aluno.matricula == matricula) {
+        No *remover = lista;
+        lista = lista->prox;   <span class="code-comment">// avança a cabeça</span>
+        free(remover);
+        return 1;
+    }
+
+    <span class="code-comment">/* Caso geral: encontrar o nó anterior */</span>
+    No *ant = lista;
+    while (ant->prox != NULL &&
+           ant->prox->aluno.matricula != matricula) {
+        ant = ant->prox;
+    }
+
+    if (ant->prox == NULL) return 0;     <span class="code-comment">// não encontrado</span>
+
+    No *alvo = ant->prox;
+    ant->prox = alvo->prox;              <span class="code-comment">// repara o elo</span>
+    free(alvo);                          <span class="code-comment">// libera a memória</span>
+    return 1;
+}
+
+<span class="code-comment">/* Libera todos os nós da lista — chamada ao encerrar o programa */</span>
+void liberarLista() {
+    No *atual = lista;
+    while (atual != NULL) {
+        No *prox = atual->prox;
+        free(atual);
+        atual = prox;
+    }
+    lista = NULL;
+}
+</pre>
+</div>
+
+<!-- ═══════════════════════════════════════ BLOCO 5 - ARQUIVO -->
+<div class="content-section">
+    <h2>6. Bloco 5 — Persistência em Arquivo Binário</h2>
+
+    <p>Salvar percorre a lista e grava cada <code>Aluno</code> com <code>fwrite</code>. Carregar lê as structs de volta com <code>fread</code> e as reinseere na lista:</p>
+
+<pre>
+<span class="code-comment">/* Salva todos os alunos da lista no arquivo binário.
+   Retorna o número de alunos gravados. */</span>
+int salvar() {
+    FILE *f = fopen(ARQUIVO, "wb");
+    if (f == NULL) {
+        printf("Erro ao abrir '%s' para escrita.\n", ARQUIVO);
+        return -1;
+    }
+
+    int count = 0;
+    No *atual = lista;
+    while (atual != NULL) {
+        fwrite(&atual->aluno, sizeof(Aluno), 1, f);  <span class="code-comment">// grava a struct</span>
+        count++;
+        atual = atual->prox;
+    }
+
+    fclose(f);
+    return count;
+}
+
+<span class="code-comment">/* Carrega alunos do arquivo binário para a lista.
+   Retorna o número de alunos carregados, ou -1 se o arquivo não existe. */</span>
+int carregar() {
+    FILE *f = fopen(ARQUIVO, "rb");
+    if (f == NULL) return -1;            <span class="code-comment">// arquivo ainda não existe — tudo bem</span>
+
+    <span class="code-comment">/* descobre quantas structs tem no arquivo */</span>
+    fseek(f, 0, SEEK_END);
+    long bytes = ftell(f);
+    rewind(f);
+    int total = (int)(bytes / sizeof(Aluno));
+
+    int carregados = 0;
+    Aluno a;
+    while (fread(&a, sizeof(Aluno), 1, f) == 1) {
+        if (inserir(a)) carregados++;
+    }
+
+    fclose(f);
+    return carregados;
+}
+</pre>
+
+    <div class="tip-box">
+        <strong>Por que recarregar via <code>inserir()</code> em vez de reconstruir a lista diretamente?</strong> Porque <code>inserir</code> já trata duplicatas, mantém a ordem e aloca os nós corretamente. Reutilizar a função existente é mais seguro e elimina código duplicado.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ BLOCO 6 - MENU / MAIN -->
+<div class="content-section">
+    <h2>7. Bloco 6 — Menu Interativo e <code>main()</code></h2>
+
+<pre>
+<span class="code-comment">/* Limpa o buffer de entrada após scanf */</span>
+void limparBuffer() {
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF);
+}
+
+<span class="code-comment">/* Exibe o menu e retorna a opção escolhida */</span>
+int menu() {
+    int op;
+    printf("\n╔══════════════════════════════════╗\n");
+    printf("║   SISTEMA DE CADASTRO — ALUNOS  ║\n");
+    printf("╠══════════════════════════════════╣\n");
+    printf("║  1. Inserir aluno               ║\n");
+    printf("║  2. Listar todos                ║\n");
+    printf("║  3. Buscar por matrícula        ║\n");
+    printf("║  4. Remover aluno               ║\n");
+    printf("║  5. Salvar em arquivo           ║\n");
+    printf("║  6. Recarregar do arquivo       ║\n");
+    printf("║  0. Salvar e sair               ║\n");
+    printf("╚══════════════════════════════════╝\n");
+    printf("Opção: ");
+    scanf("%d", &op);
+    limparBuffer();
+    return op;
+}
+
+int main() {
+    <span class="code-comment">/* Carrega dados persistidos (se existirem) */</span>
+    int carregados = carregar();
+    if (carregados &gt; 0)
+        printf("✔ %d aluno(s) carregado(s) de '%s'\n", carregados, ARQUIVO);
+    else if (carregados == -1)
+        printf("Nenhum arquivo anterior. Começando vazio.\n");
+
+    int op;
+    do {
+        op = menu();
+
+        if (op == 1) {
+            <span class="code-comment">/* ── Inserir ─────────────────────────────── */</span>
+            Aluno a;
+            printf("Matrícula: "); scanf("%d",  &a.matricula); limparBuffer();
+            printf("Nome:      "); fgets(a.nome, sizeof(a.nome), stdin);
+            a.nome[strcspn(a.nome, "\n")] = '\0'; <span class="code-comment">// remove \n</span>
+            printf("Nota:      "); scanf("%f",  &a.nota);      limparBuffer();
+
+            if (inserir(a))
+                printf("✔ Aluno %d inserido.\n", a.matricula);
+
+        } else if (op == 2) {
+            <span class="code-comment">/* ── Listar ──────────────────────────────── */</span>
+            listar();
+
+        } else if (op == 3) {
+            <span class="code-comment">/* ── Buscar ──────────────────────────────── */</span>
+            int mat;
+            printf("Matrícula a buscar: "); scanf("%d", &mat); limparBuffer();
+            No *encontrado = buscarPorMatricula(mat);
+            if (encontrado) {
+                Aluno *a = &encontrado->aluno;
+                printf("Encontrado: %d | %s | %.1f | %s\n",
+                       a->matricula, a->nome, a->nota,
+                       a->nota >= 5.0f ? "Aprovado" : "Reprovado");
+            } else {
+                printf("Matrícula %d não encontrada.\n", mat);
+            }
+
+        } else if (op == 4) {
+            <span class="code-comment">/* ── Remover ─────────────────────────────── */</span>
+            int mat;
+            printf("Matrícula a remover: "); scanf("%d", &mat); limparBuffer();
+            if (remover(mat))
+                printf("✔ Aluno %d removido.\n", mat);
+            else
+                printf("Matrícula %d não encontrada.\n", mat);
+
+        } else if (op == 5) {
+            <span class="code-comment">/* ── Salvar ──────────────────────────────── */</span>
+            int n = salvar();
+            if (n >= 0)
+                printf("✔ %d aluno(s) salvos em '%s'.\n", n, ARQUIVO);
+
+        } else if (op == 6) {
+            <span class="code-comment">/* ── Recarregar ──────────────────────────── */</span>
+            liberarLista();
+            lista = NULL;
+            int n = carregar();
+            if (n >= 0)
+                printf("✔ %d aluno(s) recarregado(s).\n", n);
+            else
+                printf("Arquivo '%s' não encontrado.\n", ARQUIVO);
+
+        } else if (op != 0) {
+            printf("Opção inválida.\n");
+        }
+
+    } while (op != 0);
+
+    <span class="code-comment">/* Salva automaticamente e libera memória */</span>
+    int n = salvar();
+    if (n >= 0) printf("✔ Dados salvos (%d aluno(s)). Até logo!\n", n);
+    liberarLista();
+    return 0;
+}
+</pre>
+</div>
+
+<!-- ═══════════════════════════════════════ DEMO -->
+<div class="content-section">
+    <h2>8. Exemplo de Sessão Completa</h2>
+
+    <div class="terminal-output">
+Nenhum arquivo anterior. Começando vazio.<br><br>
+╔══════════════════════════════════╗<br>
+║   SISTEMA DE CADASTRO — ALUNOS  ║<br>
+╠══════════════════════════════════╣<br>
+║  1. Inserir aluno               ║<br>
+║  ...                            ║<br>
+╚══════════════════════════════════╝<br>
+Opção: <strong>1</strong><br>
+Matrícula: <strong>1002</strong><br>
+Nome:      <strong>Bruno Lima</strong><br>
+Nota:      <strong>6.0</strong><br>
+✔ Aluno 1002 inserido.<br><br>
+Opção: <strong>1</strong><br>
+Matrícula: <strong>1001</strong><br>
+Nome:      <strong>Ana Silva</strong><br>
+Nota:      <strong>8.5</strong><br>
+✔ Aluno 1001 inserido.<br><br>
+Opção: <strong>2</strong><br><br>
+Matr.    | Nome                      | Nota  | Situação<br>
+---------+---------------------------+-------+---------<br>
+1001     | Ana Silva                 | 8.5   | Aprovado<br>
+1002     | Bruno Lima                | 6.0   | Aprovado<br><br>
+Opção: <strong>3</strong><br>
+Matrícula a buscar: <strong>1002</strong><br>
+Encontrado: 1002 | Bruno Lima | 6.0 | Aprovado<br><br>
+Opção: <strong>0</strong><br>
+✔ Dados salvos (2 aluno(s)). Até logo!
+    </div>
+
+    <p>Na próxima execução do programa, os dados são carregados automaticamente de <code>cadastro.bin</code>:</p>
+
+    <div class="terminal-output">
+✔ 2 aluno(s) carregado(s) de 'cadastro.bin'
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ MAPA DOS CONCEITOS -->
+<div class="content-section">
+    <h2>9. Mapa de Conceitos — O que cada aula contribuiu</h2>
+
+    <table>
+        <tr><th>Funcionalidade do projeto</th><th>Aulas que a sustentam</th></tr>
+        <tr><td>Declaração de <code>Aluno</code> e <code>No</code> com typedef</td><td>Aulas 27, 29, 30</td></tr>
+        <tr><td>Lista encadeada: inserir, remover, percorrer</td><td>Aulas 37, 38</td></tr>
+        <tr><td>Ponteiros <code>No *</code>, operador <code>-&gt;</code></td><td>Aulas 20, 28, 31</td></tr>
+        <tr><td>malloc, free, verificação de NULL</td><td>Aulas 22, 38</td></tr>
+        <tr><td>Menu com switch/do-while, scanf, fgets</td><td>Aulas 09, 10, 03, 26</td></tr>
+        <tr><td>Funções com retorno e ponteiros</td><td>Aulas 13, 14</td></tr>
+        <tr><td>fwrite, fread, fseek, ftell (arquivo binário)</td><td>Aula 39b</td></tr>
+        <tr><td>Modo <code>"wb"</code> / <code>"rb"</code>, fopen/fclose</td><td>Aula 39a</td></tr>
+        <tr><td>strcspn para remover \n de fgets</td><td>Aula 26</td></tr>
+    </table>
+
+    <div class="dica">
+        <strong>Quer ir além?</strong> Algumas extensões naturais deste projeto: (1) adicionar busca por nome com <code>strstr</code>; (2) permitir edição de nota sem remover e reinserir; (3) exportar a lista para um arquivo <code>.csv</code> texto; (4) ordenar por nota ao listar; (5) adicionar mais campos à struct (curso, data de nascimento).
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ CÓDIGO COMPLETO -->
+<div class="content-section">
+    <h2>10. Código Completo — para compilar e testar</h2>
+
+    <p>Cole tudo em um único arquivo <code>cadastro.c</code> e compile com:</p>
+<pre>gcc cadastro.c -o cadastro
+.\cadastro.exe     <span class="code-comment">// Windows</span>
+./cadastro         <span class="code-comment">// Linux/macOS</span></pre>
+
+<pre>
+/* ═══════════════════════════════════════════════════════════════
+   Sistema de Cadastro de Alunos — Projeto Integrador
+   AFF Education — Curso de C para Iniciantes
+   Conceitos: struct · lista encadeada · malloc/free · fread/fwrite
+═══════════════════════════════════════════════════════════════ */
+
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+typedef struct {
+    int   matricula;
+    char  nome[60];
+    float nota;
+} Aluno;
+
+typedef struct No {
+    Aluno      aluno;
+    struct No *prox;
+} No;
+
+No *lista = NULL;
+const char *ARQUIVO = "cadastro.bin";
+
+/* ── Inserção ordenada por matrícula ────────────────────────── */
+int inserir(Aluno a) {
+    No *atual = lista;
+    while (atual != NULL) {
+        if (atual->aluno.matricula == a.matricula) {
+            printf("Matrícula %d já cadastrada.\n", a.matricula);
+            return 0;
+        }
+        atual = atual->prox;
+    }
+    No *novo = (No *)malloc(sizeof(No));
+    if (novo == NULL) { printf("Memória insuficiente.\n"); return 0; }
+    novo->aluno = a;
+    novo->prox  = NULL;
+    if (lista == NULL || a.matricula &lt; lista->aluno.matricula) {
+        novo->prox = lista;
+        lista = novo;
+    } else {
+        No *ant = lista;
+        while (ant->prox != NULL &&
+               ant->prox->aluno.matricula &lt; a.matricula)
+            ant = ant->prox;
+        novo->prox = ant->prox;
+        ant->prox  = novo;
+    }
+    return 1;
+}
+
+/* ── Listagem ───────────────────────────────────────────────── */
+void listar() {
+    if (lista == NULL) { printf("Nenhum aluno cadastrado.\n"); return; }
+    printf("\n%-8s | %-25s | %-5s | %s\n",
+           "Matr.", "Nome", "Nota", "Situação");
+    printf("%-8s-+-%-25s-+-%-5s-+-%s\n",
+           "--------","-------------------------","-----","---------");
+    No *atual = lista;
+    while (atual != NULL) {
+        Aluno *a = &atual->aluno;
+        printf("%-8d | %-25s | %-5.1f | %s\n",
+               a->matricula, a->nome, a->nota,
+               a->nota >= 5.0f ? "Aprovado" : "Reprovado");
+        atual = atual->prox;
+    }
+    printf("\n");
+}
+
+/* ── Busca ──────────────────────────────────────────────────── */
+No *buscarPorMatricula(int matricula) {
+    No *atual = lista;
+    while (atual != NULL) {
+        if (atual->aluno.matricula == matricula) return atual;
+        atual = atual->prox;
+    }
+    return NULL;
+}
+
+/* ── Remoção ────────────────────────────────────────────────── */
+int remover(int matricula) {
+    if (lista == NULL) return 0;
+    if (lista->aluno.matricula == matricula) {
+        No *rem = lista; lista = lista->prox; free(rem); return 1;
+    }
+    No *ant = lista;
+    while (ant->prox != NULL &&
+           ant->prox->aluno.matricula != matricula)
+        ant = ant->prox;
+    if (ant->prox == NULL) return 0;
+    No *alvo = ant->prox;
+    ant->prox = alvo->prox;
+    free(alvo);
+    return 1;
+}
+
+/* ── Liberação total ────────────────────────────────────────── */
+void liberarLista() {
+    No *atual = lista;
+    while (atual != NULL) {
+        No *prox = atual->prox; free(atual); atual = prox;
+    }
+    lista = NULL;
+}
+
+/* ── Salvar em arquivo binário ─────────────────────────────── */
+int salvar() {
+    FILE *f = fopen(ARQUIVO, "wb");
+    if (f == NULL) {
+        printf("Erro ao salvar em '%s'.\n", ARQUIVO); return -1;
+    }
+    int count = 0;
+    No *atual = lista;
+    while (atual != NULL) {
+        fwrite(&atual->aluno, sizeof(Aluno), 1, f);
+        count++;
+        atual = atual->prox;
+    }
+    fclose(f);
+    return count;
+}
+
+/* ── Carregar do arquivo binário ──────────────────────────── */
+int carregar() {
+    FILE *f = fopen(ARQUIVO, "rb");
+    if (f == NULL) return -1;
+    int carregados = 0;
+    Aluno a;
+    while (fread(&a, sizeof(Aluno), 1, f) == 1)
+        if (inserir(a)) carregados++;
+    fclose(f);
+    return carregados;
+}
+
+/* ── Utilitários ────────────────────────────────────────────── */
+void limparBuffer() { int c; while ((c=getchar())!='\n'&&c!=EOF); }
+
+int menu() {
+    int op;
+    printf("\n╔══════════════════════════════════╗\n");
+    printf("║   SISTEMA DE CADASTRO — ALUNOS  ║\n");
+    printf("╠══════════════════════════════════╣\n");
+    printf("║  1. Inserir aluno               ║\n");
+    printf("║  2. Listar todos                ║\n");
+    printf("║  3. Buscar por matrícula        ║\n");
+    printf("║  4. Remover aluno               ║\n");
+    printf("║  5. Salvar em arquivo           ║\n");
+    printf("║  6. Recarregar do arquivo       ║\n");
+    printf("║  0. Salvar e sair               ║\n");
+    printf("╚══════════════════════════════════╝\n");
+    printf("Opção: ");
+    scanf("%d", &op);
+    limparBuffer();
+    return op;
+}
+
+/* ── Main ────────────────────────────────────────────────────── */
+int main() {
+    int carregados = carregar();
+    if (carregados > 0)
+        printf("✔ %d aluno(s) carregado(s) de '%s'\n", carregados, ARQUIVO);
+    else
+        printf("Nenhum arquivo anterior. Começando vazio.\n");
+
+    int op;
+    do {
+        op = menu();
+        if (op == 1) {
+            Aluno a;
+            printf("Matrícula: "); scanf("%d", &a.matricula); limparBuffer();
+            printf("Nome:      "); fgets(a.nome, sizeof(a.nome), stdin);
+            a.nome[strcspn(a.nome, "\n")] = '\0';
+            printf("Nota:      "); scanf("%f", &a.nota); limparBuffer();
+            if (inserir(a)) printf("✔ Aluno %d inserido.\n", a.matricula);
+        } else if (op == 2) {
+            listar();
+        } else if (op == 3) {
+            int mat;
+            printf("Matrícula: "); scanf("%d", &mat); limparBuffer();
+            No *n = buscarPorMatricula(mat);
+            if (n) {
+                Aluno *a = &n->aluno;
+                printf("Encontrado: %d | %s | %.1f | %s\n",
+                       a->matricula, a->nome, a->nota,
+                       a->nota >= 5.0f ? "Aprovado" : "Reprovado");
+            } else printf("Matrícula %d não encontrada.\n", mat);
+        } else if (op == 4) {
+            int mat;
+            printf("Matrícula: "); scanf("%d", &mat); limparBuffer();
+            if (remover(mat)) printf("✔ Aluno %d removido.\n", mat);
+            else printf("Matrícula %d não encontrada.\n", mat);
+        } else if (op == 5) {
+            int n = salvar();
+            if (n >= 0) printf("✔ %d aluno(s) salvos.\n", n);
+        } else if (op == 6) {
+            liberarLista();
+            int n = carregar();
+            if (n >= 0) printf("✔ %d aluno(s) recarregado(s).\n", n);
+            else printf("Arquivo não encontrado.\n");
+        } else if (op != 0) {
+            printf("Opção inválida.\n");
+        }
+    } while (op != 0);
+
+    int n = salvar();
+    if (n >= 0) printf("✔ Dados salvos (%d aluno(s)). Até logo!\n", n);
+    liberarLista();
+    return 0;
+}
+</pre>
+</div>
+
+<div class="navigation-buttons">
+    <a href="capitulo39b.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">← Aula 39b</a>
+    <a href="index.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">Índice</a>
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align:center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education" style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+</body>
+</html>

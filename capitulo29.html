@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 29 – struct em C vs class em Java</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Aula 29 – <code style="color:#aad4ff">struct</code> em C vs <code style="color:#aad4ff">class</code> em Java</h1>
+    <p>Como C agrupa dados em registros — e por que é diferente (e mais simples) do que uma classe Java</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo28.html">← Aula 28</a>
+    <a href="capitulo30.html">Aula 30 →</a>
+</nav>
+
+<!-- ═══════════════════════════════════════ CONTEXTO -->
+<div class="content-section">
+    <h2>Por que precisamos de um jeito de agrupar dados?</h2>
+    <p>Imagine que você quer representar um <strong>aluno</strong> no seu programa. Ele tem matrícula, nome e nota. Em Java, você faria isso com uma <strong>classe</strong>. Em C, você usa uma <strong>struct</strong> (estrutura).</p>
+
+    <div class="definicao">
+        Uma <strong>struct</strong> (abreviação de <em>structure</em>) é uma forma de criar um <strong>tipo composto</strong> em C: um agrupamento de variáveis de tipos diferentes sob um único nome. Cada variável dentro da struct é chamada de <strong>campo</strong> (ou <em>field</em>).
+    </div>
+
+    <p>Antes de ver a sintaxe, compare os dois mundos lado a lado:</p>
+
+    <table>
+        <tr>
+            <th>Java — <code>class</code></th>
+            <th>C — <code>struct</code></th>
+        </tr>
+        <tr>
+            <td>Agrupa <strong>dados + métodos</strong></td>
+            <td>Agrupa <strong>só dados</strong> (campos)</td>
+        </tr>
+        <tr>
+            <td>Tem construtores, herança, polimorfismo</td>
+            <td>Não tem nada disso — apenas campos</td>
+        </tr>
+        <tr>
+            <td>Objetos ficam no heap; variável guarda referência</td>
+            <td>Struct pode ficar na stack; variável é o dado em si</td>
+        </tr>
+        <tr>
+            <td>Criado com <code>new NomeDaClasse()</code></td>
+            <td>Declarado como qualquer variável: <code>REGISTRO r;</code></td>
+        </tr>
+        <tr>
+            <td>Acessa campos com <code>objeto.campo</code></td>
+            <td>Acessa campos com <code>variavel.campo</code> ou <code>ponteiro->campo</code></td>
+        </tr>
+    </table>
+
+    <div class="info-box">
+        <strong>Resumo rápido:</strong> Uma <code>struct</code> em C é como uma classe Java <em>sem métodos</em>, <em>sem construtores</em> e <em>sem herança</em>. É o bloco de construção mais básico para organizar dados relacionados.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ SINTAXE -->
+<div class="content-section">
+    <h2>Sintaxe da <code>struct</code> em C</h2>
+    <p>A forma mais simples de declarar uma struct:</p>
+
+    <pre>
+struct NomeDaEstrutura {
+    tipo campo1;
+    tipo campo2;
+    <span class="code-comment">// ... mais campos</span>
+};</pre>
+
+    <p>Exemplo concreto — um aluno com matrícula e nota:</p>
+
+    <pre>
+#include &lt;stdio.h&gt;
+
+struct Aluno {
+    int    matricula;
+    float  nota;
+};
+
+int main() {
+    struct Aluno a;          <span class="code-comment">// declara uma variável do tipo struct Aluno</span>
+    a.matricula = 1001;      <span class="code-comment">// acessa o campo com o operador ponto (.)</span>
+    a.nota      = 8.5;
+
+    printf("Matrícula: %d\n", a.matricula);
+    printf("Nota:      %.1f\n", a.nota);
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>Matrícula: 1001</p>
+        <p>Nota:      8.5</p>
+    </div>
+
+    <div class="tip-box">
+        <strong>Note o <code>struct</code> antes do nome:</strong> Em C "puro" (sem <code>typedef</code>), para declarar uma variável você precisa escrever <code>struct Aluno a;</code> — o <code>struct</code> faz parte do nome do tipo. Na próxima aula veremos como o <code>typedef</code> elimina essa repetição.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ COMPARAÇÃO COM JAVA -->
+<div class="content-section">
+    <h2>Comparação direta com Java</h2>
+    <p>Veja o mesmo "cadastro de aluno" nas duas linguagens:</p>
+
+    <div class="grid-container">
+        <div class="grid-item">
+            <strong>☕ Java</strong>
+            <pre style="margin-top:10px">
+class Aluno {
+    int   matricula;
+    float nota;
+
+    Aluno(int m, float n) {
+        this.matricula = m;
+        this.nota = n;
+    }
+
+    void exibir() {
+        System.out.println(
+          matricula + " — " + nota);
+    }
+}
+
+// Uso:
+Aluno a = new Aluno(1001, 8.5f);
+a.exibir();</pre>
+        </div>
+        <div class="grid-item">
+            <strong>⚙️ C</strong>
+            <pre style="margin-top:10px">
+struct Aluno {
+    int   matricula;
+    float nota;
+};
+<span class="code-comment">// Sem construtor, sem métodos.</span>
+<span class="code-comment">// Funções ficam fora da struct.</span>
+
+void exibir(struct Aluno a) {
+    printf("%d — %.1f\n",
+           a.matricula, a.nota);
+}
+
+<span class="code-comment">// Uso:</span>
+struct Aluno a = {1001, 8.5f};
+exibir(a);</pre>
+        </div>
+    </div>
+
+    <div class="warning-box">
+        <strong>Diferença crítica — onde ficam as funções?</strong> Em Java, os métodos <em>pertencem</em> à classe. Em C, as funções são <em>separadas</em> — elas recebem a struct como parâmetro. Esse é o ponto mais importante desta aula: C separa dados (struct) de comportamento (funções).
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ STRUCT ANINHADA -->
+<div class="content-section">
+    <h2>Structs dentro de Structs</h2>
+    <p>Assim como em Java uma classe pode ter atributos de outras classes, em C uma struct pode ter campos que são outras structs:</p>
+
+    <pre>
+typedef int TIPOCHAVE;   <span class="code-comment">// veremos typedef melhor na próxima aula</span>
+
+typedef struct {
+    TIPOCHAVE chave;     <span class="code-comment">// campo "chave" — o identificador do registro</span>
+    <span class="code-comment">// outros campos poderiam vir aqui: nome, data, etc.</span>
+} REGISTRO;
+
+typedef struct {
+    REGISTRO A[50];      <span class="code-comment">// array de até 50 registros</span>
+    int      nroElem;    <span class="code-comment">// quantos elementos estão ocupados</span>
+} LISTA;</pre>
+
+    <p>Essa é exatamente a estrutura que usaremos nas próximas aulas para implementar uma <strong>lista linear sequencial</strong>. A <code>LISTA</code> contém um array de <code>REGISTRO</code>s, e cada <code>REGISTRO</code> tem uma chave do tipo <code>TIPOCHAVE</code>.</p>
+
+    <div class="exemplo">
+        Em Java, o equivalente seria uma classe <code>Lista</code> que contém um array de objetos <code>Registro[]</code>, e cada <code>Registro</code> tem um campo <code>int chave</code>. Mesma ideia — sintaxe diferente.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ INICIALIZAÇÃO -->
+<div class="content-section">
+    <h2>Formas de Inicializar uma Struct</h2>
+    <p>C oferece diferentes formas de criar e preencher uma struct:</p>
+
+    <pre>
+struct Aluno {
+    int   matricula;
+    float nota;
+};
+
+int main() {
+    <span class="code-comment">// Forma 1: declarar e atribuir campo a campo</span>
+    struct Aluno a1;
+    a1.matricula = 1001;
+    a1.nota = 8.5f;
+
+    <span class="code-comment">// Forma 2: inicialização por posição (C89 em diante)</span>
+    struct Aluno a2 = {1002, 7.0f};
+
+    <span class="code-comment">// Forma 3: inicialização por nome de campo (C99 em diante — mais segura)</span>
+    struct Aluno a3 = { .matricula = 1003, .nota = 9.5f };
+
+    printf("a1: %d | %.1f\n", a1.matricula, a1.nota);
+    printf("a2: %d | %.1f\n", a2.matricula, a2.nota);
+    printf("a3: %d | %.1f\n", a3.matricula, a3.nota);
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>a1: 1001 | 8.5</p>
+        <p>a2: 1002 | 7.0</p>
+        <p>a3: 1003 | 9.5</p>
+    </div>
+
+    <div class="tip-box">
+        <strong>Boa prática:</strong> Prefira a Forma 3 (<em>designated initializers</em>) quando possível — ela é mais legível e não depende da ordem dos campos na struct.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ EXERCÍCIOS -->
+<div class="exercise-section">
+    <h2>Exercícios — Aula 29</h2>
+    <p>Responda às questões para fixar o conceito de <code>struct</code>:</p>
+
+    <form class="quiz-form" id="quiz-form">
+
+        <div class="quiz-question">
+            <p><strong>1. O que uma <code>struct</code> em C <em>não</em> pode conter, ao contrário de uma <code>class</code> em Java?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q1" value="a"> Campos inteiros</label></li>
+                <li><label><input type="radio" name="q1" value="b"> Arrays de outros tipos</label></li>
+                <li><label><input type="radio" name="q1" value="c"> Métodos (comportamento)</label></li>
+                <li><label><input type="radio" name="q1" value="d"> Campos de outras structs</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>2. Dado o código abaixo, qual linha está correta?</strong></p>
+            <pre>struct Ponto { int x; int y; };
+struct Ponto p = {3, 7};</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q2" value="a"> Erro: em C não se pode inicializar uma struct diretamente</label></li>
+                <li><label><input type="radio" name="q2" value="b"> Correto: <code>p.x</code> valerá 3 e <code>p.y</code> valerá 7</label></li>
+                <li><label><input type="radio" name="q2" value="c"> Correto: <code>p.x</code> valerá 7 e <code>p.y</code> valerá 3</label></li>
+                <li><label><input type="radio" name="q2" value="d"> Erro: falta o <code>new</code> antes de <code>{3, 7}</code></label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>3. Em C, como se acessa o campo <code>nota</code> de uma variável <code>struct Aluno a</code>?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q3" value="a"> <code>a->nota</code></label></li>
+                <li><label><input type="radio" name="q3" value="b"> <code>a.getNota()</code></label></li>
+                <li><label><input type="radio" name="q3" value="c"> <code>a.nota</code></label></li>
+                <li><label><input type="radio" name="q3" value="d"> <code>a[nota]</code></label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>4. Qual afirmação sobre o design de C é verdadeira?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q4" value="a"> Funções que operam sobre structs devem ser declaradas dentro delas</label></li>
+                <li><label><input type="radio" name="q4" value="b"> Funções ficam fora da struct e recebem a struct como parâmetro</label></li>
+                <li><label><input type="radio" name="q4" value="c"> C não permite passar structs como parâmetros de funções</label></li>
+                <li><label><input type="radio" name="q4" value="d"> Apenas funções <code>void</code> podem receber structs</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>5. Na estrutura abaixo, o que representa o campo <code>nroElem</code>?</strong></p>
+            <pre>typedef struct {
+    REGISTRO A[50];
+    int nroElem;
+} LISTA;</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q5" value="a"> A capacidade máxima da lista (sempre 50)</label></li>
+                <li><label><input type="radio" name="q5" value="b"> O tamanho em bytes da struct LISTA</label></li>
+                <li><label><input type="radio" name="q5" value="c"> Quantos elementos estão atualmente ocupados no array <code>A</code></label></li>
+                <li><label><input type="radio" name="q5" value="d"> O índice do último elemento inserido menos 1</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>6. Qual é a forma de inicialização por <em>nome de campo</em> (C99) para <code>struct Aluno { int matricula; float nota; }</code>?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q6" value="a"> <code>struct Aluno a = (1001, 8.5f);</code></label></li>
+                <li><label><input type="radio" name="q6" value="b"> <code>struct Aluno a = { .matricula = 1001, .nota = 8.5f };</code></label></li>
+                <li><label><input type="radio" name="q6" value="c"> <code>struct Aluno a = new Aluno(1001, 8.5f);</code></label></li>
+                <li><label><input type="radio" name="q6" value="d"> <code>struct Aluno a = { matricula: 1001, nota: 8.5f };</code></label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>7. Em Java, quando você faz <code>Aluno a = new Aluno()</code>, o objeto fica no heap e <code>a</code> é uma referência. Em C, quando você faz <code>struct Aluno a;</code>, onde a struct fica (por padrão)?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q7" value="a"> No heap, como em Java</label></li>
+                <li><label><input type="radio" name="q7" value="b"> Na stack (pilha de execução)</label></li>
+                <li><label><input type="radio" name="q7" value="c"> Em memória estática, como variáveis globais</label></li>
+                <li><label><input type="radio" name="q7" value="d"> Depende do sistema operacional</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>8. Analise o código. Qual será a saída?</strong></p>
+            <pre>struct Par { int a; int b; };
+struct Par p = { .b = 10, .a = 3 };
+printf("%d %d\n", p.a, p.b);</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q8" value="a"> 10 3</label></li>
+                <li><label><input type="radio" name="q8" value="b"> 3 10</label></li>
+                <li><label><input type="radio" name="q8" value="c"> Erro de compilação</label></li>
+                <li><label><input type="radio" name="q8" value="d"> 0 0 (campos são ignorados fora de ordem)</label></li>
+            </ul>
+        </div>
+
+        <button type="button" class="submit-btn" onclick="verificarRespostas()">Verificar Respostas</button>
+    </form>
+
+    <div id="quiz-results" style="display:none; margin-top:20px; padding:15px; background-color:#dff0d8; border-radius:5px;"></div>
+</div>
+
+<div class="navigation-buttons">
+    <a href="capitulo28.html">← Aula 28</a>
+    <a href="index.html">Índice</a>
+    <a href="capitulo30.html">Aula 30 →</a>
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align: center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education" style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+<script>
+    function verificarRespostas() {
+        const gabarito = { q1:"c", q2:"b", q3:"c", q4:"b", q5:"c", q6:"b", q7:"b", q8:"b" };
+        const explicacoes = {
+            q1: "Uma struct em C só agrupa dados (campos). Funções/métodos não podem ser declarados dentro dela — isso é exclusivo da orientação a objetos de Java (e C++).",
+            q2: "A inicialização por posição {3, 7} atribui valores na ordem dos campos: x=3, y=7. Isso é válido desde o C89.",
+            q3: "O operador ponto (.) acessa campos quando a variável é a struct em si. O operador -> é usado quando temos um ponteiro para a struct.",
+            q4: "Em C, as funções ficam completamente fora da struct. Elas recebem um ponteiro para a struct (ou a struct por valor) como parâmetro — é a separação entre dados e comportamento.",
+            q5: "nroElem guarda quantos elementos estão atualmente usados no array A. A capacidade máxima (50) é fixa e definida pelo tamanho do array. É o equivalente ao .size() de um ArrayList em Java.",
+            q6: "A sintaxe com ponto antes do nome do campo (.matricula, .nota) é chamada de 'designated initializer', disponível desde C99. É mais segura pois não depende da ordem dos campos.",
+            q7: "Por padrão, variáveis locais (incluindo structs) ficam na stack. Para colocar no heap é necessário usar malloc() — diferente de Java onde todo objeto vai para o heap automaticamente.",
+            q8: "Os designated initializers (.a=3, .b=10) atribuem corretamente independente da ordem de escrita. p.a=3 e p.b=10, então a saída é '3 10'."
+        };
+
+        let acertos = 0, html = "";
+        const total = Object.keys(gabarito).length;
+        for (const q in gabarito) {
+            const sel = document.querySelector(`input[name="${q}"]:checked`);
+            const num = q.substring(1);
+            if (sel) {
+                if (sel.value === gabarito[q]) {
+                    acertos++;
+                    html += `<p>Questão ${num}: <span style="color:green;font-weight:bold;">✓ Correto!</span> — ${explicacoes[q]}</p>`;
+                } else {
+                    html += `<p>Questão ${num}: <span style="color:red;font-weight:bold;">✗ Incorreto.</span> — ${explicacoes[q]}</p>`;
+                }
+            } else {
+                html += `<p>Questão ${num}: <span style="color:orange;font-weight:bold;">⚠ Não respondida.</span></p>`;
+            }
+        }
+        const r = document.getElementById("quiz-results");
+        r.innerHTML = `<h3>Sua pontuação: ${acertos} de ${total}</h3>${html}`;
+        r.style.display = "block";
+        r.scrollIntoView({ behavior:"smooth" });
+    }
+</script>
+
+</body>
+</html>

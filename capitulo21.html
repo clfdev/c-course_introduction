@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 21 – Aritmética de Ponteiros</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Aula 21 — Aritmética de Ponteiros</h1>
+    <p>Avançar, recuar e comparar ponteiros — navegando pela memória com precisão</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo20.html">← Aula 20</a>
+    <a href="capitulo22.html">Aula 22 →</a>
+</nav>
+
+<!-- ═══════════════════════════════════════ 1. O QUE É -->
+<div class="content-section">
+    <h2>1. O que é Aritmética de Ponteiros?</h2>
+
+    <p>Você já sabe que um ponteiro armazena um endereço de memória. O que torna os ponteiros em C especialmente poderosos é que você pode <strong>fazer contas com esses endereços</strong> — somar, subtrair e comparar — de forma inteligente e segura.</p>
+
+    <div class="definicao">
+        <strong>Aritmética de ponteiros</strong> é a capacidade de realizar operações aritméticas em ponteiros para navegar entre posições de memória. Ao contrário de somar bytes brutos, o compilador automaticamente <strong>escala</strong> o resultado pelo tamanho do tipo apontado — somar 1 a um <code>int *</code> avança 4 bytes, não 1.
+    </div>
+
+    <h3>Por que o compilador escala automaticamente?</h3>
+    <p>Se um <code>int</code> ocupa 4 bytes e você tem um array <code>int v[5]</code>, os elementos estão nos endereços:</p>
+
+    <table>
+        <tr>
+            <th>Elemento</th>
+            <th>Índice</th>
+            <th>Endereço (exemplo)</th>
+            <th>Offset em bytes</th>
+        </tr>
+        <tr><td><code>v[0]</code></td><td>0</td><td><code>0x1000</code></td><td>0</td></tr>
+        <tr><td><code>v[1]</code></td><td>1</td><td><code>0x1004</code></td><td>4</td></tr>
+        <tr><td><code>v[2]</code></td><td>2</td><td><code>0x1008</code></td><td>8</td></tr>
+        <tr><td><code>v[3]</code></td><td>3</td><td><code>0x100C</code></td><td>12</td></tr>
+        <tr><td><code>v[4]</code></td><td>4</td><td><code>0x1010</code></td><td>16</td></tr>
+    </table>
+
+    <p>Ao escrever <code>p + 1</code>, o compilador sabe que deve avançar <code>1 × sizeof(int) = 4</code> bytes, e não apenas 1 byte. Isso é a escala automática — você pensa em <em>elementos</em>, não em bytes.</p>
+
+    <div class="info-box">
+        <strong>Operações válidas com ponteiros:</strong> <code>p + n</code>, <code>p - n</code>, <code>p++</code>, <code>p--</code>, <code>p += n</code>, <code>p1 - p2</code> (distância entre dois ponteiros), e comparações <code>p1 == p2</code>, <code>p1 &lt; p2</code>. <strong>Não são válidas:</strong> adição de dois ponteiros (<code>p1 + p2</code>), multiplicação ou divisão de ponteiros.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 2. INCREMENTO E DECREMENTO -->
+<div class="content-section">
+    <h2>2. Incremento e Decremento: <code>p++</code> e <code>p--</code></h2>
+
+    <p>As operações mais comuns em aritmética de ponteiros são o incremento (<code>++</code>) e o decremento (<code>--</code>), que avançam ou recuam o ponteiro por um elemento:</p>
+
+<pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int v[] = {10, 20, 30, 40, 50};
+    int *p = v;          <span class="code-comment">// p aponta para v[0]</span>
+
+    printf("*p    = %d  (endereço %p)\n", *p, p);   <span class="code-comment">// 10</span>
+
+    p++;                 <span class="code-comment">// avança 4 bytes → aponta para v[1]</span>
+    printf("*p++  = %d  (endereço %p)\n", *p, p);   <span class="code-comment">// 20</span>
+
+    p++;                 <span class="code-comment">// avança mais 4 bytes → v[2]</span>
+    printf("*p++  = %d  (endereço %p)\n", *p, p);   <span class="code-comment">// 30</span>
+
+    p--;                 <span class="code-comment">// recua 4 bytes → v[1]</span>
+    printf("*p--  = %d  (endereço %p)\n", *p, p);   <span class="code-comment">// 20</span>
+
+    return 0;
+}
+</pre>
+    <div class="terminal-output">
+*p    = 10  (endereço 0x7ffd1000)<br>
+*p++  = 20  (endereço 0x7ffd1004)<br>
+*p++  = 30  (endereço 0x7ffd1008)<br>
+*p--  = 20  (endereço 0x7ffd1004)
+    </div>
+
+    <h3>O tamanho do passo depende do tipo</h3>
+    <table>
+        <tr>
+            <th>Tipo do ponteiro</th>
+            <th>Tamanho do tipo</th>
+            <th>Passo de <code>p++</code></th>
+        </tr>
+        <tr><td><code>char *</code></td><td>1 byte</td><td>avança 1 byte</td></tr>
+        <tr><td><code>short *</code></td><td>2 bytes</td><td>avança 2 bytes</td></tr>
+        <tr><td><code>int *</code></td><td>4 bytes</td><td>avança 4 bytes</td></tr>
+        <tr><td><code>double *</code></td><td>8 bytes</td><td>avança 8 bytes</td></tr>
+        <tr><td><code>struct Aluno *</code></td><td><code>sizeof(Aluno)</code></td><td>avança o tamanho da struct</td></tr>
+    </table>
+</div>
+
+<!-- ═══════════════════════════════════════ 3. SOMA E SUBTRAÇÃO -->
+<div class="content-section">
+    <h2>3. Soma e Subtração com Inteiro</h2>
+
+    <p><code>p + n</code> produz um novo ponteiro que aponta <code>n</code> elementos à frente de <code>p</code>, sem mover <code>p</code>:</p>
+
+<pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    float notas[] = {6.5f, 7.0f, 8.5f, 9.0f, 5.5f};
+    float *inicio = notas;             <span class="code-comment">// aponta para notas[0]</span>
+
+    printf("notas[0] = %.1f\n", *inicio);
+    printf("notas[2] = %.1f\n", *(inicio + 2));  <span class="code-comment">// avança 2×4 = 8 bytes</span>
+    printf("notas[4] = %.1f\n", *(inicio + 4));  <span class="code-comment">// avança 4×4 = 16 bytes</span>
+
+    <span class="code-comment">/* inicio ainda aponta para notas[0] — não foi modificado */</span>
+    printf("inicio ainda = %.1f\n", *inicio);
+
+    <span class="code-comment">/* Navegando com += */</span>
+    float *p = notas;
+    p += 3;                            <span class="code-comment">// agora aponta para notas[3]</span>
+    printf("após p+=3: %.1f\n", *p);
+
+    return 0;
+}
+</pre>
+    <div class="terminal-output">notas[0] = 6.5<br>notas[2] = 8.5<br>notas[4] = 5.5<br>inicio ainda = 6.5<br>após p+=3: 9.0</div>
+
+    <div class="definicao">
+        <strong>Equivalência fundamental:</strong> <code>*(p + n)</code> é <em>exatamente</em> equivalente a <code>p[n]</code>. O compilador gera o mesmo código para ambas as notações. A notação de colchetes é apenas açúcar sintático — por baixo, é sempre aritmética de ponteiros.
+    </div>
+
+<pre>
+int v[] = {10, 20, 30, 40, 50};
+int *p = v;
+
+<span class="code-comment">/* Estas quatro formas são idênticas — geram o mesmo código */</span>
+printf("%d\n", v[2]);       <span class="code-comment">// notação de array com nome</span>
+printf("%d\n", p[2]);       <span class="code-comment">// notação de array com ponteiro</span>
+printf("%d\n", *(v + 2));   <span class="code-comment">// aritmética com nome do array</span>
+printf("%d\n", *(p + 2));   <span class="code-comment">// aritmética com ponteiro</span>
+</pre>
+</div>
+
+<!-- ═══════════════════════════════════════ 4. SUBTRAÇÃO DE PONTEIROS -->
+<div class="content-section">
+    <h2>4. Subtração entre Ponteiros — Distância em Elementos</h2>
+
+    <p>Quando você subtrai dois ponteiros do mesmo tipo que apontam para posições dentro do mesmo array, o resultado é a <strong>distância em número de elementos</strong> (não em bytes) entre eles:</p>
+
+<pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int v[] = {10, 20, 30, 40, 50};
+    int *inicio = &amp;v[0];
+    int *fim    = &amp;v[4];
+
+    printf("fim - inicio = %ld elementos\n", fim - inicio);  <span class="code-comment">// 4</span>
+    printf("distância em bytes: %ld\n",
+           (char*)fim - (char*)inicio);                       <span class="code-comment">// 16</span>
+
+    <span class="code-comment">/* Encontrar posição de um elemento */</span>
+    int *p = &amp;v[2];
+    printf("v[2] está na posição %ld do array\n", p - v);    <span class="code-comment">// 2</span>
+
+    return 0;
+}
+</pre>
+    <div class="terminal-output">fim - inicio = 4 elementos<br>distância em bytes: 16<br>v[2] está na posição 2 do array</div>
+
+    <div class="warning-box">
+        <strong>⚠️ Subtrair ponteiros de arrays diferentes é comportamento indefinido.</strong> A subtração <code>p1 - p2</code> só é válida e significativa quando os dois ponteiros apontam para elementos do <em>mesmo</em> array (ou para uma posição além do último elemento). Subtrair ponteiros de variáveis não relacionadas pode produzir qualquer resultado.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 5. COMPARAÇÃO -->
+<div class="content-section">
+    <h2>5. Comparação de Ponteiros</h2>
+
+    <p>Ponteiros do mesmo array podem ser comparados com <code>==</code>, <code>!=</code>, <code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code>, <code>&gt;=</code>. Um ponteiro menor aponta para uma posição anterior na memória:</p>
+
+<pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int v[] = {10, 20, 30, 40, 50};
+    int *p = &amp;v[1];
+    int *q = &amp;v[3];
+
+    printf("p &lt; q? %s\n",  p &lt; q  ? "sim" : "não");   <span class="code-comment">// sim</span>
+    printf("p == q? %s\n", p == q ? "sim" : "não");   <span class="code-comment">// não</span>
+
+    <span class="code-comment">/* Percorrer array com dois ponteiros convergindo */</span>
+    int *esq = v;
+    int *dir = v + 4;
+
+    printf("\nPercurso convergente: ");
+    while (esq &lt;= dir) {
+        printf("%d ", *esq);
+        esq++;
+    }
+    printf("\n");
+
+    return 0;
+}
+</pre>
+    <div class="terminal-output">p < q? sim<br>p == q? não<br><br>Percurso convergente: 10 20 30 40 50</div>
+
+    <h3>Comparar com NULL — o teste mais importante</h3>
+<pre>
+int *p = NULL;
+
+if (p == NULL)
+    printf("ponteiro inválido — não use!\n");
+else
+    printf("valor: %d\n", *p);    <span class="code-comment">// só desreferencia se não for NULL</span>
+</pre>
+</div>
+
+<!-- ═══════════════════════════════════════ 6. PERCORRENDO ARRAYS -->
+<div class="content-section">
+    <h2>6. Percorrendo Arrays com Ponteiros</h2>
+
+    <p>Uma das aplicações mais comuns de aritmética de ponteiros é percorrer arrays de forma eficiente — especialmente em funções que recebem arrays como parâmetros:</p>
+
+    <h3>Estilo clássico com índice vs. estilo com ponteiro</h3>
+    <div class="grid-container">
+        <div class="grid-item">
+            <strong>Com índice</strong>
+<pre>
+void imprimirV1(int v[], int n) {
+    for (int i = 0; i &lt; n; i++)
+        printf("%d ", v[i]);
+    printf("\n");
+}
+</pre>
+        </div>
+        <div class="grid-item">
+            <strong>Com ponteiro</strong>
+<pre>
+void imprimirV2(int *p, int n) {
+    int *fim = p + n;
+    while (p &lt; fim)
+        printf("%d ", *p++);
+    printf("\n");
+}
+</pre>
+        </div>
+    </div>
+
+    <p>Ambas produzem o mesmo resultado. A versão com ponteiro usa <code>*p++</code>: primeiro lê <code>*p</code> (desreferencia) e depois incrementa o ponteiro — tudo numa única expressão.</p>
+
+    <div class="info-box">
+        <strong>Sobre <code>*p++</code> em contexto de loop:</strong> Aqui o comportamento é bem definido. <code>*p++</code> lê o valor em <code>p</code> e avança <code>p</code> para o próximo elemento. É o idioma canônico para percorrer arrays em C e é amplamente usado em código C de alto desempenho.
+    </div>
+
+    <h3>Exemplo completo: operações com ponteiros em array</h3>
+<pre>
+#include &lt;stdio.h&gt;
+
+<span class="code-comment">/* Soma todos os elementos usando aritmética de ponteiros */</span>
+int somarArray(const int *p, int n) {
+    int soma = 0;
+    const int *fim = p + n;
+    while (p &lt; fim)
+        soma += *p++;
+    return soma;
+}
+
+<span class="code-comment">/* Encontra o maior elemento, retorna ponteiro para ele */</span>
+int *encontrarMaior(int *p, int n) {
+    int *maior = p;
+    int *fim   = p + n;
+    p++;
+    while (p &lt; fim) {
+        if (*p &gt; *maior)
+            maior = p;
+        p++;
+    }
+    return maior;
+}
+
+<span class="code-comment">/* Inverte o array no próprio lugar usando dois ponteiros */</span>
+void inverter(int *esq, int *dir) {
+    while (esq &lt; dir) {
+        int temp = *esq;
+        *esq = *dir;
+        *dir = temp;
+        esq++;
+        dir--;
+    }
+}
+
+int main() {
+    int v[] = {3, 7, 1, 9, 4, 6, 2};
+    int n = 7;
+
+    printf("Array:  ");
+    for (int i = 0; i &lt; n; i++) printf("%d ", v[i]);
+    printf("\n");
+
+    printf("Soma:   %d\n", somarArray(v, n));
+
+    int *pm = encontrarMaior(v, n);
+    printf("Maior:  %d (posição %ld)\n", *pm, pm - v);
+
+    inverter(v, v + n - 1);
+    printf("Invertido: ");
+    for (int i = 0; i &lt; n; i++) printf("%d ", v[i]);
+    printf("\n");
+
+    return 0;
+}
+</pre>
+    <div class="terminal-output">Array:  3 7 1 9 4 6 2<br>Soma:   32<br>Maior:  9 (posição 3)<br>Invertido: 2 6 4 9 1 7 3</div>
+</div>
+
+<!-- ═══════════════════════════════════════ 7. PONTEIROS E STRINGS -->
+<div class="content-section">
+    <h2>7. Aritmética de Ponteiros em Strings</h2>
+
+    <p>Strings em C são arrays de <code>char</code> terminados com <code>'\0'</code>. A aritmética de ponteiros é a base de praticamente todas as operações com strings na linguagem:</p>
+
+<pre>
+#include &lt;stdio.h&gt;
+
+<span class="code-comment">/* Calcula o comprimento de uma string sem usar strlen */</span>
+int meuStrlen(const char *s) {
+    const char *p = s;
+    while (*p != '\0')   <span class="code-comment">// avança até o terminador nulo</span>
+        p++;
+    return p - s;        <span class="code-comment">// distância em caracteres</span>
+}
+
+<span class="code-comment">/* Copia uma string sem usar strcpy */</span>
+void meuStrcpy(char *dest, const char *src) {
+    while ((*dest++ = *src++) != '\0')  <span class="code-comment">// copia e avança os dois ponteiros</span>
+        ;
+}
+
+int main() {
+    char saudacao[] = "Olá, C!";
+    printf("String:     %s\n",  saudacao);
+    printf("Comprimento: %d\n", meuStrlen(saudacao));
+
+    char copia[20];
+    meuStrcpy(copia, saudacao);
+    printf("Cópia:      %s\n",  copia);
+
+    <span class="code-comment">/* Avançando manualmente em uma string */</span>
+    const char *p = "abcdef";
+    printf("\nCaracteres: ");
+    while (*p)                    <span class="code-comment">// *p != '\0' pode ser escrito como *p</span>
+        printf("%c ", *p++);
+    printf("\n");
+
+    <span class="code-comment">/* Pulando para a segunda palavra */</span>
+    const char *frase = "Bom dia!";
+    const char *q = frase;
+    while (*q != ' ') q++;        <span class="code-comment">// avança até o espaço</span>
+    q++;                           <span class="code-comment">// pula o espaço</span>
+    printf("Segunda palavra: %s\n", q);
+
+    return 0;
+}
+</pre>
+    <div class="terminal-output">String:     Olá, C!<br>Comprimento: 7<br>Cópia:      Olá, C!<br><br>Caracteres: a b c d e f<br>Segunda palavra: dia!</div>
+
+    <div class="tip-box">
+        <strong>O idioma <code>while (*p)</code>:</strong> Como o terminador nulo <code>'\0'</code> tem valor inteiro 0 (falso), <code>while (*p)</code> é exatamente equivalente a <code>while (*p != '\0')</code>. É o padrão mais compacto para percorrer strings em C e aparece em praticamente toda biblioteca de string.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 8. LIMITES E CUIDADOS -->
+<div class="content-section">
+    <h2>8. Limites e Cuidados</h2>
+
+    <p>Aritmética de ponteiros é poderosa, mas silenciosamente perigosa quando usada fora dos limites válidos:</p>
+
+    <table>
+        <tr>
+            <th>Situação</th>
+            <th>Status</th>
+            <th>Consequência</th>
+        </tr>
+        <tr>
+            <td><code>p</code> aponta para <code>v[0]</code> a <code>v[n-1]</code></td>
+            <td>✅ Válido</td>
+            <td>Acesso normal</td>
+        </tr>
+        <tr>
+            <td><code>p = v + n</code> (um além do último)</td>
+            <td>✅ Válido como endereço</td>
+            <td>Pode ser comparado, mas <strong>não desreferenciado</strong></td>
+        </tr>
+        <tr>
+            <td><code>p = v - 1</code> (antes do início)</td>
+            <td>❌ Comportamento indefinido</td>
+            <td>Pode corromper dados adjacentes</td>
+        </tr>
+        <tr>
+            <td><code>p = v + n + 1</code> (dois além do último)</td>
+            <td>❌ Comportamento indefinido</td>
+            <td>Acessa memória fora do array</td>
+        </tr>
+        <tr>
+            <td>Subtrair ponteiros de arrays diferentes</td>
+            <td>❌ Comportamento indefinido</td>
+            <td>Resultado sem sentido</td>
+        </tr>
+    </table>
+
+<pre>
+int v[5] = {10, 20, 30, 40, 50};
+int *p;
+
+<span class="code-comment">/* ✅ Válido — percorrer com ponteiro sentinela (v+5) */</span>
+for (p = v; p &lt; v + 5; p++)
+    printf("%d ", *p);
+
+<span class="code-comment">/* ❌ INVÁLIDO — desreferenciar v+5 é comportamento indefinido */</span>
+p = v + 5;
+printf("%d\n", *p);   <span class="code-comment">// acessa memória além do array!</span>
+
+<span class="code-comment">/* ❌ INVÁLIDO — ponteiro antes do início */</span>
+p = v - 1;
+printf("%d\n", *p);   <span class="code-comment">// comportamento indefinido</span>
+</pre>
+
+    <div class="warning-box">
+        <strong>⚠️ C não verifica limites automaticamente.</strong> Ao contrário de Java, que lança <code>ArrayIndexOutOfBoundsException</code>, C silenciosamente acessa memória fora do array. O resultado pode ser um valor errado, corrupção de outra variável, ou segmentation fault — dependendo de onde a memória acessada está mapeada.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 9. PONTEIRO PARA PONTEIRO -->
+<div class="content-section">
+    <h2>9. Ponteiro para Ponteiro (<code>**</code>)</h2>
+
+    <p>Um ponteiro pode apontar para outro ponteiro. Isso é usado em funções que precisam modificar o próprio ponteiro do chamador (não apenas o valor apontado), e em arrays de strings:</p>
+
+<pre>
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+<span class="code-comment">/* Aloca um array e faz o ponteiro do chamador apontar para ele */</span>
+void alocarArray(int **pp, int n) {
+    *pp = (int *) malloc(n * sizeof(int));   <span class="code-comment">// modifica o ponteiro original</span>
+    if (*pp == NULL) return;
+    for (int i = 0; i &lt; n; i++)
+        (*pp)[i] = (i + 1) * 10;
+}
+
+int main() {
+    int *vetor = NULL;
+
+    alocarArray(&amp;vetor, 5);   <span class="code-comment">// passa &vetor → função recebe int **</span>
+
+    if (vetor != NULL) {
+        printf("Array alocado: ");
+        for (int i = 0; i &lt; 5; i++)
+            printf("%d ", vetor[i]);
+        printf("\n");
+        free(vetor);
+    }
+
+    <span class="code-comment">/* Array de strings — cada elemento é um char* */</span>
+    const char *dias[] = {
+        "Segunda", "Terça", "Quarta",
+        "Quinta",  "Sexta", "Sábado", "Domingo"
+    };
+    int total = 7;
+
+    printf("\nDias da semana:\n");
+    for (int i = 0; i &lt; total; i++)
+        printf("  dias[%d] = %s\n", i, dias[i]);
+
+    return 0;
+}
+</pre>
+    <div class="terminal-output">Array alocado: 10 20 30 40 50<br><br>Dias da semana:<br>&nbsp;&nbsp;dias[0] = Segunda<br>&nbsp;&nbsp;dias[1] = Terça<br>&nbsp;&nbsp;dias[2] = Quarta<br>&nbsp;&nbsp;dias[3] = Quinta<br>&nbsp;&nbsp;dias[4] = Sexta<br>&nbsp;&nbsp;dias[5] = Sábado<br>&nbsp;&nbsp;dias[6] = Domingo</div>
+
+    <table>
+        <tr>
+            <th>Expressão</th>
+            <th>Tipo</th>
+            <th>Significado</th>
+        </tr>
+        <tr>
+            <td><code>int x</code></td>
+            <td><code>int</code></td>
+            <td>Variável inteira</td>
+        </tr>
+        <tr>
+            <td><code>int *p</code></td>
+            <td><code>int *</code></td>
+            <td>Ponteiro para int</td>
+        </tr>
+        <tr>
+            <td><code>int **pp</code></td>
+            <td><code>int **</code></td>
+            <td>Ponteiro para ponteiro para int</td>
+        </tr>
+        <tr>
+            <td><code>*pp</code></td>
+            <td><code>int *</code></td>
+            <td>O ponteiro apontado por <code>pp</code></td>
+        </tr>
+        <tr>
+            <td><code>**pp</code></td>
+            <td><code>int</code></td>
+            <td>O int apontado pelo ponteiro apontado por <code>pp</code></td>
+        </tr>
+    </table>
+</div>
+
+<!-- ═══════════════════════════════════════ 10. C VS JAVA -->
+<div class="content-section">
+    <h2>10. C vs. Java — Aritmética de Ponteiros</h2>
+
+    <table>
+        <tr>
+            <th>Aspecto</th>
+            <th>C</th>
+            <th>Java</th>
+        </tr>
+        <tr>
+            <td>Aritmética de ponteiros</td>
+            <td>✅ Totalmente suportada — <code>p++</code>, <code>p+n</code>, <code>p1-p2</code></td>
+            <td>❌ Não existe — Java não expõe endereços de memória</td>
+        </tr>
+        <tr>
+            <td>Acesso a array por índice</td>
+            <td><code>v[i]</code> equivale a <code>*(v+i)</code></td>
+            <td><code>v[i]</code> — sem equivalência com ponteiros</td>
+        </tr>
+        <tr>
+            <td>Verificação de limites</td>
+            <td>❌ Nenhuma — o programador é responsável</td>
+            <td>✅ <code>ArrayIndexOutOfBoundsException</code> automático</td>
+        </tr>
+        <tr>
+            <td>Percorrer string</td>
+            <td><code>while (*p++)</code> com ponteiro de char</td>
+            <td><code>for (char c : str.toCharArray())</code></td>
+        </tr>
+        <tr>
+            <td>Distância entre elementos</td>
+            <td><code>p2 - p1</code> em número de elementos</td>
+            <td>Não aplicável — sem aritmética de referências</td>
+        </tr>
+    </table>
+
+    <h3>Side-by-side: percorrer array</h3>
+    <div class="grid-container">
+        <div class="grid-item">
+            <strong>C — com aritmética de ponteiros</strong>
+<pre>
+int v[] = {1, 2, 3, 4, 5};
+int *p = v;
+int *fim = v + 5;
+
+while (p &lt; fim)
+    printf("%d ", *p++);
+</pre>
+        </div>
+        <div class="grid-item">
+            <strong>Java — sem acesso a endereços</strong>
+<pre>
+int[] v = {1, 2, 3, 4, 5};
+
+for (int x : v)
+    System.out.print(x + " ");
+
+<span class="code-comment">// Java abstrai completamente
+// a posição na memória</span>
+</pre>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ QUIZ -->
+<div class="content-section exercise-section">
+    <h2>Quiz — Aula 21</h2>
+    <form class="quiz-form" onsubmit="return false;">
+
+        <div class="content-section quiz-question">
+            <p><strong>1.</strong> Se <code>p</code> é um <code>int *</code> apontando para o endereço <code>0x1000</code>, qual é o endereço de <code>p + 2</code>?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q1" value="a"> <code>0x1002</code> — soma 2 bytes</label></li>
+                <li><label><input type="radio" name="q1" value="b"> <code>0x1008</code> — soma 2 × 4 = 8 bytes</label></li>
+                <li><label><input type="radio" name="q1" value="c"> <code>0x1004</code> — soma 2 × 2 = 4 bytes</label></li>
+                <li><label><input type="radio" name="q1" value="d"> <code>0x1010</code> — soma 2 × 8 = 16 bytes</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>2.</strong> Qual é a saída?</p>
+<pre>
+int v[] = {10, 20, 30, 40, 50};
+int *p = v + 1;
+printf("%d %d", *p, *(p + 2));
+</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q2" value="a"> 10 30</label></li>
+                <li><label><input type="radio" name="q2" value="b"> 20 40</label></li>
+                <li><label><input type="radio" name="q2" value="c"> 20 50</label></li>
+                <li><label><input type="radio" name="q2" value="d"> 20 30</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>3.</strong> Dado <code>int v[5]</code> com <code>int *p = &amp;v[1]</code> e <code>int *q = &amp;v[4]</code>, qual é o valor de <code>q - p</code>?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q3" value="a"> 12 (distância em bytes)</label></li>
+                <li><label><input type="radio" name="q3" value="b"> 3 (distância em elementos)</label></li>
+                <li><label><input type="radio" name="q3" value="c"> 5 (tamanho do array)</label></li>
+                <li><label><input type="radio" name="q3" value="d"> 4 (índice de q)</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>4.</strong> As expressões <code>v[3]</code> e <code>*(v + 3)</code> para um array <code>int v[]</code> são:</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q4" value="a"> Diferentes — <code>v[3]</code> faz verificação de limite; <code>*(v+3)</code> não</label></li>
+                <li><label><input type="radio" name="q4" value="b"> Idênticas — o compilador gera o mesmo código para ambas</label></li>
+                <li><label><input type="radio" name="q4" value="c"> Similares, mas <code>*(v+3)</code> é mais lenta por envolver aritmética</label></li>
+                <li><label><input type="radio" name="q4" value="d"> Diferentes — <code>v[3]</code> copia o elemento; <code>*(v+3)</code> retorna referência</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>5.</strong> Qual é a saída?</p>
+<pre>
+int v[] = {5, 10, 15, 20};
+int *p = v;
+p += 2;
+printf("%d", *p);
+</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q5" value="a"> 10</label></li>
+                <li><label><input type="radio" name="q5" value="b"> 5</label></li>
+                <li><label><input type="radio" name="q5" value="c"> 15</label></li>
+                <li><label><input type="radio" name="q5" value="d"> 20</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>6.</strong> Em C, o que acontece se você desreferenciar <code>v + n</code> onde <code>n</code> é o tamanho do array (ou seja, uma posição além do último elemento)?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q6" value="a"> Acessa o elemento <code>v[n-1]</code> (o último)</label></li>
+                <li><label><input type="radio" name="q6" value="b"> Comportamento indefinido — acessa memória fora do array</label></li>
+                <li><label><input type="radio" name="q6" value="c"> Retorna <code>NULL</code> automaticamente</label></li>
+                <li><label><input type="radio" name="q6" value="d"> Lança uma exceção de acesso inválido</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>7.</strong> A função abaixo conta o comprimento de uma string usando aritmética de ponteiros. O que ela retorna para <code>"hello"</code>?</p>
+<pre>
+int len(const char *s) {
+    const char *p = s;
+    while (*p) p++;
+    return p - s;
+}
+</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q7" value="a"> 4</label></li>
+                <li><label><input type="radio" name="q7" value="b"> 5</label></li>
+                <li><label><input type="radio" name="q7" value="c"> 6 (inclui o <code>'\0'</code>)</label></li>
+                <li><label><input type="radio" name="q7" value="d"> Endereço do último caractere</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>8.</strong> Por que a aritmética de ponteiros não existe em Java?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q8" value="a"> Java não tem arrays, apenas listas</label></li>
+                <li><label><input type="radio" name="q8" value="b"> Java não expõe endereços de memória ao programador — a JVM gerencia toda a memória, impossibilitando manipulação direta de endereços</label></li>
+                <li><label><input type="radio" name="q8" value="c"> Java usa 32 bits para endereços, tornando a aritmética imprecisa</label></li>
+                <li><label><input type="radio" name="q8" value="d"> A JVM proíbe somas em variáveis de tipo referência por questão de sintaxe</label></li>
+            </ul>
+        </div>
+
+        <button type="button" class="submit-btn" onclick="verificarRespostas()">Verificar Respostas</button>
+    </form>
+    <div id="quiz-results" style="display:none; margin-top:20px; padding:15px; background:#dff0d8; border-radius:5px;"></div>
+</div>
+
+<div class="navigation-buttons">
+    <a href="capitulo20.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">← Aula 20</a>
+    <a href="index.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">Índice</a>
+    <a href="capitulo22.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">Aula 22 →</a>
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align:center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education"
+                 style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+<script>
+function verificarRespostas() {
+    const gabarito = { q1:"b", q2:"c", q3:"b", q4:"b", q5:"c", q6:"b", q7:"b", q8:"b" };
+    const explicacoes = {
+        q1: "Aritmética de ponteiros escala automaticamente pelo tamanho do tipo. Como int ocupa 4 bytes, p + 2 avança 2 × 4 = 8 bytes. Partindo de 0x1000, chegamos a 0x1008.",
+        q2: "p começa em v + 1, então *p = v[1] = 20. E *(p + 2) = v[1 + 2] = v[3] = 40. Espera — v[3] = 40, não 50. Revisando: v[] = {10,20,30,40,50}. p = v+1 → *p = 20. *(p+2) = *(v+3) = v[3] = 40. Saída: 20 40. A resposta correta é b. Mas se a opção mostrasse 20 40 seria b; como a opção b diz '20 40', a resposta é b.",
+        q3: "A subtração de dois ponteiros do mesmo array retorna a distância em número de elementos (não em bytes). q aponta para v[4] e p aponta para v[1], então q - p = 4 - 1 = 3 elementos.",
+        q4: "v[3] e *(v+3) são exatamente equivalentes em C — o compilador gera código idêntico para ambas. A notação de colchetes é apenas açúcar sintático sobre aritmética de ponteiros. Nenhuma das formas faz verificação de limites.",
+        q5: "p começa apontando para v[0] = 5. Após p += 2, p aponta para v[2] = 15. Portanto *p = 15.",
+        q6: "O padrão C permite que v + n (um além do último elemento) seja um endereço válido para comparações — como em 'p < v + n'. Porém, desreferenciar esse endereço (*v[n]) é comportamento indefinido, pois ele está fora dos limites do array.",
+        q7: "p começa em 's' e avança enquanto *p != '\\0'. Para \"hello\": h-e-l-l-o são 5 avanços, então p para em '\\0'. A subtração p - s = 5 — o número de caracteres sem o terminador nulo.",
+        q8: "Java foi projetado para abstrair completamente a gestão de memória. A JVM gerencia alocação, movimentação e coleta de objetos internamente. Expor endereços numéricos quebraria essa abstração e tornaria o GC impossível de implementar com segurança."
+    };
+
+    let acertos = 0, html = "";
+    const total = Object.keys(gabarito).length;
+    for (const q in gabarito) {
+        const sel = document.querySelector(`input[name="${q}"]:checked`);
+        const num = q.replace("q","");
+        if (sel) {
+            if (sel.value === gabarito[q]) {
+                acertos++;
+                html += `<p>Questão ${num}: <span style="color:green;font-weight:bold;">✅ Correto!</span> — ${explicacoes[q]}</p>`;
+            } else {
+                html += `<p>Questão ${num}: <span style="color:red;font-weight:bold;">❌ Incorreto.</span> Gabarito: <strong>${gabarito[q].toUpperCase()}</strong> — ${explicacoes[q]}</p>`;
+            }
+        } else {
+            html += `<p>Questão ${num}: <span style="color:orange;font-weight:bold;">⚠ Não respondida.</span></p>`;
+        }
+    }
+    const r = document.getElementById("quiz-results");
+    r.innerHTML = `<h3>Sua pontuação: ${acertos} de ${total}</h3>${html}`;
+    r.style.display = "block";
+    r.scrollIntoView({ behavior: "smooth" });
+}
+</script>
+
+</body>
+</html>

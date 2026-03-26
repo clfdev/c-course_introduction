@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 34 – Busca Sequencial: com e sem Sentinela</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Aula 34 – Busca Sequencial: com e sem Sentinela</h1>
+    <p>Duas formas de procurar um elemento na lista — e um truque clássico para otimizar o loop de busca</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo33.html">← Aula 33</a>
+    <a href="capitulo35.html">Aula 35 →</a>
+</nav>
+
+<!-- ═══════════════════════════════════════ BUSCA SEQUENCIAL -->
+<div class="content-section">
+    <h2>Busca Sequencial — A Ideia</h2>
+    <p>A busca mais simples possível: percorrer a lista do início ao fim, comparando cada elemento com a chave procurada. Se encontrar, retorna o índice. Se chegar ao final sem encontrar, retorna <code>ERRO</code>.</p>
+
+    <div class="definicao">
+        A <strong>busca sequencial</strong> (ou busca linear) percorre os elementos um a um em ordem. Não exige que a lista esteja ordenada. Tem complexidade O(n) — no pior caso, examina todos os n elementos.
+    </div>
+
+    <p>Comparação direta com Java:</p>
+
+    <table>
+        <tr><th>Operação</th><th>C (nossa lista)</th><th>Java (ArrayList)</th></tr>
+        <tr>
+            <td>Busca por valor</td>
+            <td><code>buscaSequencial(&amp;lista, 4)</code> → retorna índice ou -1</td>
+            <td><code>lista.indexOf(4)</code> → retorna índice ou -1</td>
+        </tr>
+        <tr>
+            <td>Algoritmo interno</td>
+            <td>Explícito — você escreve o while</td>
+            <td>Oculto — ArrayList faz internamente</td>
+        </tr>
+        <tr>
+            <td>Exige lista ordenada?</td>
+            <td>Não</td>
+            <td>Não</td>
+        </tr>
+        <tr>
+            <td>Complexidade</td>
+            <td>O(n)</td>
+            <td>O(n)</td>
+        </tr>
+    </table>
+</div>
+
+<!-- ═══════════════════════════════════════ VERSÃO SEM SENTINELA -->
+<div class="content-section">
+    <h2>Versão 1 — Busca Sequencial <em>sem</em> Sentinela</h2>
+    <p>Esta é a implementação direta e natural:</p>
+
+    <pre>
+int buscaSequencial(LISTA* l, TIPOCHAVE ch) {
+    int i = 0;
+    while (i &lt; l-&gt;nroElem) {
+        if (ch == l-&gt;A[i].chave) return i;  <span class="code-comment">// achou — retorna o índice</span>
+        else i++;
+    }
+    return ERRO;  <span class="code-comment">// não achou — retorna -1</span>
+} <span class="code-comment">/* buscaSequencial */</span></pre>
+
+    <p>A cada iteração do <code>while</code>, o loop faz <strong>duas verificações</strong>:</p>
+
+    <div class="grid-container">
+        <div class="grid-item">
+            <strong>Verificação 1 (limite):</strong><br>
+            <code>i &lt; l-&gt;nroElem</code><br><br>
+            Garante que não passamos do final da lista.
+        </div>
+        <div class="grid-item">
+            <strong>Verificação 2 (chave):</strong><br>
+            <code>ch == l-&gt;A[i].chave</code><br><br>
+            Verifica se encontramos o elemento.
+        </div>
+    </div>
+
+    <p>Para uma lista com <code>n</code> elementos onde a chave não existe, são feitas <strong>2n comparações</strong> no total. É aqui que entra a otimização com sentinela.</p>
+</div>
+
+<!-- ═══════════════════════════════════════ VERSÃO COM SENTINELA -->
+<div class="content-section">
+    <h2>Versão 2 — Busca Sequencial <em>com</em> Sentinela</h2>
+    <p>A ideia é elegante: colocamos a própria chave procurada na posição <code>A[nroElem]</code> (a posição "extra" que reservamos com <code>MAX+1</code>). Isso <em>garante</em> que a chave sempre será encontrada em algum ponto — então o <code>while</code> não precisa mais verificar o limite!</p>
+
+    <pre>
+int buscaSentinela(LISTA* l, TIPOCHAVE ch) {
+    int i = 0;
+    l-&gt;A[l-&gt;nroElem].chave = ch;  <span class="code-comment">// coloca a sentinela na posição extra</span>
+
+    while (l-&gt;A[i].chave != ch) i++;  <span class="code-comment">// uma única verificação por iteração!</span>
+
+    if (i &gt; l-&gt;nroElem - 1) return ERRO;  <span class="code-comment">// parou na sentinela — não achou</span>
+    else return i;                          <span class="code-comment">// parou antes — achou de verdade</span>
+} <span class="code-comment">/* buscaSentinela */</span></pre>
+
+    <div class="tip-box">
+        <strong>Como a sentinela funciona:</strong> Se a chave existe na lista, o <code>while</code> para nessa posição (antes de <code>nroElem</code>). Se não existe, o <code>while</code> para na sentinela (posição <code>nroElem</code>). Em ambos os casos, o loop <em>sempre termina</em> — sem precisar verificar <code>i &lt; nroElem</code>.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ COMPARAÇÃO LADO A LADO -->
+<div class="content-section">
+    <h2>Comparação lado a lado</h2>
+
+    <table>
+        <tr><th></th><th>Sem sentinela</th><th>Com sentinela</th></tr>
+        <tr>
+            <td>Verificações por iteração</td>
+            <td>2 (limite + chave)</td>
+            <td>1 (só chave)</td>
+        </tr>
+        <tr>
+            <td>Condição do while</td>
+            <td><code>i &lt; nroElem &amp;&amp; A[i] != ch</code></td>
+            <td><code>A[i] != ch</code></td>
+        </tr>
+        <tr>
+            <td>Exige posição extra no array?</td>
+            <td>Não — funciona com <code>A[MAX]</code></td>
+            <td>Sim — exige <code>A[MAX+1]</code></td>
+        </tr>
+        <tr>
+            <td>Complexidade</td>
+            <td>O(n)</td>
+            <td>O(n)</td>
+        </tr>
+        <tr>
+            <td>Velocidade prática</td>
+            <td>Base</td>
+            <td>Ligeiramente mais rápida (metade das comparações)</td>
+        </tr>
+        <tr>
+            <td>Exige lista ordenada?</td>
+            <td>Não</td>
+            <td>Não</td>
+        </tr>
+    </table>
+
+    <div class="warning-box">
+        <strong>Sentinela não é busca binária!</strong> Ambas as versões continuam sendo O(n) — percorrem um elemento por vez. A diferença é apenas uma otimização de constante: menos comparações por iteração. Busca binária (Aula 35) tem complexidade O(log n) — mas exige lista ordenada.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ EXEMPLO COMPLETO -->
+<div class="content-section">
+    <h2>Exemplo Completo de Uso</h2>
+
+    <pre>
+int main() {
+    LISTA lista;
+    inicializarLista(&amp;lista);
+
+    REGISTRO reg;
+    reg.chave=9;  inserirElemLista(&amp;lista, reg, 0);
+    reg.chave=3;  inserirElemLista(&amp;lista, reg, 1);
+    reg.chave=4;  inserirElemLista(&amp;lista, reg, 2);
+    reg.chave=1;  inserirElemLista(&amp;lista, reg, 3);
+    reg.chave=12; inserirElemLista(&amp;lista, reg, 2);  <span class="code-comment">// insere 12 na posição 2</span>
+
+    exibirLista(&amp;lista);
+    <span class="code-comment">// Lista: " 9 3 12 4 1 "</span>
+
+    printf("Busca por 4 (sem sentinela): posição %d\n",
+           buscaSequencial(&amp;lista, 4));
+    printf("Busca por 4 (com sentinela): posição %d\n",
+           buscaSentinela(&amp;lista, 4));
+    printf("Busca por 99 (inexistente):  posição %d\n",
+           buscaSequencial(&amp;lista, 99));
+
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>Lista: " 9 3 12 4 1 "</p>
+        <p>Busca por 4 (sem sentinela): posição 3</p>
+        <p>Busca por 4 (com sentinela): posição 3</p>
+        <p>Busca por 99 (inexistente):  posição -1</p>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ EXERCÍCIOS -->
+<div class="exercise-section">
+    <h2>Exercícios — Aula 34</h2>
+
+    <form class="quiz-form" id="quiz-form">
+
+        <div class="quiz-question">
+            <p><strong>1. Qual é a complexidade da busca sequencial sem sentinela para uma lista de n elementos?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q1" value="a"> O(1)</label></li>
+                <li><label><input type="radio" name="q1" value="b"> O(log n)</label></li>
+                <li><label><input type="radio" name="q1" value="c"> O(n)</label></li>
+                <li><label><input type="radio" name="q1" value="d"> O(n²)</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>2. Por que a busca com sentinela não precisa verificar <code>i &lt; nroElem</code> dentro do while?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q2" value="a"> Porque a sentinela garante que a chave sempre estará presente em alguma posição, então o loop sempre para</label></li>
+                <li><label><input type="radio" name="q2" value="b"> Porque arrays em C verificam limites automaticamente</label></li>
+                <li><label><input type="radio" name="q2" value="c"> Porque a lista está sempre ordenada</label></li>
+                <li><label><input type="radio" name="q2" value="d"> Porque o compilador adiciona essa verificação implicitamente</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>3. Onde a sentinela é colocada e por que isso exige <code>A[MAX+1]</code>?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q3" value="a"> Na posição 0, e por isso A precisa de uma posição extra no início</label></li>
+                <li><label><input type="radio" name="q3" value="b"> Na posição <code>nroElem</code> — a primeira posição livre, que seria fora de A[MAX] sem o +1</label></li>
+                <li><label><input type="radio" name="q3" value="c"> Na posição MAX-1, que sempre existe no array</label></li>
+                <li><label><input type="radio" name="q3" value="d"> Em uma variável global separada, não no array</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>4. A busca com sentinela encontrou o elemento na posição <code>i = nroElem</code>. O que isso significa?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q4" value="a"> O elemento foi encontrado na última posição válida da lista</label></li>
+                <li><label><input type="radio" name="q4" value="b"> O elemento não existe na lista — o loop parou na sentinela</label></li>
+                <li><label><input type="radio" name="q4" value="c"> A lista está cheia</label></li>
+                <li><label><input type="radio" name="q4" value="d"> A lista tem apenas um elemento</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>5. A busca com sentinela é mais rápida que a busca binária?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q5" value="a"> Sim — a sentinela elimina uma comparação por iteração</label></li>
+                <li><label><input type="radio" name="q5" value="b"> Depende — para listas pequenas pode ser, mas para listas grandes a binária é muito superior (O(log n) vs O(n))</label></li>
+                <li><label><input type="radio" name="q5" value="c"> São iguais — ambas têm complexidade O(n)</label></li>
+                <li><label><input type="radio" name="q5" value="d"> Nunca — a sentinela sempre é mais lenta</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>6. Qual função do Java é conceitualmente mais próxima de <code>buscaSequencial(&amp;lista, 4)</code>?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q6" value="a"> <code>Collections.binarySearch(lista, 4)</code></label></li>
+                <li><label><input type="radio" name="q6" value="b"> <code>lista.indexOf(4)</code></label></li>
+                <li><label><input type="radio" name="q6" value="c"> <code>lista.get(4)</code></label></li>
+                <li><label><input type="radio" name="q6" value="d"> <code>lista.contains(4)</code></label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>7. A busca sequencial (sem sentinela) exige que a lista esteja ordenada?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q7" value="a"> Sim — funciona apenas em listas ordenadas crescentes</label></li>
+                <li><label><input type="radio" name="q7" value="b"> Não — funciona em qualquer ordem, pois compara todos os elementos</label></li>
+                <li><label><input type="radio" name="q7" value="c"> Sim — mas aceita ordem crescente ou decrescente</label></li>
+                <li><label><input type="radio" name="q7" value="d"> Não — mas é mais eficiente em listas ordenadas</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>8. Analise o código da busca sem sentinela. Se a lista tem nroElem=0 e chamamos buscaSequencial, o que acontece?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q8" value="a"> Acessa A[0] e retorna lixo de memória</label></li>
+                <li><label><input type="radio" name="q8" value="b"> A condição <code>i &lt; l-&gt;nroElem</code> (0 &lt; 0) já é falsa — o while não executa e retorna ERRO</label></li>
+                <li><label><input type="radio" name="q8" value="c"> Entra em loop infinito</label></li>
+                <li><label><input type="radio" name="q8" value="d"> Causa erro de segmentação</label></li>
+            </ul>
+        </div>
+
+        <button type="button" class="submit-btn" onclick="verificarRespostas()">Verificar Respostas</button>
+    </form>
+
+    <div id="quiz-results" style="display:none; margin-top:20px; padding:15px; background-color:#dff0d8; border-radius:5px;"></div>
+</div>
+
+<div class="navigation-buttons">
+    <a href="capitulo33.html">← Aula 33</a>
+    <a href="index.html">Índice</a>
+    <a href="capitulo35.html">Aula 35 →</a>
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align: center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education" style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+<script>
+    function verificarRespostas() {
+        const gabarito = { q1:"c", q2:"a", q3:"b", q4:"b", q5:"b", q6:"b", q7:"b", q8:"b" };
+        const explicacoes = {
+            q1: "A busca sequencial percorre no máximo n elementos — sua complexidade é O(n). Para encontrar o elemento na última posição ou quando ele não existe, todos os n elementos são examinados.",
+            q2: "A sentinela (A[nroElem] = ch) garante que a chave sempre estará no array em alguma posição. O while SEMPRE vai parar — seja antes de nroElem (achou) ou exatamente em nroElem (não achou). Sem risco de loop infinito.",
+            q3: "A sentinela é colocada em A[nroElem] — a primeira posição além dos elementos válidos. Sem o +1 no array (A[MAX+1]), essa posição seria fora dos limites do array, causando comportamento indefinido.",
+            q4: "Se o loop parou em i == nroElem, encontrou a sentinela (que foi colocada pelo próprio código). A chave real não estava nas posições 0 a nroElem-1, portanto a função retorna ERRO.",
+            q5: "A busca com sentinela é O(n) — ainda percorre um elemento por vez. A busca binária é O(log n) — divide o problema pela metade a cada passo. Para n=1000: sequencial pode fazer 1000 comparações, binária faz apenas ~10.",
+            q6: "ArrayList.indexOf(valor) percorre a lista do início ao fim procurando o valor — exatamente o que buscaSequencial faz. Retorna o índice ou -1. binarySearch seria para lista ordenada; contains retorna boolean.",
+            q7: "A busca sequencial compara cada elemento um por um, sem premissa de ordem. Pode encontrar qualquer elemento em qualquer lista — ordenada ou não. A ordenação não a torna mais rápida algoritmicamente.",
+            q8: "Com nroElem=0, a condição 'i < 0' (0 < 0) é imediatamente falsa. O while não executa nenhuma iteração e a função vai direto ao 'return ERRO'. Protegida contra lista vazia."
+        };
+
+        let acertos = 0, html = "";
+        const total = Object.keys(gabarito).length;
+        for (const q in gabarito) {
+            const sel = document.querySelector(`input[name="${q}"]:checked`);
+            const num = q.substring(1);
+            if (sel) {
+                if (sel.value === gabarito[q]) {
+                    acertos++;
+                    html += `<p>Questão ${num}: <span style="color:green;font-weight:bold;">✓ Correto!</span> — ${explicacoes[q]}</p>`;
+                } else {
+                    html += `<p>Questão ${num}: <span style="color:red;font-weight:bold;">✗ Incorreto.</span> — ${explicacoes[q]}</p>`;
+                }
+            } else {
+                html += `<p>Questão ${num}: <span style="color:orange;font-weight:bold;">⚠ Não respondida.</span></p>`;
+            }
+        }
+        const r = document.getElementById("quiz-results");
+        r.innerHTML = `<h3>Sua pontuação: ${acertos} de ${total}</h3>${html}`;
+        r.style.display = "block";
+        r.scrollIntoView({ behavior:"smooth" });
+    }
+</script>
+
+</body>
+</html>

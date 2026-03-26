@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 14b – Parâmetros e Retorno de Funções</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Aula 14b — Parâmetros e Retorno de Funções</h1>
+    <p>Call by Value, Call by Reference, ponteiros como parâmetros e retorno múltiplo</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo14a.html">← Aula 14a</a>
+    <a href="capitulo15.html">Aula 15 →</a>
+</nav>
+
+<!-- ═══════════════════════════════════════ 1. MAPA GERAL -->
+<div class="content-section">
+    <h2>1. Os Quatro Tipos de Função em C</h2>
+
+    <p>Na Aula 13 você aprendeu a declarar, definir e chamar funções. Agora vamos entender como os dados entram e saem delas — que é onde C se diferencia radicalmente do Java.</p>
+
+    <table>
+        <tr>
+            <th>Tipo</th>
+            <th>Retorno</th>
+            <th>Parâmetros</th>
+            <th>Quando usar</th>
+        </tr>
+        <tr>
+            <td><code>void f(void)</code></td>
+            <td>Nenhum</td>
+            <td>Nenhum</td>
+            <td>Ação pura (ex: imprimir cabeçalho)</td>
+        </tr>
+        <tr>
+            <td><code>void f(int x)</code></td>
+            <td>Nenhum</td>
+            <td>Por valor</td>
+            <td>Ação que usa dados mas não precisa devolver resultado</td>
+        </tr>
+        <tr>
+            <td><code>int f(int x)</code></td>
+            <td>Um valor</td>
+            <td>Por valor</td>
+            <td>Cálculo simples com um resultado</td>
+        </tr>
+        <tr>
+            <td><code>void f(int *x)</code></td>
+            <td>Nenhum (via ponteiro)</td>
+            <td>Por referência</td>
+            <td>Modificar variáveis externas ou retornar múltiplos resultados</td>
+        </tr>
+    </table>
+
+    <div class="warning-box">
+        <strong>A limitação fundamental do <code>return</code>:</strong> Uma função em C só pode retornar <strong>um único valor</strong> com <code>return</code>. Para "retornar" múltiplos resultados, a solução é passar ponteiros como parâmetros — a função escreve os resultados diretamente na memória dos argumentos.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 1b. NOMENCLATURA FORMAL -->
+<div class="content-section">
+    <h2>1b. Nomenclatura Formal: Call by Value e Call by Reference</h2>
+
+    <p>Antes de mergulhar nos exemplos, vale fixar os dois nomes que você verá em qualquer livro de C, livro de algoritmos ou entrevista técnica:</p>
+
+    <div class="definicao">
+        <strong>Call by Value (Passagem por Valor):</strong> A função recebe uma <em>cópia</em> do argumento. Qualquer modificação feita dentro da função afeta apenas a cópia local — a variável original permanece intocada. É o comportamento padrão de C para tipos primitivos (<code>int</code>, <code>float</code>, <code>char</code>…).
+    </div>
+
+    <div class="definicao">
+        <strong>Call by Reference (Passagem por Referência):</strong> A função recebe o <em>endereço de memória</em> da variável original e pode modificá-la diretamente. Em C, isso é feito explicitamente passando um ponteiro (<code>&amp;variavel</code>) e usando o operador de desreferência (<code>*</code>) dentro da função.
+    </div>
+
+    <table>
+        <tr>
+            <th>Mecanismo</th>
+            <th>O que é passado</th>
+            <th>Pode modificar o original?</th>
+            <th>Sintaxe na chamada</th>
+            <th>Sintaxe no parâmetro</th>
+        </tr>
+        <tr>
+            <td><strong>Call by Value</strong></td>
+            <td>Cópia do valor</td>
+            <td>❌ Não</td>
+            <td><code>f(x)</code></td>
+            <td><code>void f(int x)</code></td>
+        </tr>
+        <tr>
+            <td><strong>Call by Reference</strong></td>
+            <td>Endereço de memória</td>
+            <td>✅ Sim</td>
+            <td><code>f(&amp;x)</code></td>
+            <td><code>void f(int *x)</code></td>
+        </tr>
+    </table>
+
+    <div class="info-box">
+        <strong>Comparação com Java:</strong> Java usa <em>call by value</em> para tipos primitivos (<code>int</code>, <code>double</code>…) — igual ao C. Para objetos, Java passa a referência <em>por valor</em> (cópia do endereço), permitindo modificar o conteúdo do objeto mas não a referência em si. C é mais explícito: você decide manualmente quando usar ponteiros.
+    </div>
+
+    <h3>O exemplo mais direto: a mesma tarefa pelos dois mecanismos</h3>
+<pre>
+#include &lt;stdio.h&gt;
+
+<span class="code-comment">/* Call by Value: recebe cópia, retorna novo valor */</span>
+int somarDez_valor(int numero) {
+    return numero + 10;             <span class="code-comment">// não altera o original</span>
+}
+
+<span class="code-comment">/* Call by Reference: recebe endereço, modifica diretamente */</span>
+void somarDez_referencia(int *numero) {
+    *numero = *numero + 10;         <span class="code-comment">// modifica no endereço apontado</span>
+}
+
+int main() {
+    int a = 5;
+
+    printf("a = %d\n", a);                   <span class="code-comment">// 5</span>
+
+    a = somarDez_valor(a);                   <span class="code-comment">// precisa reatribuir o retorno</span>
+    printf("após valor:      a = %d\n", a);  <span class="code-comment">// 15</span>
+
+    somarDez_referencia(&amp;a);                <span class="code-comment">// &a = endereço de a</span>
+    printf("após referência: a = %d\n", a);  <span class="code-comment">// 25</span>
+
+    return 0;
+}
+</pre>
+    <div class="terminal-output">a = 5<br>após valor:      a = 15<br>após referência: a = 25</div>
+</div>
+
+<!-- ═══════════════════════════════════════ 2. PASSAGEM POR VALOR -->
+<div class="content-section">
+    <h2>2. Passagem por Valor — a Cópia Invisível</h2>
+
+    <p>Quando você escreve <code>f(x)</code>, C cria uma cópia de <code>x</code> na stack da função. A variável original fica completamente isolada.</p>
+
+<pre>
+#include &lt;stdio.h&gt;
+
+void tentaDobrar(int n) {
+    n = n * 2;                          <span class="code-comment">// modifica apenas a cópia local</span>
+    printf("dentro: n = %d\n", n);      <span class="code-comment">// imprime 10</span>
+}
+
+int main() {
+    int n = 5;
+    tentaDobrar(n);
+    printf("fora:   n = %d\n", n);      <span class="code-comment">// ainda 5 — original intocado</span>
+    return 0;
+}
+</pre>
+    <div class="terminal-output">dentro: n = 10<br>fora:   n = 5</div>
+
+    <h3>O que acontece na memória</h3>
+    <table>
+        <tr>
+            <th>Momento</th>
+            <th><code>n</code> em <code>main</code> (end. 0x100)</th>
+            <th><code>n</code> em <code>tentaDobrar</code> (end. 0x200)</th>
+        </tr>
+        <tr><td>Antes da chamada</td><td>5</td><td>—</td></tr>
+        <tr><td>Ao entrar na função</td><td>5</td><td>5 (cópia criada)</td></tr>
+        <tr><td>Após <code>n = n * 2</code></td><td>5</td><td>10</td></tr>
+        <tr><td>Após retorno</td><td>5</td><td>— (destruída)</td></tr>
+    </table>
+</div>
+
+<!-- ═══════════════════════════════════════ 3. PASSAGEM POR PONTEIRO -->
+<div class="content-section">
+    <h2>3. Passagem por Ponteiro (Call by Reference)</h2>
+
+    <p>Para que uma função modifique a variável original, passamos seu <strong>endereço</strong>. A função recebe um ponteiro e usa <code>*</code> para acessar o valor naquele endereço.</p>
+
+    <table>
+        <tr>
+            <th>Operador</th>
+            <th>Nome</th>
+            <th>Onde aparece</th>
+            <th>Significado</th>
+        </tr>
+        <tr>
+            <td><code>&amp;</code></td>
+            <td>Endereço-de</td>
+            <td>Na chamada: <code>f(&amp;x)</code></td>
+            <td>Obtém o endereço de memória de <code>x</code></td>
+        </tr>
+        <tr>
+            <td><code>*tipo</code></td>
+            <td>Declaração de ponteiro</td>
+            <td>No parâmetro: <code>int *p</code></td>
+            <td>Declara que <code>p</code> é um ponteiro para <code>int</code></td>
+        </tr>
+        <tr>
+            <td><code>*ponteiro</code></td>
+            <td>Desreferência</td>
+            <td>No corpo: <code>*p = 10</code></td>
+            <td>Acessa/modifica o valor no endereço apontado por <code>p</code></td>
+        </tr>
+    </table>
+
+    <h3>Exemplo 1 — dobrar um valor</h3>
+<pre>
+#include &lt;stdio.h&gt;
+
+void dobrar(int *p) {
+    *p = *p * 2;    <span class="code-comment">// lê o valor em 0x100, multiplica por 2, salva de volta</span>
+}
+
+int main() {
+    int x = 5;
+    dobrar(&amp;x);     <span class="code-comment">// passa o endereço 0x100</span>
+    printf("x = %d\n", x);   <span class="code-comment">// 10</span>
+    return 0;
+}
+</pre>
+    <div class="terminal-output">x = 10</div>
+
+    <h3>Exemplo 2 — trocar dois valores (o swap clássico)</h3>
+    <p>O swap é impossível com passagem por valor. Com ponteiros, funciona perfeitamente:</p>
+<pre>
+#include &lt;stdio.h&gt;
+
+<span class="code-comment">/* ❌ Versão errada — por valor */</span>
+void trocar_errado(int a, int b) {
+    int temp = a; a = b; b = temp;   <span class="code-comment">// troca as cópias, não os originais</span>
+}
+
+<span class="code-comment">/* ✅ Versão correta — por ponteiro */</span>
+void trocar(int *a, int *b) {
+    int temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+int main() {
+    int x = 10, y = 20;
+    printf("antes:  x=%d  y=%d\n", x, y);
+
+    trocar_errado(x, y);
+    printf("errado: x=%d  y=%d\n", x, y);   <span class="code-comment">// ainda 10 e 20</span>
+
+    trocar(&amp;x, &amp;y);
+    printf("certo:  x=%d  y=%d\n", x, y);   <span class="code-comment">// 20 e 10</span>
+    return 0;
+}
+</pre>
+    <div class="terminal-output">antes:  x=10  y=20<br>errado: x=10  y=20<br>certo:  x=20  y=10</div>
+
+    <h3>Exemplo 3 — retornar dois resultados simultaneamente (minMax)</h3>
+<pre>
+#include &lt;stdio.h&gt;
+
+void minMax(int v[], int tam, int *minimo, int *maximo) {
+    *minimo = *maximo = v[0];
+    for (int i = 1; i &lt; tam; i++) {
+        if (v[i] &lt; *minimo) *minimo = v[i];
+        if (v[i] &gt; *maximo) *maximo = v[i];
+    }
+}
+
+int main() {
+    int notas[] = {7, 3, 9, 5, 8};
+    int min, max;
+
+    minMax(notas, 5, &amp;min, &amp;max);
+    printf("Mínimo: %d  Máximo: %d\n", min, max);
+    return 0;
+}
+</pre>
+    <div class="terminal-output">Mínimo: 3  Máximo: 9</div>
+</div>
+
+<!-- ═══════════════════════════════════════ 4. ARRAYS POR PONTEIRO -->
+<div class="content-section">
+    <h2>4. Arrays Sempre por Ponteiro</h2>
+
+    <p>Arrays em C têm um comportamento especial: ao serem passados para uma função, <strong>decaem automaticamente para um ponteiro</strong> para o primeiro elemento. Você nunca precisa (nem consegue) passar um array por valor.</p>
+
+<pre>
+#include &lt;stdio.h&gt;
+
+void dobrarTodos(int *v, int tam) {
+    for (int i = 0; i &lt; tam; i++)
+        v[i] *= 2;   <span class="code-comment">// modifica o array original — sem &amp; necessário na chamada</span>
+}
+
+int main() {
+    int nums[] = {1, 2, 3, 4, 5};
+    dobrarTodos(nums, 5);                       <span class="code-comment">// nums já é o endereço do [0]</span>
+    for (int i = 0; i &lt; 5; i++)
+        printf("%d ", nums[i]);
+    printf("\n");
+    return 0;
+}
+</pre>
+    <div class="terminal-output">2 4 6 8 10</div>
+
+    <div class="info-box">
+        <strong>Pointer decay:</strong> <code>dobrarTodos(nums, 5)</code> é equivalente a <code>dobrarTodos(&amp;nums[0], 5)</code>. O nome do array <em>decai</em> para um ponteiro para o primeiro elemento. Por isso a função já recebe o endereço original e pode modificar todos os elementos.
+    </div>
+
+    <div class="tip-box">
+        Use <code>const int *v</code> quando a função só precisa <strong>ler</strong> o array — o compilador avisa se você tentar modificá-lo por acidente.
+    </div>
+
+    <h3>Exemplo completo: imprimir e modificar um array via funções</h3>
+    <p>Ao passar um array para uma função, o ponteiro permite tanto lê-lo quanto modificá-lo diretamente. Use <code>const</code> quando quiser garantir que a função não alterará os dados:</p>
+<pre>
+#include &lt;stdio.h&gt;
+
+<span class="code-comment">/* Apenas lê o array — const protege contra modificação acidental */</span>
+void printArray(const int *v, int tam) {
+    int i;
+    for (i = 0; i &lt; tam; i++)
+        printf("%d ", v[i]);
+    printf("\n");
+}
+
+<span class="code-comment">/* Modifica o array original — incrementa cada elemento */</span>
+void incrementarTodos(int *v, int tam) {
+    int i;
+    for (i = 0; i &lt; tam; i++)
+        v[i] = v[i] + 1;    <span class="code-comment">// equivalente a *(v+i) = *(v+i) + 1</span>
+}
+
+int main() {
+    int notas[5] = {6, 7, 8, 5, 9};
+
+    printf("Antes:  ");
+    printArray(notas, 5);
+
+    incrementarTodos(notas, 5);   <span class="code-comment">// sem & — arrays já são ponteiros</span>
+
+    printf("Depois: ");
+    printArray(notas, 5);
+
+    return 0;
+}
+</pre>
+    <div class="terminal-output">Antes:  6 7 8 5 9<br>Depois: 7 8 9 6 10</div>
+
+    <div class="dica">
+        <strong>Por que sem <code>&amp;</code>?</strong> Arrays em C decaem automaticamente para o ponteiro do primeiro elemento quando passados para funções. Escrever <code>printArray(notas, 5)</code> já é equivalente a <code>printArray(&amp;notas[0], 5)</code>. Use <code>const int *v</code> no parâmetro quando a função não precisar modificar o array — isso documenta a intenção e o compilador avisa se você tentar modificar por acidente.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 5. TIPOS DE RETORNO -->
+<div class="content-section">
+    <h2>5. Tipos de Retorno</h2>
+
+    <table>
+        <tr>
+            <th>Tipo de retorno</th>
+            <th>Exemplo</th>
+            <th>Uso típico</th>
+        </tr>
+        <tr>
+            <td><code>void</code></td>
+            <td><code>void imprimirSeparador(void)</code></td>
+            <td>Ação sem resultado</td>
+        </tr>
+        <tr>
+            <td>Tipo primitivo</td>
+            <td><code>int ehPrimo(int n)</code></td>
+            <td>Cálculo simples</td>
+        </tr>
+        <tr>
+            <td>Código de erro (<code>int</code>)</td>
+            <td><code>int salvarArquivo(...)</code></td>
+            <td>0 = sucesso, -1 = erro</td>
+        </tr>
+        <tr>
+            <td>Múltiplos (via ponteiro)</td>
+            <td><code>void minMax(int[], int, int*, int*)</code></td>
+            <td>Quando precisar de mais de um resultado</td>
+        </tr>
+    </table>
+
+    <h3>Múltiplos return e o padrão código-de-erro</h3>
+<pre>
+#include &lt;stdio.h&gt;
+
+int ehPrimo(int n) {
+    if (n &lt; 2) return 0;                  <span class="code-comment">// saída antecipada</span>
+    for (int i = 2; i * i &lt;= n; i++)
+        if (n % i == 0) return 0;
+    return 1;
+}
+
+<span class="code-comment">/* Padrão código-de-erro: 0 = OK, -1 = falha */</span>
+int dividir(int a, int b, float *resultado) {
+    if (b == 0) return -1;                <span class="code-comment">// indica erro ao chamador</span>
+    *resultado = (float)a / b;
+    return 0;                             <span class="code-comment">// indica sucesso</span>
+}
+
+int main() {
+    printf("7 é primo? %s\n", ehPrimo(7) ? "Sim" : "Não");
+    printf("4 é primo? %s\n", ehPrimo(4) ? "Sim" : "Não");
+
+    float res;
+    if (dividir(10, 3, &amp;res) == 0)
+        printf("10 / 3 = %.2f\n", res);
+    else
+        printf("Erro: divisão por zero!\n");
+
+    dividir(5, 0, &amp;res);   <span class="code-comment">// retorna -1, res não é modificado</span>
+    return 0;
+}
+</pre>
+    <div class="terminal-output">7 é primo? Sim<br>4 é primo? Não<br>10 / 3 = 3.33</div>
+
+    <div class="warning-box">
+        <strong>⚠️ Nunca retorne ponteiro para variável local!</strong> Variáveis locais são destruídas ao final da função. Um ponteiro para elas fica "pendurado" (dangling pointer).
+<pre>
+<span class="code-comment">/* ❌ ERRADO — retorna endereço de variável local destruída */</span>
+int* funcaoErrada() {
+    int x = 42;
+    return &amp;x;   <span class="code-comment">// x deixa de existir após o return!</span>
+}
+</pre>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 6. EXEMPLO COMPLETO -->
+<div class="content-section">
+    <h2>6. Exemplo Completo — Calculadora Modular</h2>
+
+    <p>Reunindo os quatro tipos de função num único programa:</p>
+<pre>
+#include &lt;stdio.h&gt;
+#include &lt;math.h&gt;
+
+<span class="code-comment">/* void sem parâmetros */</span>
+void imprimirSeparador(void) {
+    printf("──────────────────────\n");
+}
+
+<span class="code-comment">/* retorno simples */</span>
+double calcularHipotenusa(double a, double b) {
+    return sqrt(a * a + b * b);
+}
+
+<span class="code-comment">/* retorno como código: 1=acutangulo 2=retangulo 3=obtusangulo 0=invalido */</span>
+int classificarTriangulo(double a, double b, double c) {
+    if (a &lt;= 0 || b &lt;= 0 || c &lt;= 0) return 0;
+    if (a + b &lt;= c || a + c &lt;= b || b + c &lt;= a) return 0;
+    double maior2 = (a&gt;b &amp;&amp; a&gt;c) ? a*a : (b&gt;c ? b*b : c*c);
+    double somaQuad = a*a + b*b + c*c - maior2;
+    if (maior2 &lt; somaQuad) return 1;
+    if (maior2 == somaQuad) return 2;
+    return 3;
+}
+
+<span class="code-comment">/* múltiplos resultados via ponteiro */</span>
+void estatisticasVetor(const float v[], int tam,
+                       float *media, float *maximo, float *minimo) {
+    *media = *maximo = *minimo = v[0];
+    for (int i = 1; i &lt; tam; i++) {
+        *media += v[i];
+        if (v[i] &gt; *maximo) *maximo = v[i];
+        if (v[i] &lt; *minimo) *minimo = v[i];
+    }
+    *media /= tam;
+}
+
+int main() {
+    imprimirSeparador();
+    printf("Hipotenusa (3,4): %.2f\n", calcularHipotenusa(3, 4));
+
+    imprimirSeparador();
+    const char *tipos[] = {"Inválido","Acutângulo","Retângulo","Obtusângulo"};
+    printf("Triângulo 3-4-5: %s\n", tipos[classificarTriangulo(3,4,5)]);
+    printf("Triângulo 5-5-5: %s\n", tipos[classificarTriangulo(5,5,5)]);
+
+    imprimirSeparador();
+    float notas[] = {7.5f, 8.0f, 6.0f, 9.5f, 5.5f};
+    float med, mx, mn;
+    estatisticasVetor(notas, 5, &amp;med, &amp;mx, &amp;mn);
+    printf("Média: %.1f | Máx: %.1f | Mín: %.1f\n", med, mx, mn);
+
+    return 0;
+}
+</pre>
+    <div class="terminal-output">
+──────────────────────<br>
+Hipotenusa (3,4): 5.00<br>
+──────────────────────<br>
+Triângulo 3-4-5: Retângulo<br>
+Triângulo 5-5-5: Acutângulo<br>
+──────────────────────<br>
+Média: 7.3 | Máx: 9.5 | Mín: 5.5
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 7. C VS JAVA -->
+<div class="content-section">
+    <h2>7. C vs. Java</h2>
+
+    <table>
+        <tr>
+            <th>Aspecto</th>
+            <th>C</th>
+            <th>Java</th>
+        </tr>
+        <tr>
+            <td>Passagem de primitivos</td>
+            <td>Sempre por valor (cópia)</td>
+            <td>Sempre por valor (cópia)</td>
+        </tr>
+        <tr>
+            <td>Modificar variável externa</td>
+            <td>Ponteiro explícito (<code>&amp;x</code>, <code>*p</code>)</td>
+            <td>Impossível para primitivos; objetos podem ser modificados via referência</td>
+        </tr>
+        <tr>
+            <td>Retornar múltiplos valores</td>
+            <td>Ponteiros como parâmetros de saída</td>
+            <td>Retornar objeto/array contendo os valores</td>
+        </tr>
+        <tr>
+            <td>Swap de dois inteiros</td>
+            <td>✅ Possível com ponteiros</td>
+            <td>❌ Impossível para primitivos — Java não tem ponteiros explícitos</td>
+        </tr>
+        <tr>
+            <td>Arrays passados para funções</td>
+            <td>Sempre por ponteiro (decay automático)</td>
+            <td>Por referência automática</td>
+        </tr>
+        <tr>
+            <td>Proteger array de modificação</td>
+            <td><code>const int *v</code></td>
+            <td>Não há equivalente direto para arrays primitivos</td>
+        </tr>
+    </table>
+
+    <h3>O swap — impossível em Java, trivial em C com ponteiros</h3>
+    <div class="grid-container">
+        <div class="grid-item">
+            <strong>C — funciona ✅</strong>
+<pre>
+void trocar(int *a, int *b) {
+    int t = *a;
+    *a = *b;
+    *b = t;
+}
+// uso:
+trocar(&amp;x, &amp;y);
+</pre>
+        </div>
+        <div class="grid-item">
+            <strong>Java — não modifica os originais ❌</strong>
+<pre>
+void trocar(int a, int b) {
+    int t = a;
+    a = b;
+    b = t;
+    // x e y fora do método
+    // continuam inalterados
+}
+</pre>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ QUIZ -->
+<div class="content-section exercise-section">
+    <h2>Quiz — Aula 14</h2>
+    <form class="quiz-form" onsubmit="return false;">
+
+        <div class="content-section quiz-question">
+            <p><strong>1.</strong> Qual é a saída do programa abaixo?</p>
+<pre>
+void f(int x) { x = x + 1; }
+int main() {
+    int a = 5;
+    f(a);
+    printf("%d", a);
+}
+</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q1" value="a"> 6</label></li>
+                <li><label><input type="radio" name="q1" value="b"> 5</label></li>
+                <li><label><input type="radio" name="q1" value="c"> 0</label></li>
+                <li><label><input type="radio" name="q1" value="d"> Erro de compilação</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>2.</strong> Para que a função <code>void zerar(int x)</code> consiga zerar a variável original, qual deve ser a assinatura correta?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q2" value="a"> <code>void zerar(int x)</code> — sem mudança necessária</label></li>
+                <li><label><input type="radio" name="q2" value="b"> <code>void zerar(int &amp;x)</code></label></li>
+                <li><label><input type="radio" name="q2" value="c"> <code>void zerar(int *x)</code></label></li>
+                <li><label><input type="radio" name="q2" value="d"> <code>int zerar(int x)</code></label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>3.</strong> Qual é a saída?</p>
+<pre>
+void dobrar(int *p) { *p = *p * 2; }
+int main() {
+    int x = 5;
+    dobrar(&amp;x);
+    printf("%d", x);
+}
+</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q3" value="a"> 5</label></li>
+                <li><label><input type="radio" name="q3" value="b"> 10</label></li>
+                <li><label><input type="radio" name="q3" value="c"> 0</label></li>
+                <li><label><input type="radio" name="q3" value="d"> Endereço de memória</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>4.</strong> Em <em>call by reference</em>, o que é passado para a função?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q4" value="a"> Uma cópia do valor da variável</label></li>
+                <li><label><input type="radio" name="q4" value="b"> O endereço de memória da variável original</label></li>
+                <li><label><input type="radio" name="q4" value="c"> O nome da variável como string</label></li>
+                <li><label><input type="radio" name="q4" value="d"> O tipo da variável</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>5.</strong> Por que o swap de dois inteiros é impossível em Java para primitivos, mas trivial em C?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q5" value="a"> Java não tem variáveis inteiras</label></li>
+                <li><label><input type="radio" name="q5" value="b"> C passa arrays por referência, Java por valor</label></li>
+                <li><label><input type="radio" name="q5" value="c"> C permite passar ponteiros explicitamente, dando acesso direto à memória; Java só passa primitivos por valor</label></li>
+                <li><label><input type="radio" name="q5" value="d"> Java não tem a instrução return</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>6.</strong> Por que arrays são sempre passados por ponteiro em C, mesmo sem usar <code>&amp;</code>?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q6" value="a"> É uma restrição sintática sem razão técnica</label></li>
+                <li><label><input type="radio" name="q6" value="b"> Arrays decaem automaticamente para ponteiro para o primeiro elemento ao serem passados para funções</label></li>
+                <li><label><input type="radio" name="q6" value="c"> O compilador insere o <code>&amp;</code> automaticamente para todos os argumentos</label></li>
+                <li><label><input type="radio" name="q6" value="d"> Arrays não podem ser passados para funções em C</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>7.</strong> O que o parâmetro <code>const int *v</code> garante dentro de uma função?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q7" value="a"> O ponteiro <code>v</code> não pode ser reatribuído</label></li>
+                <li><label><input type="radio" name="q7" value="b"> Os valores apontados por <code>v</code> não podem ser modificados dentro da função</label></li>
+                <li><label><input type="radio" name="q7" value="c"> O array é copiado antes de ser passado</label></li>
+                <li><label><input type="radio" name="q7" value="d"> A função é marcada como somente leitura pelo compilador</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>8.</strong> Qual é o padrão de retorno mais comum em C para indicar sucesso ou falha de uma operação?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q8" value="a"> Retornar <code>true</code> ou <code>false</code></label></li>
+                <li><label><input type="radio" name="q8" value="b"> Retornar <code>0</code> para sucesso e valor negativo (ex: <code>-1</code>) para erro</label></li>
+                <li><label><input type="radio" name="q8" value="c"> Lançar uma exceção</label></li>
+                <li><label><input type="radio" name="q8" value="d"> Retornar <code>NULL</code> sempre que houver erro</label></li>
+            </ul>
+        </div>
+
+        <button type="button" class="submit-btn" onclick="verificarRespostas()">Verificar Respostas</button>
+    </form>
+    <div id="quiz-results" style="display:none; margin-top:20px; padding:15px; background:#dff0d8; border-radius:5px;"></div>
+</div>
+
+<div class="navigation-buttons">
+    <a href="capitulo13.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">← Aula 13</a>
+    <a href="index.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">Índice</a>
+    <a href="capitulo15.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">Aula 15 →</a>
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align:center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education" style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+<script>
+function verificarRespostas() {
+    const gabarito = { q1:"b", q2:"c", q3:"b", q4:"b", q5:"c", q6:"b", q7:"b", q8:"b" };
+    const explicacoes = {
+        q1: "Call by value: a função recebe uma cópia de 'a'. A variável 'x' dentro de f é independente — incrementá-la não afeta 'a' em main, que permanece 5.",
+        q2: "Para modificar a variável original, a função precisa receber seu endereço. A assinatura correta é 'void zerar(int *x)', e o corpo usa '*x = 0'. A chamada seria 'zerar(&variavel)'.",
+        q3: "A função recebe o endereço de x (&x). Dentro da função, *p acessa o valor no endereço de x (5) e *p = *p * 2 escreve 10 naquele endereço. Portanto x vira 10.",
+        q4: "Em call by reference, o que é passado é o endereço de memória da variável original. A função usa esse endereço para acessar e modificar diretamente o valor original.",
+        q5: "C permite passar ponteiros explicitamente (&x, &y), dando às funções acesso direto ao endereço de memória das variáveis. Java passa primitivos sempre por valor — não há como dar à função acesso ao slot de memória da variável do chamador.",
+        q6: "Pointer decay: ao ser passado para uma função, o nome do array se converte automaticamente no endereço do seu primeiro elemento. Isso significa que a função sempre trabalha com o array original, nunca com uma cópia.",
+        q7: "const int *v significa que os valores apontados por v são somente leitura dentro da função. Tentar fazer v[i] = algo resulta em erro de compilação. O ponteiro v em si ainda pode ser reatribuído.",
+        q8: "O padrão código-de-erro é universal em C: 0 indica sucesso, valores negativos (geralmente -1) indicam erro. Assim o chamador pode verificar 'if (funcao(...) == 0)' para saber se tudo correu bem."
+    };
+
+    let acertos = 0, html = "";
+    const total = Object.keys(gabarito).length;
+    for (const q in gabarito) {
+        const sel = document.querySelector(`input[name="${q}"]:checked`);
+        const num = q.replace("q","");
+        if (sel) {
+            if (sel.value === gabarito[q]) {
+                acertos++;
+                html += `<p>Questão ${num}: <span style="color:green;font-weight:bold;">✅ Correto!</span> — ${explicacoes[q]}</p>`;
+            } else {
+                html += `<p>Questão ${num}: <span style="color:red;font-weight:bold;">❌ Incorreto.</span> Gabarito: <strong>${gabarito[q].toUpperCase()}</strong> — ${explicacoes[q]}</p>`;
+            }
+        } else {
+            html += `<p>Questão ${num}: <span style="color:orange;font-weight:bold;">⚠ Não respondida.</span></p>`;
+        }
+    }
+    const r = document.getElementById("quiz-results");
+    r.innerHTML = `<h3>Sua pontuação: ${acertos} de ${total}</h3>${html}`;
+    r.style.display = "block";
+    r.scrollIntoView({ behavior: "smooth" });
+}
+</script>
+
+</body>
+</html>

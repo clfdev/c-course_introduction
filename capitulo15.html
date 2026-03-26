@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 15 – Escopo de Variáveis: Local e Global</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Aula 15 — Escopo de Variáveis</h1>
+    <p>Local, global, de bloco e <code style="color:#aad4ff">static</code> — onde uma variável existe e por quanto tempo</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo14.html">← Aula 14</a>
+    <a href="capitulo16.html">Aula 16 →</a>
+</nav>
+
+<!-- ═══════════════════════════════════════ 1. O QUE É ESCOPO -->
+<div class="content-section">
+    <h2>1. O que é Escopo?</h2>
+
+    <p>Toda variável em C tem um <strong>escopo</strong>: a região do código onde ela existe e pode ser acessada. Fora desse escopo, a variável simplesmente não existe — tentar usá-la gera erro de compilação.</p>
+
+    <div class="definicao">
+        <strong>Escopo</strong> é a região do código-fonte onde um identificador (variável, função, constante) é visível e pode ser utilizado. Em C, o escopo é determinado principalmente pelo local da declaração em relação às chaves <code>{ }</code> e pela posição no arquivo.
+    </div>
+
+    <p>C reconhece quatro categorias de escopo:</p>
+
+    <table>
+        <tr>
+            <th>Tipo de escopo</th>
+            <th>Onde é declarado</th>
+            <th>Visível de</th>
+            <th>Dura até</th>
+        </tr>
+        <tr>
+            <td><strong>De bloco (local)</strong></td>
+            <td>Dentro de <code>{ }</code></td>
+            <td>Ponto da declaração</td>
+            <td>Fim do bloco <code>}</code></td>
+        </tr>
+        <tr>
+            <td><strong>De parâmetro</strong></td>
+            <td>Lista de parâmetros da função</td>
+            <td>Início do corpo da função</td>
+            <td>Fim da função <code>}</code></td>
+        </tr>
+        <tr>
+            <td><strong>De arquivo (global)</strong></td>
+            <td>Fora de qualquer função</td>
+            <td>Ponto da declaração até fim do arquivo</td>
+            <td>Fim do programa</td>
+        </tr>
+        <tr>
+            <td><strong>Local <code>static</code></strong></td>
+            <td>Dentro de função, com <code>static</code></td>
+            <td>Apenas dentro da função</td>
+            <td>Fim do programa (persiste entre chamadas)</td>
+        </tr>
+    </table>
+</div>
+
+<!-- ═══════════════════════════════════════ 2. VARIÁVEIS LOCAIS -->
+<div class="content-section">
+    <h2>2. Variáveis Locais (Escopo de Bloco)</h2>
+
+    <p>Uma variável declarada <em>dentro</em> de um par de chaves <code>{ }</code> é <strong>local</strong> àquele bloco. Ela nasce quando o programa entra no bloco e morre quando sai.</p>
+
+<pre>
+#include &lt;stdio.h&gt;
+
+void exemploLocal() {
+    int x = 10;                  <span class="code-comment">// x existe apenas dentro de exemploLocal</span>
+
+    if (x &gt; 5) {
+        int y = 20;              <span class="code-comment">// y existe apenas dentro deste if</span>
+        printf("x=%d y=%d\n", x, y);   <span class="code-comment">// OK: x e y visíveis aqui</span>
+    }
+
+    <span class="code-comment">// printf("%d", y);          // ❌ ERRO: y não existe mais aqui</span>
+    printf("x=%d\n", x);        <span class="code-comment">// OK: x ainda existe aqui</span>
+}                                <span class="code-comment">// x é destruída ao sair de exemploLocal</span>
+
+int main() {
+    exemploLocal();
+    <span class="code-comment">// printf("%d", x);          // ❌ ERRO: x não existe em main</span>
+    return 0;
+}
+</pre>
+    <div class="terminal-output">x=10 y=20<br>x=10</div>
+
+    <h3>Variável de controle do <code>for</code> (C99)</h3>
+    <p>Declarar a variável de controle dentro do próprio <code>for</code> limita seu escopo ao bloco do loop — uma boa prática:</p>
+
+<pre>
+for (int i = 0; i &lt; 5; i++) {
+    printf("%d ", i);     <span class="code-comment">// OK: i existe dentro do for</span>
+}
+<span class="code-comment">// printf("%d", i);       // ❌ ERRO: i não existe fora do for (C99)</span>
+</pre>
+
+    <div class="warning-box">
+        <strong>⚠️ Variáveis locais não são inicializadas automaticamente.</strong> Em C, variáveis locais contêm o que estiver na memória naquele momento — chamado de <em>lixo de memória</em>. Ler uma variável local antes de atribuir um valor é <strong>comportamento indefinido</strong>.
+<pre>
+int x;                   <span class="code-comment">// ❌ contém lixo — valor imprevisível</span>
+printf("%d\n", x);       <span class="code-comment">// comportamento indefinido!</span>
+
+int y = 0;               <span class="code-comment">// ✅ sempre inicialize antes de usar</span>
+</pre>
+    </div>
+
+    <div class="tip-box">
+        <strong>Boas práticas:</strong> Declare variáveis no escopo mais restrito possível — o mais próximo do ponto de uso. Isso reduz conflitos de nomes, torna o código mais claro e ajuda o compilador a detectar erros.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 3. VARIÁVEIS GLOBAIS -->
+<div class="content-section">
+    <h2>3. Variáveis Globais (Escopo de Arquivo)</h2>
+
+    <p>Uma variável declarada <em>fora</em> de qualquer função — normalmente no topo do arquivo — é <strong>global</strong>. Ela é visível em todas as funções do arquivo e existe durante toda a execução do programa.</p>
+
+<pre>
+#include &lt;stdio.h&gt;
+
+int contador = 0;           <span class="code-comment">// global — visível em todas as funções</span>
+const float TAXA = 0.05f;   <span class="code-comment">// constante global — uso adequado</span>
+
+void incrementar() {
+    contador++;             <span class="code-comment">// acessa e modifica a global diretamente</span>
+}
+
+void exibir() {
+    printf("Contador: %d | Taxa: %.0f%%\n", contador, TAXA * 100);
+}
+
+int main() {
+    exibir();           <span class="code-comment">// Contador: 0 | Taxa: 5%</span>
+    incrementar();
+    incrementar();
+    incrementar();
+    exibir();           <span class="code-comment">// Contador: 3 | Taxa: 5%</span>
+    return 0;
+}
+</pre>
+    <div class="terminal-output">Contador: 0 | Taxa: 5%<br>Contador: 3 | Taxa: 5%</div>
+
+    <h3>Variáveis globais são inicializadas automaticamente com zero</h3>
+
+    <p>Ao contrário das locais, variáveis globais são sempre zeradas antes do programa começar:</p>
+
+    <table>
+        <tr>
+            <th>Tipo</th>
+            <th>Valor padrão (global)</th>
+        </tr>
+        <tr><td><code>int</code></td><td><code>0</code></td></tr>
+        <tr><td><code>float</code> / <code>double</code></td><td><code>0.0</code></td></tr>
+        <tr><td><code>char</code></td><td><code>'\0'</code></td></tr>
+        <tr><td>Ponteiro</td><td><code>NULL</code></td></tr>
+    </table>
+</div>
+
+<!-- ═══════════════════════════════════════ 4. SOMBREAMENTO -->
+<div class="content-section">
+    <h2>4. Sombreamento (Shadowing) — Local Esconde Global</h2>
+
+    <p>Quando uma variável local tem o <strong>mesmo nome</strong> de uma variável global, a local <em>sombreia</em> (esconde) a global dentro do seu escopo. A global continua existindo, mas fica temporariamente inacessível pelo nome.</p>
+
+<pre>
+#include &lt;stdio.h&gt;
+
+int valor = 100;            <span class="code-comment">// global</span>
+
+void demonstrar() {
+    printf("global: %d\n", valor);   <span class="code-comment">// 100 — ainda sem sombra</span>
+
+    int valor = 50;                  <span class="code-comment">// local — cria sombra sobre a global</span>
+    printf("local:  %d\n", valor);   <span class="code-comment">// 50</span>
+
+    {
+        int valor = 25;              <span class="code-comment">// bloco interno — sombra da sombra</span>
+        printf("bloco:  %d\n", valor); <span class="code-comment">// 25</span>
+    }
+
+    printf("local:  %d\n", valor);   <span class="code-comment">// 50 — volta ao escopo local</span>
+}
+
+int main() {
+    demonstrar();
+    printf("global: %d\n", valor);   <span class="code-comment">// 100 — global intocada</span>
+    return 0;
+}
+</pre>
+    <div class="terminal-output">global: 100<br>local:  50<br>bloco:  25<br>local:  50<br>global: 100</div>
+
+    <div class="warning-box">
+        <strong>⚠️ Sombreamento é uma fonte clássica de bugs.</strong> Use <code>gcc -Wall -Wshadow</code> para receber avisos do compilador sempre que houver sombreamento no seu código.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 5. QUANDO USAR GLOBAL -->
+<div class="content-section">
+    <h2>5. Quando Usar (e Quando Evitar) Variáveis Globais</h2>
+
+    <table>
+        <tr>
+            <th>✅ Quando globais fazem sentido</th>
+            <th>❌ Quando globais causam problemas</th>
+        </tr>
+        <tr>
+            <td>Constantes imutáveis (<code>const</code>) compartilhadas por todo o programa</td>
+            <td>Variáveis que podem ser modificadas por qualquer função</td>
+        </tr>
+        <tr>
+            <td>Contadores ou flags de estado do programa inteiro</td>
+            <td>Variáveis com nomes genéricos (<code>i</code>, <code>temp</code>, <code>aux</code>)</td>
+        </tr>
+        <tr>
+            <td>Tabelas de configuração apenas de leitura</td>
+            <td>Variáveis usadas para evitar passar parâmetros</td>
+        </tr>
+        <tr>
+            <td>Programas pequenos e de arquivo único</td>
+            <td>Projetos com múltiplos arquivos e equipes</td>
+        </tr>
+    </table>
+
+    <div class="bad-practice">
+        <strong>❌ Anti-padrão: usar global para "facilitar" o retorno</strong>
+<pre>
+int resultado;              <span class="code-comment">// global desnecessária</span>
+void somar(int a, int b) {
+    resultado = a + b;      <span class="code-comment">// qualquer função pode corromper isso</span>
+}
+</pre>
+    </div>
+
+    <div class="good-practice">
+        <strong>✅ Correto: retornar o valor pela assinatura</strong>
+<pre>
+int somar(int a, int b) {
+    return a + b;           <span class="code-comment">// limpo, sem efeitos colaterais</span>
+}
+</pre>
+    </div>
+
+    <div class="definicao">
+        <strong>Princípio da encapsulação:</strong> Uma função deve depender apenas dos seus parâmetros e variáveis locais. Funções que seguem esse princípio são chamadas de <em>funções puras</em> — muito mais fáceis de testar, reutilizar e depurar.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 6. STATIC LOCAL -->
+<div class="content-section">
+    <h2>6. Variável Local <code>static</code> — Persistindo Entre Chamadas</h2>
+
+    <p>C tem um tipo especial de variável local: a variável local <code>static</code>. Ela tem <strong>escopo local</strong> (só visível dentro da função) mas <strong>duração global</strong> — não é destruída ao retornar e persiste entre chamadas.</p>
+
+    <div class="definicao">
+        Uma variável local declarada com <code>static</code> é inicializada <strong>uma única vez</strong> (na primeira execução da função) e mantém seu valor entre chamadas consecutivas — como uma "memória privada" daquela função.
+    </div>
+
+<pre>
+#include &lt;stdio.h&gt;
+
+void contarChamadas() {
+    static int n = 0;       <span class="code-comment">// inicializada UMA vez; persiste entre chamadas</span>
+    n++;
+    printf("Esta função foi chamada %d vez(es)\n", n);
+}
+
+int main() {
+    contarChamadas();   <span class="code-comment">// Esta função foi chamada 1 vez(es)</span>
+    contarChamadas();   <span class="code-comment">// Esta função foi chamada 2 vez(es)</span>
+    contarChamadas();   <span class="code-comment">// Esta função foi chamada 3 vez(es)</span>
+    return 0;
+}
+</pre>
+    <div class="terminal-output">Esta função foi chamada 1 vez(es)<br>Esta função foi chamada 2 vez(es)<br>Esta função foi chamada 3 vez(es)</div>
+
+    <h3>Comparação: local normal vs local <code>static</code> vs global</h3>
+    <table>
+        <tr>
+            <th>Característica</th>
+            <th>Local normal</th>
+            <th>Local <code>static</code></th>
+            <th>Global</th>
+        </tr>
+        <tr>
+            <td>Visibilidade</td>
+            <td>Apenas dentro da função</td>
+            <td>Apenas dentro da função</td>
+            <td>Todo o arquivo</td>
+        </tr>
+        <tr>
+            <td>Inicialização automática</td>
+            <td>❌ Contém lixo</td>
+            <td>✅ Zero (uma vez)</td>
+            <td>✅ Zero</td>
+        </tr>
+        <tr>
+            <td>Persiste entre chamadas?</td>
+            <td>❌ Destruída ao retornar</td>
+            <td>✅ Sim</td>
+            <td>✅ Sim</td>
+        </tr>
+        <tr>
+            <td>Armazenamento</td>
+            <td>Stack (pilha)</td>
+            <td>Segmento de dados</td>
+            <td>Segmento de dados</td>
+        </tr>
+    </table>
+
+    <h3>Exemplo prático: gerador de ID único</h3>
+<pre>
+#include &lt;stdio.h&gt;
+
+int gerarID() {
+    static int proximoID = 1000;   <span class="code-comment">// começa em 1000, nunca reinicia</span>
+    return proximoID++;
+}
+
+int main() {
+    printf("ID: %d\n", gerarID());   <span class="code-comment">// ID: 1000</span>
+    printf("ID: %d\n", gerarID());   <span class="code-comment">// ID: 1001</span>
+    printf("ID: %d\n", gerarID());   <span class="code-comment">// ID: 1002</span>
+    return 0;
+}
+</pre>
+    <div class="terminal-output">ID: 1000<br>ID: 1001<br>ID: 1002</div>
+
+    <div class="tip-box">
+        <strong>Uso clássico de <code>static</code> local:</strong> Geradores de IDs únicos, contadores de chamadas, buffers de cache — tudo isso sem expor a variável como global.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 7. ESCOPO DE PARÂMETROS -->
+<div class="content-section">
+    <h2>7. Escopo de Parâmetros</h2>
+
+    <p>Os parâmetros de uma função têm escopo equivalente ao de variáveis locais declaradas no início do corpo. Eles existem enquanto a função está executando e são destruídos ao retornar.</p>
+
+<pre>
+#include &lt;stdio.h&gt;
+
+void processar(int valor, float taxa) {
+    <span class="code-comment">// 'valor' e 'taxa' existem aqui — escopo idêntico ao de locais</span>
+    valor = valor + (int)(valor * taxa);   <span class="code-comment">// modifica a cópia local</span>
+    printf("Valor processado: %d\n", valor);
+}   <span class="code-comment">// 'valor' e 'taxa' são destruídos aqui</span>
+
+int main() {
+    int preco = 100;
+    processar(preco, 0.1f);
+    printf("Preço original: %d\n", preco);   <span class="code-comment">// 100 — intocado</span>
+    return 0;
+}
+</pre>
+    <div class="terminal-output">Valor processado: 110<br>Preço original: 100</div>
+
+    <div class="info-box">
+        Parâmetros são sempre recebidos <strong>por valor</strong> em C (cópia). Para modificar a variável original, é necessário usar ponteiros — como visto na Aula 14 (<em>Call by Reference</em>).
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 8. EXEMPLO COMPLETO -->
+<div class="content-section">
+    <h2>8. Exemplo Completo — Todos os Escopos em Um Programa</h2>
+
+<pre>
+#include &lt;stdio.h&gt;
+
+<span class="code-comment">/* ── ESCOPO GLOBAL ─────────────────────────────── */</span>
+int totalVendas = 0;                   <span class="code-comment">// global: visível em todo o arquivo</span>
+const float IMPOSTO = 0.12f;           <span class="code-comment">// constante global: uso adequado</span>
+
+float calcularPrecoFinal(float preco, int quantidade) {
+    <span class="code-comment">/* ── ESCOPO DE PARÂMETRO ────────────────── */</span>
+    <span class="code-comment">// 'preco' e 'quantidade' existem apenas aqui</span>
+
+    <span class="code-comment">/* ── ESCOPO LOCAL (bloco da função) ────── */</span>
+    float subtotal = preco * quantidade;
+    float imposto  = subtotal * IMPOSTO;   <span class="code-comment">// usa constante global</span>
+    float total    = subtotal + imposto;
+
+    <span class="code-comment">/* ── STATIC LOCAL ───────────────────────── */</span>
+    static int numTransacoes = 0;          <span class="code-comment">// persiste entre chamadas</span>
+    numTransacoes++;
+
+    <span class="code-comment">/* ── ESCOPO DE BLOCO (if interno) ───────── */</span>
+    if (total &gt; 500.0f) {
+        float desconto = total * 0.05f;    <span class="code-comment">// existe apenas neste if</span>
+        total -= desconto;
+        printf("  Desconto de 5%% aplicado: -R$%.2f\n", desconto);
+    }   <span class="code-comment">// 'desconto' destruída aqui</span>
+
+    totalVendas++;                         <span class="code-comment">// modifica global</span>
+    printf("  Transacao #%d | Total: R$%.2f\n", numTransacoes, total);
+    return total;
+}
+
+int main() {
+    printf("=== Caixa da Loja ===\n");
+    calcularPrecoFinal(80.0f,  3);   <span class="code-comment">// 3 x R$80  = R$240 + imposto</span>
+    calcularPrecoFinal(200.0f, 4);   <span class="code-comment">// 4 x R$200 = R$800 -> desconto!</span>
+    calcularPrecoFinal(50.0f,  2);   <span class="code-comment">// 2 x R$50  = R$100 + imposto</span>
+    printf("\nTotal de vendas no sistema: %d\n", totalVendas);
+    return 0;
+}
+</pre>
+    <div class="terminal-output">
+=== Caixa da Loja ===<br>
+&nbsp;&nbsp;Transacao #1 | Total: R$268.80<br>
+&nbsp;&nbsp;Desconto de 5% aplicado: -R$44.80<br>
+&nbsp;&nbsp;Transacao #2 | Total: R$851.20<br>
+&nbsp;&nbsp;Transacao #3 | Total: R$112.00<br>
+<br>
+Total de vendas no sistema: 3
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 9. C VS JAVA -->
+<div class="content-section">
+    <h2>9. C vs. Java — Escopo de Variáveis</h2>
+
+    <table>
+        <tr>
+            <th>Aspecto</th>
+            <th>C</th>
+            <th>Java</th>
+        </tr>
+        <tr>
+            <td>Local não inicializada</td>
+            <td>⚠️ Contém lixo — comportamento indefinido</td>
+            <td>✅ Erro de compilação se usada sem inicializar</td>
+        </tr>
+        <tr>
+            <td>Variável global</td>
+            <td>Declarada fora de qualquer função</td>
+            <td>Não existe — substituída por atributos <code>static</code> de classe</td>
+        </tr>
+        <tr>
+            <td>Inicialização automática</td>
+            <td>Apenas globais e <code>static</code> locais (com zero)</td>
+            <td>Atributos de objetos são zerados automaticamente</td>
+        </tr>
+        <tr>
+            <td>Variável de controle do <code>for</code></td>
+            <td>Morre fora do <code>for</code> (C99)</td>
+            <td>Morre fora do <code>for</code> — igual ao C</td>
+        </tr>
+        <tr>
+            <td>Sombreamento</td>
+            <td>Permitido (com aviso <code>-Wshadow</code>)</td>
+            <td>Permitido para locais, mas não para atributos de instância</td>
+        </tr>
+        <tr>
+            <td>Local <code>static</code></td>
+            <td>✅ Existe — persiste entre chamadas</td>
+            <td>❌ Não existe — sem equivalente direto</td>
+        </tr>
+    </table>
+
+    <h3>Side-by-side: variável global em C vs atributo estático em Java</h3>
+    <div class="grid-container">
+        <div class="grid-item">
+            <strong>C — variável global</strong>
+<pre>
+int contador = 0;
+
+void incrementar() {
+    contador++;
+}
+
+int obter() {
+    return contador;
+}
+</pre>
+        </div>
+        <div class="grid-item">
+            <strong>Java — atributo estático</strong>
+<pre>
+class Contador {
+    static int valor = 0;
+
+    static void incrementar() {
+        valor++;
+    }
+
+    static int obter() {
+        return valor;
+    }
+}
+</pre>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ QUIZ -->
+<div class="content-section exercise-section">
+    <h2>Quiz — Aula 15</h2>
+    <form class="quiz-form" onsubmit="return false;">
+
+        <div class="content-section quiz-question">
+            <p><strong>1.</strong> Qual é a saída do código abaixo?</p>
+<pre>
+#include &lt;stdio.h&gt;
+int x = 5;
+void f() { int x = 10; printf("%d ", x); }
+int main() { f(); printf("%d\n", x); }
+</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q1" value="a"> 5 5</label></li>
+                <li><label><input type="radio" name="q1" value="b"> 10 10</label></li>
+                <li><label><input type="radio" name="q1" value="c"> 10 5</label></li>
+                <li><label><input type="radio" name="q1" value="d"> Erro de compilação — redeclaração de x</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>2.</strong> Qual é a saída?</p>
+<pre>
+#include &lt;stdio.h&gt;
+void contar() {
+    static int n = 0;
+    n++;
+    printf("%d ", n);
+}
+int main() { contar(); contar(); contar(); }
+</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q2" value="a"> 0 0 0</label></li>
+                <li><label><input type="radio" name="q2" value="b"> 1 1 1</label></li>
+                <li><label><input type="radio" name="q2" value="c"> 1 2 3</label></li>
+                <li><label><input type="radio" name="q2" value="d"> 0 1 2</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>3.</strong> O que acontece ao tentar usar uma variável local depois do bloco em que foi declarada?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q3" value="a"> A variável retorna zero automaticamente</label></li>
+                <li><label><input type="radio" name="q3" value="b"> Erro de compilação — a variável não existe fora do bloco</label></li>
+                <li><label><input type="radio" name="q3" value="c"> A variável retorna o último valor antes de ser destruída</label></li>
+                <li><label><input type="radio" name="q3" value="d"> O programa compila mas executa com comportamento indefinido</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>4.</strong> Diferentemente das variáveis locais, variáveis globais em C são inicializadas automaticamente. Qual é o valor inicial de um <code>float</code> global não inicializado explicitamente?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q4" value="a"> Valor aleatório (lixo de memória)</label></li>
+                <li><label><input type="radio" name="q4" value="b"> <code>0.0</code></label></li>
+                <li><label><input type="radio" name="q4" value="c"> <code>-1.0</code></label></li>
+                <li><label><input type="radio" name="q4" value="d"> <code>NULL</code></label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>5.</strong> Qual a principal diferença entre uma variável local <code>static</code> e uma variável global?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q5" value="a"> A variável <code>static</code> é inicializada com -1; a global com 0</label></li>
+                <li><label><input type="radio" name="q5" value="b"> Ambas têm exatamente as mesmas características — <code>static</code> é apenas um alias</label></li>
+                <li><label><input type="radio" name="q5" value="c"> A local <code>static</code> persiste entre chamadas mas só é visível dentro da função; a global é visível em todo o arquivo</label></li>
+                <li><label><input type="radio" name="q5" value="d"> A global é destruída ao final de cada função; a <code>static</code> não</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>6.</strong> Qual é a saída?</p>
+<pre>
+#include &lt;stdio.h&gt;
+int v = 1;
+void f() {
+    int v = 2;
+    { int v = 3; printf("%d ", v); }
+    printf("%d ", v);
+}
+int main() { f(); printf("%d\n", v); }
+</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q6" value="a"> 1 2 3</label></li>
+                <li><label><input type="radio" name="q6" value="b"> 3 2 1</label></li>
+                <li><label><input type="radio" name="q6" value="c"> 3 3 1</label></li>
+                <li><label><input type="radio" name="q6" value="d"> 1 1 1</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>7.</strong> Por que usar variáveis globais modificáveis indiscriminadamente é uma má prática?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q7" value="a"> Porque ocupam mais memória do que variáveis locais</label></li>
+                <li><label><input type="radio" name="q7" value="b"> Porque qualquer função pode modificá-las, tornando o código difícil de depurar, testar e reutilizar</label></li>
+                <li><label><input type="radio" name="q7" value="c"> Porque o compilador as inicializa com lixo de memória</label></li>
+                <li><label><input type="radio" name="q7" value="d"> Porque variáveis globais não podem ter o mesmo nome que variáveis locais</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>8.</strong> Em Java, usar uma variável local sem inicializá-la gera erro de compilação. Em C, o mesmo código:</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q8" value="a"> Também gera erro de compilação</label></li>
+                <li><label><input type="radio" name="q8" value="b"> Pode gerar apenas um aviso (<em>warning</em>) e compila — executando com comportamento indefinido</label></li>
+                <li><label><input type="radio" name="q8" value="c"> Inicializa a variável com zero automaticamente</label></li>
+                <li><label><input type="radio" name="q8" value="d"> Inicializa a variável com o valor da variável global de mesmo nome</label></li>
+            </ul>
+        </div>
+
+        <button type="button" class="submit-btn" onclick="verificarRespostas()">Verificar Respostas</button>
+    </form>
+    <div id="quiz-results" style="display:none; margin-top:20px; padding:15px; background:#dff0d8; border-radius:5px;"></div>
+</div>
+
+<div class="navigation-buttons">
+    <a href="capitulo14.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">← Aula 14</a>
+    <a href="index.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">Índice</a>
+    <a href="capitulo16.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">Aula 16 →</a>
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align:center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education" style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+<script>
+function verificarRespostas() {
+    const gabarito = { q1:"c", q2:"c", q3:"b", q4:"b", q5:"c", q6:"b", q7:"b", q8:"b" };
+    const explicacoes = {
+        q1: "A função f() declara um 'x' local com valor 10, que sombreia o 'x' global de valor 5. Dentro de f(), o printf imprime a local (10). De volta em main(), a global 'x' está intacta: imprime 5.",
+        q2: "A variável 'n' é static: inicializada uma única vez com 0 e persistida entre chamadas. Na 1ª chamada vira 1, na 2ª vira 2, na 3ª vira 3. Resultado: 1 2 3.",
+        q3: "Variáveis de bloco existem apenas dentro das chaves que as delimitam. Ao tentar usá-las fora, o compilador emite erro — a variável simplesmente não existe naquele escopo.",
+        q4: "Variáveis globais são armazenadas no segmento de dados do programa e inicializadas com zero antes do início da execução. Um float global não inicializado explicitamente recebe 0.0.",
+        q5: "Ambas persistem durante toda a execução do programa. A diferença é a visibilidade: a local static só é acessível dentro da função onde foi declarada; a global é visível em todo o arquivo a partir do ponto de declaração.",
+        q6: "Há três variáveis distintas chamadas 'v': global (1), local de f (2) e local do bloco interno (3). Dentro do bloco interno, imprime 3. Saindo do bloco, volta para a local de f: imprime 2. Em main, acessa a global: imprime 1.",
+        q7: "Variáveis globais modificáveis criam acoplamento oculto: qualquer função pode alterar o estado do programa sem que o chamador saiba. Isso torna bugs difíceis de rastrear e funções impossíveis de testar isoladamente.",
+        q8: "Em C, usar variável local não inicializada pode gerar apenas um aviso com -Wall, mas o código compila. O valor é indeterminado (lixo de memória) e qualquer comportamento que dependa dele é tecnicamente indefinido pela norma C."
+    };
+
+    let acertos = 0, html = "";
+    const total = Object.keys(gabarito).length;
+    for (const q in gabarito) {
+        const sel = document.querySelector(`input[name="${q}"]:checked`);
+        const num = q.replace("q","");
+        if (sel) {
+            if (sel.value === gabarito[q]) {
+                acertos++;
+                html += `<p>Questão ${num}: <span style="color:green;font-weight:bold;">✅ Correto!</span> — ${explicacoes[q]}</p>`;
+            } else {
+                html += `<p>Questão ${num}: <span style="color:red;font-weight:bold;">❌ Incorreto.</span> Gabarito: <strong>${gabarito[q].toUpperCase()}</strong> — ${explicacoes[q]}</p>`;
+            }
+        } else {
+            html += `<p>Questão ${num}: <span style="color:orange;font-weight:bold;">⚠ Não respondida.</span></p>`;
+        }
+    }
+    const r = document.getElementById("quiz-results");
+    r.innerHTML = `<h3>Sua pontuação: ${acertos} de ${total}</h3>${html}`;
+    r.style.display = "block";
+    r.scrollIntoView({ behavior: "smooth" });
+}
+</script>
+
+</body>
+</html>

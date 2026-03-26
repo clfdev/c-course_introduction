@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 06 – Constantes: #define e const</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Aula 06 – Constantes: #define e const</h1>
+    <p>Valores fixos no programa — macros de pré-processador versus variáveis somente leitura</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo05.html">← Aula 05</a>
+    <a href="capitulo07.html">Aula 07 →</a>
+</nav>
+
+<!-- ═══════════════════════════════════════ O QUE É UMA CONSTANTE -->
+<div class="content-section">
+    <h2>O que é uma Constante?</h2>
+    <p>Uma <strong>constante</strong> é um valor que não deve ser alterado durante a execução do programa. Em vez de espalhar números e textos literais pelo código — prática chamada de <em>magic numbers</em> — damos um nome significativo a esses valores fixos. Isso torna o código mais legível, seguro e fácil de manter.</p>
+
+    <div class="definicao">
+        Em C, existem duas formas principais de declarar constantes: a <strong>diretiva de pré-processador <code>#define</code></strong>, que cria uma macro substituída antes da compilação, e a <strong>palavra-chave <code>const</code></strong>, que declara uma variável somente leitura com tipo definido.
+    </div>
+
+    <div class="info-box">
+        <strong>Por que evitar "magic numbers"?</strong><br>
+        Considere o código <code>area = 3.14159 * r * r;</code> versus <code>area = PI * r * r;</code>. O segundo é imediatamente compreensível. Se o valor de PI precisar ser atualizado para mais casas decimais, basta mudar <em>uma</em> linha — a definição da constante — em vez de buscar e substituir todos os <code>3.14159</code> espalhados pelo código.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ #DEFINE -->
+<div class="content-section">
+    <h2>Diretiva #define — Macros de Pré-processador</h2>
+    <p>A diretiva <code>#define</code> instrui o <strong>pré-processador</strong> — uma etapa que ocorre <em>antes</em> da compilação propriamente dita — a substituir textualmente cada ocorrência do nome definido pelo seu valor correspondente.</p>
+
+    <div class="definicao">
+        <code>#define NOME valor</code><br><br>
+        Não termina com ponto e vírgula. Por convenção, nomes de macros são escritos em <strong>MAIÚSCULAS</strong> para distingui-los de variáveis comuns.
+    </div>
+
+    <pre>
+#include &lt;stdio.h&gt;
+
+#define PI        3.14159
+#define GRAVIDADE 9.81
+#define NOME      "Curso de C"
+#define MAXIMO    100
+
+int main() {
+    printf("PI = %.5f\n", PI);
+    printf("Gravidade = %.2f m/s²\n", GRAVIDADE);
+    printf("Bem-vindo ao %s!\n", NOME);
+    printf("Valor máximo: %d\n", MAXIMO);
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>PI = 3.14159</p>
+        <p>Gravidade = 9.81 m/s²</p>
+        <p>Bem-vindo ao Curso de C!</p>
+        <p>Valor máximo: 100</p>
+    </div>
+
+    <h3>O que o pré-processador faz</h3>
+    <p>Antes de compilar, o pré-processador lê o código e substitui mecanicamente cada ocorrência do nome pelo valor — como um "localizar e substituir" automático. O compilador nunca vê o nome <code>PI</code>; ele vê diretamente o número <code>3.14159</code>:</p>
+
+    <table>
+        <tr>
+            <th>Código que você escreve</th>
+            <th>Código que o compilador recebe</th>
+        </tr>
+        <tr>
+            <td><code>area = PI * r * r;</code></td>
+            <td><code>area = 3.14159 * r * r;</code></td>
+        </tr>
+        <tr>
+            <td><code>if (x > MAXIMO)</code></td>
+            <td><code>if (x > 100)</code></td>
+        </tr>
+    </table>
+
+    <div class="warning-box">
+        <strong>Atenção — #define não tem tipo:</strong> O pré-processador faz substituição de texto puro, sem verificar tipos. Isso significa que erros como usar <code>#define TAXA "dez"</code> onde se espera um número <em>não são detectados</em> durante a definição da macro — o erro só aparece quando a macro é usada. Por isso o <code>const</code> é geralmente preferido quando a segurança de tipos é importante.
+    </div>
+
+    <h3>Macros com expressões</h3>
+    <p>O <code>#define</code> também pode definir expressões inteiras. Nesse caso, use sempre parênteses para evitar problemas de precedência na substituição textual:</p>
+
+    <pre>
+<span class="code-comment">// SEM parênteses — perigoso!</span>
+#define DOBRO_ERRADO(x)  x * 2
+
+<span class="code-comment">// COM parênteses — seguro</span>
+#define DOBRO(x)         ((x) * 2)
+#define QUADRADO(x)      ((x) * (x))
+
+int main() {
+    printf("%d\n", DOBRO(5));          <span class="code-comment">// 10</span>
+    printf("%d\n", DOBRO(3 + 1));      <span class="code-comment">// 8  (com parênteses: (3+1)*2)</span>
+    printf("%d\n", DOBRO_ERRADO(3+1)); <span class="code-comment">// 5  ERRADO! expande para: 3+1*2 = 5</span>
+    printf("%d\n", QUADRADO(4));       <span class="code-comment">// 16</span>
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>10</p>
+        <p>8</p>
+        <p>5</p>
+        <p>16</p>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ CONST -->
+<div class="content-section">
+    <h2>Palavra-chave const — Variável Somente Leitura</h2>
+    <p>O qualificador <code>const</code> declara uma variável cujo valor <strong>não pode ser modificado</strong> após a inicialização. Ao contrário do <code>#define</code>, uma variável <code>const</code> tem tipo definido, ocupa espaço na memória e é verificada pelo compilador.</p>
+
+    <div class="definicao">
+        <code>const tipo nome = valor;</code><br><br>
+        A inicialização é <strong>obrigatória</strong> na declaração — não é possível declarar um <code>const</code> sem valor e atribuí-lo depois.
+    </div>
+
+    <pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    const float  PI       = 3.14159f;
+    const double EULER    = 2.718281828;
+    const int    ANO_BASE = 2024;
+    const char   GRAU     = 'C';        <span class="code-comment">// grau Celsius</span>
+
+    float raio = 5.0;
+    float area = PI * raio * raio;
+
+    printf("Área do círculo: %.2f\n", area);
+    printf("e (Euler): %.9f\n", EULER);
+    printf("Ano base: %d\n", ANO_BASE);
+    printf("Unidade: °%c\n", GRAU);
+
+    <span class="code-comment">// PI = 3.0;  ← erro de compilação: assignment of read-only variable</span>
+
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>Área do círculo: 78.54</p>
+        <p>e (Euler): 2.718281828</p>
+        <p>Ano base: 2024</p>
+        <p>Unidade: °C</p>
+    </div>
+
+    <div class="good-practice">
+        <strong>Boa prática:</strong> Sempre inicialize constantes <code>const</code> no momento da declaração. Tentativas de modificar uma variável <code>const</code> geram erro de compilação — que é exatamente o comportamento desejado. O compilador protege o valor automaticamente.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ EXEMPLO DO DOCX -->
+<div class="content-section">
+    <h2>Exemplo do Material de Referência</h2>
+    <p>O programa abaixo, extraído diretamente da seção 4 do livro de referência do curso, demonstra as duas abordagens lado a lado calculando a área de um círculo. O resultado é idêntico, mas os mecanismos internos são bem diferentes:</p>
+
+    <pre>
+#include &lt;stdio.h&gt;
+
+#define PI_MACRO 3.14159        <span class="code-comment">// substituição textual — sem tipo, sem memória</span>
+
+int main() {
+    const float pi_const = 3.14159;  <span class="code-comment">// variável somente leitura — tem tipo e endereço</span>
+
+    float radius = 5.0;
+
+    float area_macro = PI_MACRO * radius * radius;
+    float area_const = pi_const * radius * radius;
+
+    printf("Area using macro: %.2f\n", area_macro);
+    printf("Area using const: %.2f\n", area_const);
+
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>Area using macro: 78.54</p>
+        <p>Area using const: 78.54</p>
+    </div>
+
+    <div class="info-box">
+        <strong>Resultados iguais, mecanismos diferentes:</strong> Os dois produzem o mesmo número, mas internamente: <code>PI_MACRO</code> é substituído por <code>3.14159</code> antes do compilador ver o código; já <code>pi_const</code> é uma variável real alocada na memória, com tipo <code>float</code> verificado pelo compilador.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ #DEFINE VS CONST -->
+<div class="content-section">
+    <h2>#define versus const — Quando usar cada um?</h2>
+    <p>Ambas as formas são amplamente usadas na prática. A escolha depende do contexto:</p>
+
+    <table>
+        <tr>
+            <th>Característica</th>
+            <th><code>#define</code></th>
+            <th><code>const</code></th>
+        </tr>
+        <tr>
+            <td>Etapa de processamento</td>
+            <td>Pré-processador (antes da compilação)</td>
+            <td>Compilador</td>
+        </tr>
+        <tr>
+            <td>Tem tipo de dado</td>
+            <td>Não — é substituição textual pura</td>
+            <td>Sim — tipo explícito e verificado</td>
+        </tr>
+        <tr>
+            <td>Ocupa memória</td>
+            <td>Não — não existe em runtime</td>
+            <td>Sim — é uma variável na memória</td>
+        </tr>
+        <tr>
+            <td>Verificação de tipo</td>
+            <td>Nenhuma — erros de tipo só aparecem no uso</td>
+            <td>Completa — o compilador valida o tipo</td>
+        </tr>
+        <tr>
+            <td>Visível no depurador</td>
+            <td>Não — o depurador vê apenas o valor numérico</td>
+            <td>Sim — o nome da variável é preservado</td>
+        </tr>
+        <tr>
+            <td>Escopo</td>
+            <td>Do ponto de definição até o fim do arquivo</td>
+            <td>Segue as regras normais de escopo de bloco</td>
+        </tr>
+        <tr>
+            <td>Pode ser ponteiro</td>
+            <td>Não</td>
+            <td>Sim — <code>const int *ptr</code></td>
+        </tr>
+        <tr>
+            <td>Uso preferido</td>
+            <td>Inclusão condicional, macros parametrizadas, constantes globais simples</td>
+            <td>Constantes com tipo definido, escopo controlado</td>
+        </tr>
+    </table>
+
+    <div class="tip-box">
+        <strong>Recomendação geral:</strong> Para constantes numéricas e strings simples em um único arquivo, ambas funcionam bem. Para projetos maiores e multilinguagem, prefira <code>const</code> — ele oferece verificação de tipo, escopo controlado e melhor integração com depuradores. O material de referência deste curso usa <code>#define</code> extensivamente (como <code>#define alturaMaxima 225</code>), então é fundamental conhecer os dois.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ GUARD DE INCLUSÃO -->
+<div class="content-section">
+    <h2>#define além de Constantes: Include Guards</h2>
+    <p>O <code>#define</code> tem outros usos importantes além de definir constantes numéricas. Um dos mais comuns são os <strong>include guards</strong> (guardas de inclusão), que evitam que um arquivo de cabeçalho seja incluído múltiplas vezes em um projeto — tema que aprofundaremos nas Aulas 17 e 18:</p>
+
+    <pre>
+<span class="code-comment">/* arquivo: geometria.h */</span>
+#ifndef GEOMETRIA_H      <span class="code-comment">// "se GEOMETRIA_H NÃO estiver definido..."</span>
+#define GEOMETRIA_H      <span class="code-comment">// "...define-o agora"</span>
+
+#define PI 3.14159
+
+float areaCirculo(float r);
+float areaRetangulo(float b, float h);
+
+#endif                   <span class="code-comment">// fim do bloco condicional</span></pre>
+
+    <div class="info-box">
+        <strong>Como funciona:</strong> Na primeira vez que <code>geometria.h</code> é incluído, <code>GEOMETRIA_H</code> não está definido, então o bloco inteiro é processado e <code>GEOMETRIA_H</code> é definido. Se o arquivo for incluído novamente, <code>GEOMETRIA_H</code> já existe e todo o conteúdo é ignorado, evitando erros de declaração dupla.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ EXEMPLO PRÁTICO -->
+<div class="content-section">
+    <h2>Exemplo Prático: Constantes em um Programa Real</h2>
+    <p>O programa abaixo usa tanto <code>#define</code> quanto <code>const</code> para calcular propriedades de um movimento uniformemente acelerado — tema diretamente relacionado ao contexto científico do curso:</p>
+
+    <pre>
+#include &lt;stdio.h&gt;
+#include &lt;math.h&gt;
+
+<span class="code-comment">// Constantes físicas globais — #define por serem simples e globais</span>
+#define GRAVIDADE   9.81     <span class="code-comment">// m/s²</span>
+#define LUZ         299792458 <span class="code-comment">// m/s</span>
+
+int main() {
+    <span class="code-comment">// Constantes locais com tipo — const para segurança</span>
+    const float altura_inicial = 100.0f;  <span class="code-comment">// metros</span>
+    const float velocidade_0   = 0.0f;    <span class="code-comment">// m/s (largado do repouso)</span>
+
+    <span class="code-comment">// Tempo de queda: h = v0*t + (g/2)*t² → t = sqrt(2h/g)</span>
+    float tempo = sqrt(2.0 * altura_inicial / GRAVIDADE);
+    float velocidade_final = velocidade_0 + GRAVIDADE * tempo;
+
+    printf("Queda de %.0f metros:\n", altura_inicial);
+    printf("  Tempo de queda:      %.2f s\n",   tempo);
+    printf("  Velocidade final:    %.2f m/s\n", velocidade_final);
+    printf("\nVelocidade da luz: %d m/s\n", LUZ);
+
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>Queda de 100 metros:</p>
+        <p>&nbsp;&nbsp;Tempo de queda:      4.52 s</p>
+        <p>&nbsp;&nbsp;Velocidade final:    44.29 m/s</p>
+        <p>&nbsp;</p>
+        <p>Velocidade da luz: 299792458 m/s</p>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ C VS JAVA -->
+<div class="content-section">
+    <h2>Constantes em C versus Java</h2>
+    <p>Em Java, o equivalente mais próximo de uma constante é uma variável declarada com <code>static final</code>. O C não tem essa combinação — as duas abordagens disponíveis são <code>#define</code> e <code>const</code>:</p>
+
+    <table>
+        <tr>
+            <th>Aspecto</th>
+            <th>C — <code>#define</code></th>
+            <th>C — <code>const</code></th>
+            <th>Java — <code>static final</code></th>
+        </tr>
+        <tr>
+            <td>Declaração</td>
+            <td><code>#define PI 3.14</code></td>
+            <td><code>const float PI = 3.14;</code></td>
+            <td><code>static final double PI = 3.14;</code></td>
+        </tr>
+        <tr>
+            <td>Tem tipo</td>
+            <td>Não</td>
+            <td>Sim</td>
+            <td>Sim</td>
+        </tr>
+        <tr>
+            <td>Verificação em compilação</td>
+            <td>Não (só no uso)</td>
+            <td>Sim</td>
+            <td>Sim</td>
+        </tr>
+        <tr>
+            <td>Escopo</td>
+            <td>Global no arquivo</td>
+            <td>Bloco onde foi declarada</td>
+            <td>Classe</td>
+        </tr>
+        <tr>
+            <td>Convenção de nome</td>
+            <td><code>MAIUSCULAS</code></td>
+            <td>Variável ou <code>MAIUSCULAS</code></td>
+            <td><code>MAIUSCULAS_COM_UNDERSCORE</code></td>
+        </tr>
+    </table>
+
+    <h3>Código equivalente nas duas linguagens</h3>
+    <table>
+        <tr>
+            <th style="width:50%">C</th>
+            <th style="width:50%">Java</th>
+        </tr>
+        <tr>
+            <td>
+<pre style="margin:0; font-size:0.85em;">
+#define PI_MACRO 3.14159
+
+int main() {
+    const float pi = 3.14159f;
+    float r = 5.0;
+    float area = pi * r * r;
+    printf("%.2f\n", area);
+}
+</pre>
+            </td>
+            <td>
+<pre style="margin:0; font-size:0.85em;">
+public class Main {
+  static final double PI = 3.14159;
+
+  public static void main(String[] args) {
+    double r = 5.0;
+    double area = PI * r * r;
+    System.out.printf("%.2f%n", area);
+  }
+}
+</pre>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<!-- ═══════════════════════════════════════ EXERCÍCIOS -->
+<div class="exercise-section">
+    <h2>Exercícios — Aula 06</h2>
+    <p>Teste seus conhecimentos sobre constantes em C:</p>
+
+    <form class="quiz-form" id="quiz-form">
+
+        <div class="quiz-question">
+            <p><strong>1. Qual é a principal diferença entre <code>#define PI 3.14</code> e <code>const float pi = 3.14;</code>?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q1" value="a"> Apenas a convenção de nomenclatura — maiúsculas para <code>#define</code> e minúsculas para <code>const</code></label></li>
+                <li><label><input type="radio" name="q1" value="b"> <code>#define</code> faz substituição textual antes da compilação e não tem tipo; <code>const</code> é uma variável com tipo verificada pelo compilador</label></li>
+                <li><label><input type="radio" name="q1" value="c"> <code>#define</code> só funciona com números inteiros; <code>const</code> funciona com qualquer tipo</label></li>
+                <li><label><input type="radio" name="q1" value="d"> <code>const</code> é processado antes da compilação; <code>#define</code> é processado em tempo de execução</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>2. O que acontece se você tentar modificar uma variável <code>const</code> em C?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q2" value="a"> O programa compila normalmente e ignora a modificação em tempo de execução</label></li>
+                <li><label><input type="radio" name="q2" value="b"> O programa compila, mas lança uma exceção em tempo de execução</label></li>
+                <li><label><input type="radio" name="q2" value="c"> O compilador gera um erro e impede a compilação</label></li>
+                <li><label><input type="radio" name="q2" value="d"> O compilador gera apenas um aviso, mas compila normalmente</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>3. Por que a macro abaixo pode causar resultados inesperados?</strong></p>
+            <pre>#define DOBRO(x) x * 2
+printf("%d\n", DOBRO(3 + 1));</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q3" value="a"> Porque <code>#define</code> não aceita parâmetros</label></li>
+                <li><label><input type="radio" name="q3" value="b"> Porque a substituição textual expande para <code>3 + 1 * 2 = 5</code> em vez de <code>(3+1) * 2 = 8</code></label></li>
+                <li><label><input type="radio" name="q3" value="c"> Porque o especificador <code>%d</code> é inválido com macros</label></li>
+                <li><label><input type="radio" name="q3" value="d"> Porque <code>DOBRO</code> só funciona com variáveis, não com expressões</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>4. Qual das declarações abaixo está <u>incorreta</u> sintaticamente em C?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q4" value="a"> <code>#define MAXIMO 100</code></label></li>
+                <li><label><input type="radio" name="q4" value="b"> <code>const int maximo = 100;</code></label></li>
+                <li><label><input type="radio" name="q4" value="c"> <code>#define MAXIMO = 100;</code></label></li>
+                <li><label><input type="radio" name="q4" value="d"> <code>const float taxa = 0.05f;</code></label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>5. Em que etapa do processo de compilação o <code>#define</code> é processado?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q5" value="a"> Durante a execução do programa (runtime)</label></li>
+                <li><label><input type="radio" name="q5" value="b"> Durante a fase de linkedição (linking)</label></li>
+                <li><label><input type="radio" name="q5" value="c"> Antes da compilação, pelo pré-processador</label></li>
+                <li><label><input type="radio" name="q5" value="d"> Durante a compilação, junto com as demais instruções</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>6. Qual é o equivalente mais próximo de <code>const float PI = 3.14;</code> em Java?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q6" value="a"> <code>final float PI = 3.14;</code> em qualquer contexto</label></li>
+                <li><label><input type="radio" name="q6" value="b"> <code>static final double PI = 3.14;</code> em uma classe</label></li>
+                <li><label><input type="radio" name="q6" value="c"> <code>const double PI = 3.14;</code> (Java também tem <code>const</code>)</label></li>
+                <li><label><input type="radio" name="q6" value="d"> <code>readonly double PI = 3.14;</code></label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>7. Qual vantagem o <code>const</code> tem sobre o <code>#define</code> em projetos maiores?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q7" value="a"> <code>const</code> é mais rápido em tempo de execução porque não ocupa memória</label></li>
+                <li><label><input type="radio" name="q7" value="b"> <code>const</code> tem tipo definido e escopo controlado, sendo visível no depurador e verificado pelo compilador</label></li>
+                <li><label><input type="radio" name="q7" value="c"> <code>const</code> permite alterar o valor em tempo de execução, ao contrário do <code>#define</code></label></li>
+                <li><label><input type="radio" name="q7" value="d"> <code>const</code> pode ser usado sem inicialização, enquanto o <code>#define</code> exige um valor imediato</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>8. Para que serve a construção <code>#ifndef ARQUIVO_H / #define ARQUIVO_H / #endif</code> em um arquivo de cabeçalho?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q8" value="a"> Para impedir que o arquivo seja compilado em sistemas operacionais diferentes do Windows</label></li>
+                <li><label><input type="radio" name="q8" value="b"> Para garantir que o conteúdo do arquivo de cabeçalho seja incluído apenas uma vez, evitando erros de declaração dupla</label></li>
+                <li><label><input type="radio" name="q8" value="c"> Para definir versões diferentes do mesmo código dependendo do sistema operacional</label></li>
+                <li><label><input type="radio" name="q8" value="d"> Para esconder o código-fonte do arquivo do compilador</label></li>
+            </ul>
+        </div>
+
+        <button type="button" class="submit-btn" onclick="verificarRespostas()">Verificar Respostas</button>
+    </form>
+
+    <div id="quiz-results" style="display:none; margin-top:20px; padding:15px; background-color:#dff0d8; border-radius:5px;"></div>
+</div>
+
+<div class="navigation-buttons">
+    <a href="capitulo05.html">← Aula 05</a>
+    <a href="index.html">Índice</a>
+    <a href="capitulo07.html">Aula 07 →</a>
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align: center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education" style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+<script>
+    function verificarRespostas() {
+        const gabarito = {
+            q1: "b",
+            q2: "c",
+            q3: "b",
+            q4: "c",
+            q5: "c",
+            q6: "b",
+            q7: "b",
+            q8: "b"
+        };
+
+        const explicacoes = {
+            q1: "#define faz substituição textual pura pelo pré-processador antes da compilação — sem tipo, sem memória alocada. const declara uma variável com tipo explícito verificada pelo compilador em tempo de compilação.",
+            q2: "Tentar modificar uma variável const gera erro de compilação: 'assignment of read-only variable'. O programa não compila, protegendo o valor contra alterações acidentais.",
+            q3: "A substituição textual expande DOBRO(3+1) para 3+1*2. Por precedência, * é calculado antes de +: 3 + (1*2) = 3 + 2 = 5. A solução é usar parênteses: #define DOBRO(x) ((x)*2), que expande para ((3+1)*2) = 8.",
+            q4: "#define MAXIMO = 100; está incorreto. O pré-processador substituiria MAXIMO por '= 100' (incluindo o sinal de igual e o ponto e vírgula), causando erros de sintaxe ao usar a macro. O correto é #define MAXIMO 100 (sem = e sem ;).",
+            q5: "O #define é processado pelo pré-processador, que é executado antes da compilação. Ele faz substituições textuais no código antes que o compilador veja qualquer linha.",
+            q6: "O equivalente em Java é static final double PI = 3.14; dentro de uma classe. A palavra-chave const não existe em Java — ela é reservada mas não implementada.",
+            q7: "const tem tipo definido (o compilador verifica incompatibilidades), escopo de bloco (não vaza para o arquivo inteiro), e o nome da variável é preservado no depurador. Isso facilita a manutenção e depuração de projetos maiores.",
+            q8: "Esse padrão é chamado de 'include guard'. Na primeira inclusão, ARQUIVO_H não está definido, então o bloco é processado e ARQUIVO_H é definido. Em inclusões subsequentes, ARQUIVO_H já existe e o bloco inteiro é ignorado, evitando declarações duplicadas."
+        };
+
+        let acertos = 0;
+        let html = "";
+        const total = Object.keys(gabarito).length;
+
+        for (const q in gabarito) {
+            const selecionada = document.querySelector(`input[name="${q}"]:checked`);
+            const num = q.substring(1);
+            if (selecionada) {
+                if (selecionada.value === gabarito[q]) {
+                    acertos++;
+                    html += `<p>Questão ${num}: <span style="color:green; font-weight:bold;">✓ Correto!</span> — ${explicacoes[q]}</p>`;
+                } else {
+                    html += `<p>Questão ${num}: <span style="color:red; font-weight:bold;">✗ Incorreto.</span> — ${explicacoes[q]}</p>`;
+                }
+            } else {
+                html += `<p>Questão ${num}: <span style="color:orange; font-weight:bold;">⚠ Não respondida.</span></p>`;
+            }
+        }
+
+        const resultado = document.getElementById("quiz-results");
+        resultado.innerHTML = `<h3>Sua pontuação: ${acertos} de ${total}</h3>${html}`;
+        resultado.style.display = "block";
+        resultado.scrollIntoView({ behavior: "smooth" });
+    }
+</script>
+
+</body>
+</html>

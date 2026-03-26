@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 23 – Ponteiros e Funções: passagem por referência versus por valor</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Aula 23 — Ponteiros e Funções</h1>
+    <p>Passagem por valor vs. por referência — quando copiar e quando apontar</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo22.html">← Aula 22</a>
+    <a href="capitulo24.html">Aula 24 →</a>
+</nav>
+
+<!-- ═══════════════════════════════════════ 1. REVISÃO E CONTEXTO -->
+<div class="content-section">
+    <h2>1. Revisão: a Cópia Invisível</h2>
+
+    <p>Nas aulas de funções você aprendeu que C passa argumentos <strong>por valor</strong> — a função recebe uma cópia independente de cada argumento. Isso é seguro, mas insuficiente para dois cenários importantes: quando a função precisa <em>modificar</em> a variável original, ou quando passar a cópia de um dado grande (como uma struct) seria caro.</p>
+
+    <p>Esta aula aprofunda os dois mecanismos, agora com o conhecimento completo de ponteiros das aulas 20 a 22:</p>
+
+    <table>
+        <tr>
+            <th>Mecanismo</th>
+            <th>O que é passado</th>
+            <th>Pode modificar o original?</th>
+            <th>Custo</th>
+            <th>Sintaxe na chamada</th>
+        </tr>
+        <tr>
+            <td><strong>Por valor</strong></td>
+            <td>Cópia do dado</td>
+            <td>❌ Não</td>
+            <td>Proporcional ao tamanho do tipo</td>
+            <td><code>f(x)</code></td>
+        </tr>
+        <tr>
+            <td><strong>Por referência</strong></td>
+            <td>Endereço de memória</td>
+            <td>✅ Sim</td>
+            <td>Sempre 8 bytes (o ponteiro)</td>
+            <td><code>f(&amp;x)</code></td>
+        </tr>
+    </table>
+</div>
+
+<!-- ═══════════════════════════════════════ 2. POR VALOR EM DETALHE -->
+<div class="content-section">
+    <h2>2. Passagem por Valor — Anatomia Completa</h2>
+
+    <p>Quando você chama <code>f(x)</code>, o compilador cria um novo frame na pilha para <code>f</code> e <strong>copia</strong> o valor de <code>x</code> nesse frame. As duas variáveis são independentes a partir daí.</p>
+
+<pre>
+#include &lt;stdio.h&gt;
+
+void tentarZerar(int n) {
+    printf("  [dentro] n antes = %d  endereço = %p\n", n, &amp;n);
+    n = 0;
+    printf("  [dentro] n depois = %d  endereço = %p\n", n, &amp;n);
+}
+
+int main() {
+    int x = 42;
+    printf("[main] x antes = %d  endereço = %p\n", x, &amp;x);
+    tentarZerar(x);
+    printf("[main] x depois = %d  endereço = %p\n", x, &amp;x);
+    return 0;
+}
+</pre>
+    <div class="terminal-output">
+[main] x antes = 42  endereço = 0x7ffd...10<br>
+&nbsp;&nbsp;[dentro] n antes = 42  endereço = 0x7ffd...e0<br>
+&nbsp;&nbsp;[dentro] n depois = 0  endereço = 0x7ffd...e0<br>
+[main] x depois = 42  endereço = 0x7ffd...10
+    </div>
+
+    <div class="info-box">
+        <strong>Observe os endereços:</strong> <code>x</code> e <code>n</code> estão em endereços diferentes — são variáveis distintas. Zerar <code>n</code> não afeta <code>x</code>. Ao retornar de <code>tentarZerar</code>, o frame de <code>n</code> é destruído e <code>x</code> permanece intacto com <code>42</code>.
+    </div>
+
+    <h3>Quando passagem por valor é a escolha certa</h3>
+    <table>
+        <tr>
+            <th>Situação</th>
+            <th>Justificativa</th>
+        </tr>
+        <tr>
+            <td>Tipos primitivos pequenos (<code>int</code>, <code>float</code>, <code>char</code>)</td>
+            <td>Custo de cópia é mínimo (4–8 bytes); evita efeitos colaterais acidentais</td>
+        </tr>
+        <tr>
+            <td>A função calcula e <strong>retorna</strong> o resultado</td>
+            <td><code>int quadrado(int n) { return n*n; }</code> — limpo e sem efeitos colaterais</td>
+        </tr>
+        <tr>
+            <td>Você quer garantir que o dado original não será alterado</td>
+            <td>Isolamento é desejável — a cópia age como proteção</td>
+        </tr>
+    </table>
+</div>
+
+<!-- ═══════════════════════════════════════ 3. POR REFERÊNCIA EM DETALHE -->
+<div class="content-section">
+    <h2>3. Passagem por Referência — Anatomia Completa</h2>
+
+    <p>Ao chamar <code>f(&amp;x)</code>, você passa o <em>endereço</em> de <code>x</code>. A função recebe um ponteiro que aponta para a mesma posição de memória que <code>x</code> ocupa no chamador. Tudo que a função escrever via <code>*p</code> modifica diretamente <code>x</code>.</p>
+
+<pre>
+#include &lt;stdio.h&gt;
+
+void zerar(int *p) {
+    printf("  [dentro] *p antes = %d  endereço de p = %p  *p em = %p\n",
+           *p, &amp;p, p);
+    *p = 0;
+    printf("  [dentro] *p depois = %d\n", *p);
+}
+
+int main() {
+    int x = 42;
+    printf("[main] x antes = %d  endereço de x = %p\n", x, &amp;x);
+    zerar(&amp;x);
+    printf("[main] x depois = %d\n", x);
+    return 0;
+}
+</pre>
+    <div class="terminal-output">
+[main] x antes = 42  endereço de x = 0x7ffd...10<br>
+&nbsp;&nbsp;[dentro] *p antes = 42  endereço de p = 0x7ffd...e0  *p em = 0x7ffd...10<br>
+&nbsp;&nbsp;[dentro] *p depois = 0<br>
+[main] x depois = 0
+    </div>
+
+    <div class="info-box">
+        <strong>Repare nos endereços:</strong> O ponteiro <code>p</code> dentro de <code>zerar</code> está em um endereço diferente (na stack de <code>zerar</code>), mas o valor que ele guarda (<code>*p em</code>) é o mesmo endereço de <code>x</code>. Eles compartilham a mesma posição de memória de dado — como dois controles remotos apontando para a mesma TV.
+    </div>
+
+    <h3>Quando passagem por referência é necessária</h3>
+    <table>
+        <tr>
+            <th>Situação</th>
+            <th>Exemplo</th>
+        </tr>
+        <tr>
+            <td>A função precisa modificar a variável do chamador</td>
+            <td><code>void incrementar(int *n) { (*n)++; }</code></td>
+        </tr>
+        <tr>
+            <td>A função precisa retornar mais de um resultado</td>
+            <td><code>void minMax(int[], int, int*, int*)</code></td>
+        </tr>
+        <tr>
+            <td>Passar struct grande para evitar cópia cara</td>
+            <td><code>void exibir(const Aluno *a)</code></td>
+        </tr>
+        <tr>
+            <td>Alocar memória e devolver o ponteiro ao chamador</td>
+            <td><code>void criar(int **pp, int n)</code></td>
+        </tr>
+    </table>
+</div>
+
+<!-- ═══════════════════════════════════════ 4. PADRÕES DE USO -->
+<div class="content-section">
+    <h2>4. Os Quatro Padrões de Parâmetro com Ponteiros</h2>
+
+    <p>Em C profissional, a combinação de <code>*</code> e <code>const</code> em parâmetros comunica com precisão a <em>intenção</em> da função — o que ela faz e o que não faz com os dados:</p>
+
+    <table>
+        <tr>
+            <th>Declaração do parâmetro</th>
+            <th>Pode mudar <code>*p</code>?</th>
+            <th>Pode mudar <code>p</code>?</th>
+            <th>Uso típico</th>
+        </tr>
+        <tr>
+            <td><code>int *p</code></td>
+            <td>✅ Sim</td>
+            <td>✅ Sim</td>
+            <td>Parâmetro de saída — função escreve resultado via ponteiro</td>
+        </tr>
+        <tr>
+            <td><code>const int *p</code></td>
+            <td>❌ Não</td>
+            <td>✅ Sim</td>
+            <td>Parâmetro de entrada — função só lê, não modifica o dado</td>
+        </tr>
+        <tr>
+            <td><code>int * const p</code></td>
+            <td>✅ Sim</td>
+            <td>❌ Não</td>
+            <td>Raro — o ponteiro em si não pode ser redirecionado</td>
+        </tr>
+        <tr>
+            <td><code>const int * const p</code></td>
+            <td>❌ Não</td>
+            <td>❌ Não</td>
+            <td>Ponteiro completamente imutável — leitura pura</td>
+        </tr>
+    </table>
+
+<pre>
+#include &lt;stdio.h&gt;
+
+<span class="code-comment">/* Só lê — const int* protege o dado */</span>
+float calcularMedia(const float *v, int n) {
+    float soma = 0;
+    for (int i = 0; i &lt; n; i++)
+        soma += v[i];           <span class="code-comment">// OK: leitura</span>
+    <span class="code-comment">// v[0] = 0;               // ❌ ERRO: const proíbe escrita</span>
+    return soma / n;
+}
+
+<span class="code-comment">/* Escreve resultado via ponteiro de saída */</span>
+void minMax(const int *v, int n, int *minimo, int *maximo) {
+    *minimo = *maximo = v[0];
+    for (int i = 1; i &lt; n; i++) {
+        if (v[i] &lt; *minimo) *minimo = v[i];
+        if (v[i] &gt; *maximo) *maximo = v[i];
+    }
+}
+
+int main() {
+    float notas[]  = {7.5f, 8.0f, 6.0f, 9.5f, 5.5f};
+    int   valores[] = {3, 7, 1, 9, 4};
+
+    printf("Média: %.1f\n", calcularMedia(notas, 5));
+
+    int mn, mx;
+    minMax(valores, 5, &amp;mn, &amp;mx);
+    printf("Min: %d  Max: %d\n", mn, mx);
+
+    return 0;
+}
+</pre>
+    <div class="terminal-output">Média: 7.3<br>Min: 1  Max: 9</div>
+
+    <div class="tip-box">
+        <strong>Regra de ouro:</strong> Se a função só <em>lê</em> os dados via ponteiro, use <code>const tipo *p</code>. Isso é documentação executável — o compilador garante que a função não modifica o dado acidentalmente, e o chamador sabe que seus dados estão protegidos.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 5. RETORNO MÚLTIPLO -->
+<div class="content-section">
+    <h2>5. Retorno Múltiplo via Ponteiros</h2>
+
+    <p>Uma função só pode devolver um único valor com <code>return</code>. Quando você precisa de dois ou mais resultados, use ponteiros de saída — é o padrão idiomático em C:</p>
+
+<pre>
+#include &lt;stdio.h&gt;
+#include &lt;math.h&gt;
+
+<span class="code-comment">/* Converte coordenadas cartesianas para polares */</span>
+void cartesianParaPolar(double x, double y,
+                        double *raio, double *angulo) {
+    *raio   = sqrt(x*x + y*y);
+    *angulo = atan2(y, x) * 180.0 / 3.14159265;  <span class="code-comment">// em graus</span>
+}
+
+<span class="code-comment">/* Divide e retorna quociente + resto */</span>
+int dividir(int dividendo, int divisor,
+            int *quociente, int *resto) {
+    if (divisor == 0) return 0;           <span class="code-comment">// erro: retorna 0 (falso)</span>
+    *quociente = dividendo / divisor;
+    *resto     = dividendo % divisor;
+    return 1;                             <span class="code-comment">// sucesso: retorna 1 (verdadeiro)</span>
+}
+
+<span class="code-comment">/* Estatísticas completas de um vetor */</span>
+void estatisticas(const float *v, int n,
+                  float *media, float *maior, float *menor, float *desvio) {
+    float soma = 0;
+    *maior = *menor = v[0];
+    for (int i = 0; i &lt; n; i++) {
+        soma += v[i];
+        if (v[i] &gt; *maior) *maior = v[i];
+        if (v[i] &lt; *menor) *menor = v[i];
+    }
+    *media = soma / n;
+    float varSoma = 0;
+    for (int i = 0; i &lt; n; i++)
+        varSoma += (v[i] - *media) * (v[i] - *media);
+    *desvio = sqrt(varSoma / n);
+}
+
+int main() {
+    double r, ang;
+    cartesianParaPolar(3.0, 4.0, &amp;r, &amp;ang);
+    printf("(3,4) → raio=%.2f  ângulo=%.1f°\n", r, ang);
+
+    int q, res;
+    if (dividir(17, 5, &amp;q, &amp;res))
+        printf("17 ÷ 5 = %d  resto %d\n", q, res);
+    if (!dividir(10, 0, &amp;q, &amp;res))
+        printf("Divisão por zero!\n");
+
+    float notas[] = {6.0f, 8.5f, 7.0f, 9.0f, 5.5f};
+    float med, mx, mn, desv;
+    estatisticas(notas, 5, &amp;med, &amp;mx, &amp;mn, &amp;desv);
+    printf("\nMédia: %.2f  Maior: %.1f  Menor: %.1f  Desvio: %.2f\n",
+           med, mx, mn, desv);
+
+    return 0;
+}
+</pre>
+    <div class="terminal-output">(3,4) → raio=5.00  ângulo=53.1°<br>17 ÷ 5 = 3  resto 2<br>Divisão por zero!<br><br>Média: 7.20  Maior: 9.0  Menor: 5.5  Desvio: 1.25</div>
+
+    <div class="info-box">
+        <strong>Padrão código de erro:</strong> A função <code>dividir</code> usa o <code>return</code> para indicar sucesso/falha (0 = erro, 1 = ok) e ponteiros para os resultados. Esse padrão é onipresente na biblioteca padrão de C — <code>scanf</code>, <code>fgets</code>, <code>malloc</code> e dezenas de outras funções usam exatamente essa convenção.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 6. PONTEIROS E STRUCTS -->
+<div class="content-section">
+    <h2>6. Ponteiros para Structs — Eficiência e Modificação</h2>
+
+    <p>Passar uma struct por valor copia <em>todos</em> os seus bytes. Para uma struct de 200 bytes chamada 100 mil vezes, isso é 20 MB de cópia desnecessária. Ponteiros resolvem os dois problemas:</p>
+
+<pre>
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+typedef struct {
+    char  nome[50];
+    float salario;
+    int   nivel;
+} Funcionario;
+
+<span class="code-comment">/* Só lê — const evita modificação acidental, custo = 8 bytes */</span>
+void exibir(const Funcionario *f) {
+    printf("%-20s | R$%8.2f | Nível %d\n",
+           f-&gt;nome, f-&gt;salario, f-&gt;nivel);
+}
+
+<span class="code-comment">/* Modifica — aplica reajuste direto na struct original */</span>
+void aplicarReajuste(Funcionario *f, float percentual) {
+    f-&gt;salario *= (1.0f + percentual / 100.0f);
+    if (f-&gt;salario &gt; 10000.0f &amp;&amp; f-&gt;nivel &lt; 3)
+        f-&gt;nivel++;    <span class="code-comment">// promoção automática acima de R$10k</span>
+}
+
+<span class="code-comment">/* Encontra o de maior salário — retorna ponteiro para o elemento */</span>
+Funcionario *melhorPago(Funcionario *equipe, int n) {
+    Funcionario *melhor = &amp;equipe[0];
+    for (int i = 1; i &lt; n; i++)
+        if (equipe[i].salario &gt; melhor-&gt;salario)
+            melhor = &amp;equipe[i];
+    return melhor;
+}
+
+int main() {
+    Funcionario equipe[] = {
+        {"Ana Oliveira",  8500.0f, 2},
+        {"Bruno Santos",  6200.0f, 1},
+        {"Carla Mendes", 11000.0f, 3},
+        {"Diego Nunes",   7800.0f, 2}
+    };
+    int n = 4;
+
+    printf("=== Antes do reajuste ===\n");
+    for (int i = 0; i &lt; n; i++) exibir(&amp;equipe[i]);
+
+    for (int i = 0; i &lt; n; i++) aplicarReajuste(&amp;equipe[i], 10.0f);
+
+    printf("\n=== Após reajuste de 10%% ===\n");
+    for (int i = 0; i &lt; n; i++) exibir(&amp;equipe[i]);
+
+    Funcionario *star = melhorPago(equipe, n);
+    printf("\nMelhor pago: %s (R$%.2f)\n", star-&gt;nome, star-&gt;salario);
+
+    return 0;
+}
+</pre>
+    <div class="terminal-output">
+=== Antes do reajuste ===<br>
+Ana Oliveira         | R$  8500.00 | Nível 2<br>
+Bruno Santos         | R$  6200.00 | Nível 1<br>
+Carla Mendes         | R$ 11000.00 | Nível 3<br>
+Diego Nunes          | R$  7800.00 | Nível 2<br>
+<br>
+=== Após reajuste de 10% ===<br>
+Ana Oliveira         | R$  9350.00 | Nível 2<br>
+Bruno Santos         | R$  6820.00 | Nível 1<br>
+Carla Mendes         | R$ 12100.00 | Nível 3<br>
+Diego Nunes          | R$  8580.00 | Nível 2<br>
+<br>
+Melhor pago: Carla Mendes (R$12100.00)
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 7. PONTEIROS COMO SAÍDA DE ALOCAÇÃO -->
+<div class="content-section">
+    <h2>7. Ponteiro para Ponteiro — Alocar e Devolver ao Chamador</h2>
+
+    <p>Quando uma função precisa alocar memória <em>e</em> devolver o ponteiro ao chamador, ela recebe um <code>**</code> (ponteiro para ponteiro). Isso é necessário porque o ponteiro em si precisa ser modificado:</p>
+
+<pre>
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+<span class="code-comment">/* Cria e inicializa um vetor de zeros — modifica o ponteiro do chamador */</span>
+int criarVetor(int **pp, int n) {
+    *pp = (int *) calloc(n, sizeof(int));   <span class="code-comment">// escreve no ponteiro original</span>
+    if (*pp == NULL) return 0;              <span class="code-comment">// falhou</span>
+    return 1;                               <span class="code-comment">// sucesso</span>
+}
+
+<span class="code-comment">/* Duplica uma string em memória dinâmica */</span>
+char *duplicarString(const char *src) {
+    int len = strlen(src);
+    char *copia = (char *) malloc((len + 1) * sizeof(char));
+    if (copia == NULL) return NULL;
+    strcpy(copia, src);
+    return copia;    <span class="code-comment">// chamador é responsável por fazer free</span>
+}
+
+int main() {
+    int *v = NULL;
+
+    if (criarVetor(&amp;v, 5)) {   <span class="code-comment">// passa &v — função recebe int **</span>
+        for (int i = 0; i &lt; 5; i++)
+            v[i] = (i + 1) * 10;
+        printf("Vetor: ");
+        for (int i = 0; i &lt; 5; i++) printf("%d ", v[i]);
+        printf("\n");
+        free(v);
+    }
+
+    char *s = duplicarString("Ponteiros em C");
+    if (s) {
+        printf("Cópia: %s\n", s);
+        free(s);   <span class="code-comment">// chamador libera o que a função alocou</span>
+    }
+
+    return 0;
+}
+</pre>
+    <div class="terminal-output">Vetor: 10 20 30 40 50<br>Cópia: Ponteiros em C</div>
+
+    <div class="tip-box">
+        <strong>Contrato de propriedade:</strong> Quando uma função aloca memória e retorna o ponteiro (como <code>duplicarString</code>), o <em>chamador</em> fica responsável por chamar <code>free</code>. Isso deve ser documentado no cabeçalho ou num comentário — é um "contrato" entre quem cria e quem usa a função.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 8. ERROS CLÁSSICOS -->
+<div class="content-section">
+    <h2>8. Erros Clássicos com Ponteiros em Funções</h2>
+
+    <h3>Erro 1 — Retornar ponteiro para variável local</h3>
+<pre>
+<span class="code-comment">/* ❌ ERRADO — variável local é destruída ao retornar */</span>
+int *funcaoPerigosa() {
+    int resultado = 42;
+    return &amp;resultado;   <span class="code-comment">// endereço de variável que não existe mais!</span>
+}
+
+<span class="code-comment">/* ✅ CORRETO — aloca no heap: sobrevive ao retorno da função */</span>
+int *funcaoCorreta() {
+    int *p = (int *) malloc(sizeof(int));
+    if (p) *p = 42;
+    return p;   <span class="code-comment">// chamador deve fazer free(p)</span>
+}
+
+<span class="code-comment">/* ✅ TAMBÉM CORRETO — ponteiro para static: persiste entre chamadas */</span>
+int *funcaoComStatic() {
+    static int resultado = 42;
+    return &amp;resultado;   <span class="code-comment">// static vive durante todo o programa</span>
+}
+</pre>
+
+    <h3>Erro 2 — Não verificar NULL antes de desreferenciar</h3>
+<pre>
+<span class="code-comment">/* ❌ ERRADO — se p for NULL, *p causa segfault */</span>
+void processar_errado(int *p) {
+    *p = *p * 2;    <span class="code-comment">// crash se p == NULL</span>
+}
+
+<span class="code-comment">/* ✅ CORRETO — verificar sempre */</span>
+int processar_correto(int *p) {
+    if (p == NULL) return 0;   <span class="code-comment">// guard clause</span>
+    *p = *p * 2;
+    return 1;
+}
+</pre>
+
+    <h3>Erro 3 — Esquecer <code>&amp;</code> na chamada</h3>
+<pre>
+void dobrar(int *n) { *n *= 2; }
+
+int main() {
+    int x = 5;
+
+    dobrar(x);    <span class="code-comment">// ❌ passa o VALOR 5 como se fosse endereço — segfault!</span>
+    dobrar(&amp;x);   <span class="code-comment">// ✅ passa o endereço de x</span>
+
+    return 0;
+}
+</pre>
+
+    <h3>Erro 4 — Modificar ponteiro de entrada quando intenção é só ler</h3>
+<pre>
+<span class="code-comment">/* ❌ Função "leitora" que acidentalmente modifica dados */</span>
+float somar_errado(float *v, int n) {
+    float soma = 0;
+    while (n--)
+        soma += *v++;   <span class="code-comment">// modifica v — pode ser bug se ponteiro for reutilizado</span>
+    return soma;
+}
+
+<span class="code-comment">/* ✅ Correto: const garante que o compilador avisa qualquer modificação */</span>
+float somar_correto(const float *v, int n) {
+    float soma = 0;
+    for (int i = 0; i &lt; n; i++)
+        soma += v[i];
+    return soma;
+}
+</pre>
+
+    <table>
+        <tr>
+            <th>Erro</th>
+            <th>Sintoma</th>
+            <th>Solução</th>
+        </tr>
+        <tr>
+            <td>Retornar ponteiro para local</td>
+            <td>Comportamento indefinido — dados corrompidos</td>
+            <td>Usar <code>malloc</code> ou <code>static</code></td>
+        </tr>
+        <tr>
+            <td>Desreferenciar sem verificar NULL</td>
+            <td>Segmentation fault</td>
+            <td>Sempre verificar <code>if (p == NULL)</code></td>
+        </tr>
+        <tr>
+            <td>Esquecer <code>&amp;</code> na chamada</td>
+            <td>Segmentation fault ou valor errado</td>
+            <td>Usar <code>f(&amp;x)</code> para passar por referência</td>
+        </tr>
+        <tr>
+            <td>Modificar dados de entrada inadvertidamente</td>
+            <td>Bug sutil e difícil de encontrar</td>
+            <td>Usar <code>const tipo *</code> para parâmetros somente leitura</td>
+        </tr>
+    </table>
+</div>
+
+<!-- ═══════════════════════════════════════ 9. EXEMPLO INTEGRADOR -->
+<div class="content-section">
+    <h2>9. Exemplo Integrador — Sistema de Notas Completo</h2>
+
+    <p>Um programa que usa todos os padrões desta aula: leitura por ponteiro, cálculo com <code>const</code>, retorno múltiplo e alocação dinâmica:</p>
+
+<pre>
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;math.h&gt;
+
+typedef struct {
+    char  nome[40];
+    float *notas;    <span class="code-comment">// array dinâmico — tamanho definido em execução</span>
+    int   qtdNotas;
+} Aluno;
+
+<span class="code-comment">/* Cria aluno com array dinâmico de notas */</span>
+int inicializarAluno(Aluno *a, const char *nome, int qtd) {
+    if (a == NULL || qtd &lt;= 0) return 0;
+    strncpy(a-&gt;nome, nome, 39);
+    a-&gt;nome[39] = '\0';
+    a-&gt;notas = (float *) malloc(qtd * sizeof(float));
+    if (a-&gt;notas == NULL) return 0;
+    a-&gt;qtdNotas = qtd;
+    return 1;
+}
+
+<span class="code-comment">/* Calcula estatísticas — const: só lê */</span>
+void calcularEstatisticas(const Aluno *a,
+                           float *media, float *maior, float *menor) {
+    *media = *maior = *menor = a-&gt;notas[0];
+    for (int i = 1; i &lt; a-&gt;qtdNotas; i++) {
+        *media += a-&gt;notas[i];
+        if (a-&gt;notas[i] &gt; *maior) *maior = a-&gt;notas[i];
+        if (a-&gt;notas[i] &lt; *menor) *menor = a-&gt;notas[i];
+    }
+    *media /= a-&gt;qtdNotas;
+}
+
+<span class="code-comment">/* Exibe relatório — const: só lê */</span>
+void exibirAluno(const Aluno *a) {
+    float med, mx, mn;
+    calcularEstatisticas(a, &amp;med, &amp;mx, &amp;mn);
+    printf("%-15s | Notas: ", a-&gt;nome);
+    for (int i = 0; i &lt; a-&gt;qtdNotas; i++)
+        printf("%.1f ", a-&gt;notas[i]);
+    printf("| Média: %.1f | %s\n",
+           med, med &gt;= 7.0f ? "Aprovado" : "Reprovado");
+}
+
+<span class="code-comment">/* Libera memória dinâmica do aluno */</span>
+void liberarAluno(Aluno *a) {
+    if (a &amp;&amp; a-&gt;notas) {
+        free(a-&gt;notas);
+        a-&gt;notas = NULL;
+        a-&gt;qtdNotas = 0;
+    }
+}
+
+int main() {
+    int qtd = 3;
+    Aluno turma[3];
+
+    const char *nomes[] = {"Ana Silva", "Bruno Lima", "Carla Matos"};
+    float notasDados[][3] = {
+        {8.0f, 9.0f, 7.5f},
+        {5.0f, 6.0f, 4.5f},
+        {9.5f, 10.f, 9.0f}
+    };
+
+    <span class="code-comment">/* Inicializa cada aluno com array dinâmico */</span>
+    for (int i = 0; i &lt; qtd; i++) {
+        if (!inicializarAluno(&amp;turma[i], nomes[i], 3)) {
+            fprintf(stderr, "Erro ao alocar aluno %d\n", i);
+            for (int j = 0; j &lt; i; j++) liberarAluno(&amp;turma[j]);
+            return 1;
+        }
+        for (int j = 0; j &lt; 3; j++)
+            turma[i].notas[j] = notasDados[i][j];
+    }
+
+    printf("=== Boletim da Turma ===\n");
+    for (int i = 0; i &lt; qtd; i++)
+        exibirAluno(&amp;turma[i]);
+
+    <span class="code-comment">/* Libera toda a memória dinâmica */</span>
+    for (int i = 0; i &lt; qtd; i++)
+        liberarAluno(&amp;turma[i]);
+
+    return 0;
+}
+</pre>
+    <div class="terminal-output">
+=== Boletim da Turma ===<br>
+Ana Silva       | Notas: 8.0 9.0 7.5 | Média: 8.2 | Aprovado<br>
+Bruno Lima      | Notas: 5.0 6.0 4.5 | Média: 5.2 | Reprovado<br>
+Carla Matos     | Notas: 9.5 10.0 9.0 | Média: 9.5 | Aprovado
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 10. C VS JAVA -->
+<div class="content-section">
+    <h2>10. C vs. Java — Passagem de Parâmetros</h2>
+
+    <table>
+        <tr>
+            <th>Aspecto</th>
+            <th>C</th>
+            <th>Java</th>
+        </tr>
+        <tr>
+            <td>Primitivos (<code>int</code>, <code>float</code>…)</td>
+            <td>Por valor — cópia</td>
+            <td>Por valor — cópia (idêntico)</td>
+        </tr>
+        <tr>
+            <td>Modificar primitivo no chamador</td>
+            <td>Ponteiro explícito: <code>void f(int *p)</code></td>
+            <td>Impossível diretamente — primitivos sempre por valor</td>
+        </tr>
+        <tr>
+            <td>Structs / objetos</td>
+            <td>Por valor (cópia de todos os bytes) — use ponteiro para evitar</td>
+            <td>Referência por valor — objetos sempre por referência implícita</td>
+        </tr>
+        <tr>
+            <td>Múltiplos retornos</td>
+            <td>Ponteiros de saída: <code>void f(int *a, int *b)</code></td>
+            <td>Retornar array, classe ou usar wrapper</td>
+        </tr>
+        <tr>
+            <td>Proteção de leitura</td>
+            <td><code>const tipo *p</code></td>
+            <td>Sem equivalente direto para primitivos; <code>final</code> para referências</td>
+        </tr>
+        <tr>
+            <td>Swap de dois inteiros</td>
+            <td>✅ <code>trocar(&amp;a, &amp;b)</code></td>
+            <td>❌ Impossível para primitivos</td>
+        </tr>
+    </table>
+
+    <h3>Side-by-side: o swap clássico</h3>
+    <div class="grid-container">
+        <div class="grid-item">
+            <strong>C — possível com ponteiros</strong>
+<pre>
+void trocar(int *a, int *b) {
+    int t = *a;
+    *a = *b;
+    *b = t;
+}
+
+int x = 10, y = 20;
+trocar(&amp;x, &amp;y);
+<span class="code-comment">// x = 20, y = 10 ✅</span>
+</pre>
+        </div>
+        <div class="grid-item">
+            <strong>Java — impossível para primitivos</strong>
+<pre>
+static void trocar(int a, int b) {
+    int t = a;
+    a = b;
+    b = t;
+    <span class="code-comment">// modifica cópias locais</span>
+}
+
+int x = 10, y = 20;
+trocar(x, y);
+<span class="code-comment">// x = 10, y = 20 ❌ (inalterados)</span>
+</pre>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ QUIZ -->
+<div class="content-section exercise-section">
+    <h2>Quiz — Aula 23</h2>
+    <form class="quiz-form" onsubmit="return false;">
+
+        <div class="content-section quiz-question">
+            <p><strong>1.</strong> Qual é a saída?</p>
+<pre>
+#include &lt;stdio.h&gt;
+void f(int x) { x = 99; }
+int main() {
+    int a = 5;
+    f(a);
+    printf("%d", a);
+}
+</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q1" value="a"> 99</label></li>
+                <li><label><input type="radio" name="q1" value="b"> 5</label></li>
+                <li><label><input type="radio" name="q1" value="c"> 0</label></li>
+                <li><label><input type="radio" name="q1" value="d"> Comportamento indefinido</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>2.</strong> Qual é a saída?</p>
+<pre>
+#include &lt;stdio.h&gt;
+void f(int *p) { *p = 99; }
+int main() {
+    int a = 5;
+    f(&amp;a);
+    printf("%d", a);
+}
+</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q2" value="a"> 5</label></li>
+                <li><label><input type="radio" name="q2" value="b"> 99</label></li>
+                <li><label><input type="radio" name="q2" value="c"> 0</label></li>
+                <li><label><input type="radio" name="q2" value="d"> Endereço de memória</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>3.</strong> O que o parâmetro <code>const float *v</code> garante dentro de uma função?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q3" value="a"> O array <code>v</code> é copiado antes de ser passado</label></li>
+                <li><label><input type="radio" name="q3" value="b"> Os valores apontados por <code>v</code> não podem ser modificados pela função — o compilador emite erro se tentar</label></li>
+                <li><label><input type="radio" name="q3" value="c"> O ponteiro <code>v</code> não pode ser reatribuído dentro da função</label></li>
+                <li><label><input type="radio" name="q3" value="d"> A função é marcada como somente leitura pelo compilador</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>4.</strong> Por que a função abaixo está errada?</p>
+<pre>
+int *calcular() {
+    int resultado = 42;
+    return &amp;resultado;
+}
+</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q4" value="a"> Funções não podem retornar ponteiros em C</label></li>
+                <li><label><input type="radio" name="q4" value="b"> Retorna o endereço de uma variável local que é destruída ao retornar — o ponteiro fica pendurado (<em>dangling pointer</em>)</label></li>
+                <li><label><input type="radio" name="q4" value="c"> O tipo de retorno deveria ser <code>int</code>, não <code>int *</code></label></li>
+                <li><label><input type="radio" name="q4" value="d"> Variáveis locais não têm endereço em C</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>5.</strong> Qual é a saída?</p>
+<pre>
+#include &lt;stdio.h&gt;
+void trocar(int *a, int *b) {
+    int t = *a; *a = *b; *b = t;
+}
+int main() {
+    int x = 10, y = 20;
+    trocar(&amp;x, &amp;y);
+    printf("%d %d", x, y);
+}
+</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q5" value="a"> 10 20</label></li>
+                <li><label><input type="radio" name="q5" value="b"> 20 10</label></li>
+                <li><label><input type="radio" name="q5" value="c"> 0 0</label></li>
+                <li><label><input type="radio" name="q5" value="d"> Comportamento indefinido</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>6.</strong> Quando é vantajoso passar uma <code>struct</code> grande para uma função usando <code>const Struct *p</code> em vez de <code>Struct s</code> por valor?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q6" value="a"> Nunca — passar por valor é sempre mais seguro</label></li>
+                <li><label><input type="radio" name="q6" value="b"> Quando a função só precisa ler a struct: evita copiar todos os bytes e usa apenas 8 bytes (o ponteiro), com proteção de leitura via <code>const</code></label></li>
+                <li><label><input type="radio" name="q6" value="c"> Somente quando a struct tem mais de 1000 bytes</label></li>
+                <li><label><input type="radio" name="q6" value="d"> Apenas quando a struct contém ponteiros internos</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>7.</strong> Uma função recebe <code>int **pp</code> como parâmetro e executa <code>*pp = malloc(10 * sizeof(int))</code>. O que isso faz?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q7" value="a"> Aloca memória local à função, inacessível ao chamador</label></li>
+                <li><label><input type="radio" name="q7" value="b"> Modifica o ponteiro original no chamador, fazendo-o apontar para o bloco recém-alocado no heap</label></li>
+                <li><label><input type="radio" name="q7" value="c"> Cria um ponteiro duplo que nunca pode ser liberado</label></li>
+                <li><label><input type="radio" name="q7" value="d"> Causa erro de compilação — não é possível atribuir a <code>*pp</code></label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question">
+            <p><strong>8.</strong> Em Java, trocar os valores de dois <code>int</code> dentro de um método não altera os originais no chamador. A razão é:</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q8" value="a"> Java não suporta a operação de troca</label></li>
+                <li><label><input type="radio" name="q8" value="b"> Primitivos em Java são sempre passados por valor — o método recebe cópias e qualquer modificação afeta apenas essas cópias</label></li>
+                <li><label><input type="radio" name="q8" value="c"> Java usa ponteiros internos mas os esconde do programador</label></li>
+                <li><label><input type="radio" name="q8" value="d"> O Garbage Collector reverte modificações feitas em parâmetros</label></li>
+            </ul>
+        </div>
+
+        <button type="button" class="submit-btn" onclick="verificarRespostas()">Verificar Respostas</button>
+    </form>
+    <div id="quiz-results" style="display:none; margin-top:20px; padding:15px; background:#dff0d8; border-radius:5px;"></div>
+</div>
+
+<div class="navigation-buttons">
+    <a href="capitulo22.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">← Aula 22</a>
+    <a href="index.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">Índice</a>
+    <a href="capitulo24.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">Aula 24 →</a>
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align:center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education"
+                 style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+<script>
+function verificarRespostas() {
+    const gabarito = { q1:"b", q2:"b", q3:"b", q4:"b", q5:"b", q6:"b", q7:"b", q8:"b" };
+    const explicacoes = {
+        q1: "Passagem por valor: a função f recebe uma cópia de a. A atribuição x = 99 modifica apenas essa cópia local — a variável a em main permanece 5.",
+        q2: "Passagem por referência: f recebe o endereço de a (&a). A instrução *p = 99 escreve 99 diretamente no endereço de a. Após a chamada, a vale 99.",
+        q3: "const float *v significa que os valores apontados por v são somente leitura dentro da função. Tentar escrever em v[i] ou *v resulta em erro de compilação. O ponteiro v em si (sua posição) ainda pode ser reatribuído.",
+        q4: "resultado é uma variável local: existe apenas no frame de pilha de calcular(). Ao retornar, esse frame é destruído e o endereço &resultado aponta para memória que pode ser reutilizada por qualquer outra função — um dangling pointer. Usar esse ponteiro é comportamento indefinido.",
+        q5: "A função trocar recebe os endereços de x e y. Internamente usa uma variável temporária t para fazer a troca nos endereços originais. Após a chamada: x = 20 e y = 10.",
+        q6: "Passar uma struct grande por valor copia todos os seus bytes (ex: uma struct de 200 bytes copia 200 bytes a cada chamada). Com const Struct *p, apenas 8 bytes (o ponteiro) são copiados, e o const garante que a função não modifica a struct — eficiência + segurança.",
+        q7: "pp é um ponteiro para ponteiro. *pp é o ponteiro original no chamador. Ao escrever *pp = malloc(...), a função modifica o ponteiro no chamador, fazendo-o apontar para o novo bloco alocado no heap. Após a chamada, o ponteiro do chamador aponta para a memória alocada.",
+        q8: "Java passa primitivos (int, float, etc.) sempre por valor — o método recebe cópias independentes. Modificar os parâmetros dentro do método afeta apenas as cópias locais, nunca as variáveis originais no chamador. Por isso o swap de primitivos é impossível em Java sem estruturas auxiliares."
+    };
+
+    let acertos = 0, html = "";
+    const total = Object.keys(gabarito).length;
+    for (const q in gabarito) {
+        const sel = document.querySelector(`input[name="${q}"]:checked`);
+        const num = q.replace("q","");
+        if (sel) {
+            if (sel.value === gabarito[q]) {
+                acertos++;
+                html += `<p>Questão ${num}: <span style="color:green;font-weight:bold;">✅ Correto!</span> — ${explicacoes[q]}</p>`;
+            } else {
+                html += `<p>Questão ${num}: <span style="color:red;font-weight:bold;">❌ Incorreto.</span> Gabarito: <strong>${gabarito[q].toUpperCase()}</strong> — ${explicacoes[q]}</p>`;
+            }
+        } else {
+            html += `<p>Questão ${num}: <span style="color:orange;font-weight:bold;">⚠ Não respondida.</span></p>`;
+        }
+    }
+    const r = document.getElementById("quiz-results");
+    r.innerHTML = `<h3>Sua pontuação: ${acertos} de ${total}</h3>${html}`;
+    r.style.display = "block";
+    r.scrollIntoView({ behavior: "smooth" });
+}
+</script>
+
+</body>
+</html>

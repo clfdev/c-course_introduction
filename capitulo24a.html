@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 12a - Arrays (Vetores) em C — Parte 1</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Aula 12a — Arrays (Vetores) <span style="font-size:0.7em; opacity:0.85;">Parte 1 de 2</span></h1>
+    <p>O que são, como declarar, acessar — e por que a falta de verificação de limites é perigosa</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo11.html">← Aula Anterior</a>
+    <a href="capitulo12b.html">Parte 2 →</a>
+</nav>
+
+<!-- ============================================================ -->
+<!-- 1. O QUE É UM ARRAY -->
+<!-- ============================================================ -->
+<div class="content-section">
+    <h2>1. O que é um Array?</h2>
+
+    <div class="definicao">
+        Um <strong>array</strong> (ou vetor) é uma sequência de elementos do <strong>mesmo tipo</strong>, armazenados em posições <strong>contíguas</strong> na memória. O acesso a qualquer elemento é feito pelo seu <strong>índice</strong> (posição), que em C começa sempre em <strong>zero</strong>.
+    </div>
+
+    <p>Imagine que você precisa guardar as notas de 5 alunos. Sem array, seria:</p>
+<pre>
+float nota0, nota1, nota2, nota3, nota4;  <span class="code-comment">// 5 variáveis separadas — impraticável para 100 alunos</span>
+</pre>
+    <p>Com array:</p>
+<pre>
+float notas[5];  <span class="code-comment">// 5 floats em sequência na memória, acessíveis por índice</span>
+</pre>
+
+    <h3>Visualização na memória</h3>
+    <table>
+        <tr>
+            <th>Índice</th>
+            <th>0</th><th>1</th><th>2</th><th>3</th><th>4</th>
+        </tr>
+        <tr>
+            <td>Variável</td>
+            <td><code>notas[0]</code></td>
+            <td><code>notas[1]</code></td>
+            <td><code>notas[2]</code></td>
+            <td><code>notas[3]</code></td>
+            <td><code>notas[4]</code></td>
+        </tr>
+        <tr>
+            <td>Endereço (exemplo)</td>
+            <td>1000</td><td>1004</td><td>1008</td><td>1012</td><td>1016</td>
+        </tr>
+    </table>
+    <p>Cada <code>float</code> ocupa 4 bytes, então os endereços avançam de 4 em 4. Os elementos ficam <strong>lado a lado na memória</strong> — isso é o que torna o acesso por índice tão rápido.</p>
+</div>
+
+<!-- ============================================================ -->
+<!-- 2. DECLARAÇÃO E INICIALIZAÇÃO -->
+<!-- ============================================================ -->
+<div class="content-section">
+    <h2>2. Declaração e Inicialização</h2>
+
+    <h3>Sintaxe de declaração</h3>
+<pre>
+tipo nome[tamanho];
+</pre>
+    <p>O <strong>tamanho</strong> deve ser uma constante inteira positiva conhecida em tempo de compilação (C89/C90). Em C99 em diante, pode ser uma variável (VLA — Variable Length Array), mas isso é assunto avançado.</p>
+
+    <h3>Formas de inicialização</h3>
+<pre>
+<span class="code-comment">// Forma 1 — inicialização na declaração com lista</span>
+int idades[5] = {20, 25, 30, 35, 40};
+
+<span class="code-comment">// Forma 2 — tamanho deduzido pelo compilador (conta os elementos)</span>
+int idades[] = {20, 25, 30, 35, 40};   <span class="code-comment">// compilador define tamanho = 5</span>
+
+<span class="code-comment">// Forma 3 — inicialização parcial (restante recebe 0)</span>
+int idades[5] = {20, 25};              <span class="code-comment">// idades = {20, 25, 0, 0, 0}</span>
+
+<span class="code-comment">// Forma 4 — zerar todo o array (idioma C clássico)</span>
+int idades[5] = {0};                   <span class="code-comment">// idades = {0, 0, 0, 0, 0}</span>
+
+<span class="code-comment">// Forma 5 — declaração sem inicialização (contém lixo de memória!)</span>
+int idades[5];                         <span class="code-comment">// PERIGO: valores imprevisíveis</span>
+</pre>
+
+    <div class="warning-box">
+        <strong>Lixo de memória:</strong> Em C, declarar um array sem inicializar não zera os valores — cada posição contém o que estiver na memória naquele momento ("lixo"). Diferente do Java, onde campos de instância são zerados automaticamente. Sempre inicialize antes de usar!
+    </div>
+
+    <div class="tip-box">
+        O idioma <code>= {0}</code> é a forma mais compacta de zerar um array inteiro. Funciona porque C garante que elementos não especificados na lista de inicialização recebem zero. Assim, especificar apenas o primeiro como zero faz os demais seguirem a mesma regra.
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 3. ACESSO E PERCORRIMENTO -->
+<!-- ============================================================ -->
+<div class="content-section">
+    <h2>3. Acessando e Percorrendo Elementos</h2>
+
+    <h3>Leitura e escrita por índice</h3>
+<pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int notas[5] = {7, 8, 6, 9, 5};
+
+    notas[2] = 10;                        <span class="code-comment">// modifica o 3º elemento (índice 2)</span>
+    printf("Nota 3: %d\n", notas[2]);     <span class="code-comment">// lê o 3º elemento</span>
+    return 0;
+}
+</pre>
+    <div class="terminal-output">Nota 3: 10</div>
+
+    <h3>Percorrendo com for</h3>
+<pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    float notas[] = {7.5, 8.0, 6.5, 9.0, 5.5};
+    int n = 5;
+    float soma = 0;
+
+    for (int i = 0; i &lt; n; i++) {
+        soma += notas[i];
+        printf("notas[%d] = %.1f\n", i, notas[i]);
+    }
+
+    printf("Média: %.2f\n", soma / n);
+    return 0;
+}
+</pre>
+    <div class="terminal-output">
+notas[0] = 7.5<br>
+notas[1] = 8.0<br>
+notas[2] = 6.5<br>
+notas[3] = 9.0<br>
+notas[4] = 5.5<br>
+Média: 7.30
+    </div>
+
+    <h3>Preenchendo com scanf</h3>
+<pre>
+#include &lt;stdio.h&gt;
+#define N 5
+
+int main() {
+    int v[N];
+    printf("Digite %d inteiros:\n", N);
+    for (int i = 0; i &lt; N; i++) {
+        printf("v[%d]: ", i);
+        scanf("%d", &amp;v[i]);         <span class="code-comment">// &amp;v[i] = endereço do elemento i</span>
+    }
+
+    printf("Você digitou: ");
+    for (int i = 0; i &lt; N; i++)
+        printf("%d ", v[i]);
+    printf("\n");
+    return 0;
+}
+</pre>
+</div>
+
+<!-- ============================================================ -->
+<!-- 4. PERIGO: SEM BOUNDS CHECKING — DIFERENÇA CRÍTICA DO JAVA -->
+<!-- ============================================================ -->
+<div class="content-section">
+    <h2>4. ⚠️ Sem Verificação de Limites — A Diferença Mais Perigosa em Relação ao Java</h2>
+
+    <div class="definicao">
+        Em Java, acessar um índice fora do array lança imediatamente uma <code>ArrayIndexOutOfBoundsException</code>, interrompendo o programa de forma controlada. Em C, <strong>não existe nenhuma verificação automática de limites</strong>. Acessar além do fim do array é <strong>comportamento indefinido</strong> (Undefined Behavior — UB).
+    </div>
+
+    <h3>O que acontece em Java vs C</h3>
+
+    <div class="grid-container">
+        <div class="grid-item">
+            <strong>Java — erro detectado e reportado:</strong>
+<pre>
+int[] v = new int[5];
+v[10] = 42;  <span class="code-comment">// lança exceção</span>
+</pre>
+            <div class="error-output">
+Exception in thread "main"<br>
+java.lang.ArrayIndexOutOfBoundsException:<br>
+Index 10 out of bounds for length 5
+            </div>
+            <p style="color:#28a745">✅ Programa para, erro identificado.</p>
+        </div>
+        <div class="grid-item">
+            <strong>C — comportamento indefinido, silencioso:</strong>
+<pre>
+int v[5];
+v[10] = 42;  <span class="code-comment">// UB — sem aviso!</span>
+printf("%d\n", v[10]);
+</pre>
+            <div class="terminal-output">
+<span style="color:#ff9800">Possíveis resultados:</span><br>
+• Imprime algum valor lixo (42, -1073741824, ...)<br>
+• Corrompe outra variável na memória<br>
+• Segmentation fault (crash)<br>
+• Parece funcionar — mas o dano já foi feito
+            </div>
+            <p style="color:#dc3545">❌ Pode parecer OK e ainda assim ser catastrófico.</p>
+        </div>
+    </div>
+
+    <h3>Por que isso é tão grave?</h3>
+    <p>Quando você escreve em <code>v[10]</code> num array de tamanho 5, você está escrevendo em memória que pertence a <strong>outra variável</strong>, ao <strong>sistema operacional</strong>, ou a código do programa. Os efeitos são imprevisíveis:</p>
+
+    <table>
+        <tr>
+            <th>Cenário</th>
+            <th>O que pode acontecer</th>
+        </tr>
+        <tr>
+            <td>Leitura fora do array</td>
+            <td>Retorna "lixo" — valor de outra variável ou área de memória não inicializada</td>
+        </tr>
+        <tr>
+            <td>Escrita fora do array</td>
+            <td>Corrompe silenciosamente outra variável; o bug pode se manifestar muito depois, em ponto diferente do código</td>
+        </tr>
+        <tr>
+            <td>Acesso a área do SO</td>
+            <td>Segmentation fault — programa termina abruptamente</td>
+        </tr>
+        <tr>
+            <td>Buffer overflow</td>
+            <td>Vulnerabilidade de segurança clássica — pode ser explorada por hackers para executar código arbitrário</td>
+        </tr>
+    </table>
+
+    <div class="warning-box">
+        <strong>Regra de ouro:</strong> Em C, <em>você</em> é responsável por não ultrapassar os limites. O compilador não vai avisá-lo. O programa pode não travar imediatamente. O erro pode aparecer longe do ponto onde foi cometido. Por isso, sempre use a variável de controle do loop (<code>i &lt; n</code>) e nunca <code>i &lt;= n</code>.
+    </div>
+
+    <h3>Exemplo do erro mais comum</h3>
+<pre>
+int v[5] = {1, 2, 3, 4, 5};
+
+<span class="code-comment">// ERRADO — acessa v[5] que não existe!</span>
+for (int i = 0; i &lt;= 5; i++)       <span class="code-comment">// ← i <= 5 (deveria ser i < 5)</span>
+    printf("%d ", v[i]);
+
+<span class="code-comment">// CORRETO</span>
+for (int i = 0; i &lt; 5; i++)        <span class="code-comment">// ← i < 5</span>
+    printf("%d ", v[i]);
+</pre>
+    <p>A diferença entre <code>&lt;</code> e <code>&lt;=</code> na condição do loop é responsável por inúmeros bugs em C. Um array de tamanho <code>n</code> tem índices de <code>0</code> a <code>n-1</code>. O índice <code>n</code> já está fora.</p>
+</div>
+
+<!-- ============================================================ -->
+<!-- EXERCÍCIOS 12a -->
+<!-- ============================================================ -->
+<div class="exercise-section">
+    <h2>5. Exercícios de Fixação — Parte 1</h2>
+    <p>Questões sobre os conceitos desta parte. A Parte 2 traz mais 4 questões sobre <code>sizeof</code>, matrizes e C vs Java.</p>
+
+    <form class="quiz-form" id="quiz">
+
+        <!-- Q1 -->
+        <div class="quiz-question">
+            <p><strong>1.</strong> Dado <code>int v[5];</code>, qual é o índice do <strong>último</strong> elemento válido?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q1" value="a"> 5</label></li>
+                <li><label><input type="radio" name="q1" value="b"> 4</label></li>
+                <li><label><input type="radio" name="q1" value="c"> 0</label></li>
+                <li><label><input type="radio" name="q1" value="d"> Depende do compilador</label></li>
+            </ul>
+        </div>
+
+        <!-- Q2 -->
+        <div class="quiz-question">
+            <p><strong>2.</strong> O que contém <code>int v[5];</code> (sem inicialização) em C?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q2" value="a"> Zeros em todas as posições</label></li>
+                <li><label><input type="radio" name="q2" value="b"> Valores indefinidos ("lixo" de memória)</label></li>
+                <li><label><input type="radio" name="q2" value="c"> O programa não compila sem inicialização</label></li>
+                <li><label><input type="radio" name="q2" value="d"> -1 em todas as posições</label></li>
+            </ul>
+        </div>
+
+        <!-- Q3 -->
+        <div class="quiz-question">
+            <p><strong>3.</strong> O que acontece em C ao acessar <code>v[10]</code> num array de tamanho 5?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q3" value="a"> Uma exceção é lançada e o programa para com mensagem de erro</label></li>
+                <li><label><input type="radio" name="q3" value="b"> O compilador rejeita o código</label></li>
+                <li><label><input type="radio" name="q3" value="c"> Comportamento indefinido — pode corromper memória, travar ou parecer funcionar</label></li>
+                <li><label><input type="radio" name="q3" value="d"> Retorna sempre 0</label></li>
+            </ul>
+        </div>
+
+        <!-- Q4 -->
+        <div class="quiz-question">
+            <p><strong>4.</strong> Qual declaração inicializa o array com todos os elementos em zero?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q4" value="a"> <code>int v[5] = {};</code></label></li>
+                <li><label><input type="radio" name="q4" value="b"> <code>int v[5] = {0};</code></label></li>
+                <li><label><input type="radio" name="q4" value="c"> <code>int v[5] = 0;</code></label></li>
+                <li><label><input type="radio" name="q4" value="d"> Todas as anteriores são equivalentes</label></li>
+            </ul>
+        </div>
+
+        <button type="button" class="submit-btn" onclick="verificarRespostas()">Verificar Respostas</button>
+    </form>
+
+    <div id="quiz-results" style="display:none; margin-top:20px;"></div>
+
+    <div style="margin-top:30px; text-align:center;">
+        <a href="capitulo12b.html" style="display:inline-block; padding:12px 30px; background-color:#3047bb; color:white; text-decoration:none; border-radius:6px; font-weight:bold; font-size:1.05em;">
+            Continuar para a Parte 2 → sizeof, Matrizes e C vs Java
+        </a>
+    </div>
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align:center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education"
+                 style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+<script>
+function verificarRespostas() {
+    const gabarito = { q1:'b', q2:'b', q3:'c', q4:'b' };
+
+    const explicacoes = {
+        q1: "Um array de tamanho 5 tem índices de 0 a 4. O último elemento válido é <code>v[4]</code>. Acessar <code>v[5]</code> já é comportamento indefinido.",
+        q2: "Em C, variáveis locais (incluindo arrays) não são inicializadas automaticamente. Elas contêm o que estiver na memória naquele momento — 'lixo'. Diferente do Java, que inicializa campos com 0/null.",
+        q3: "Em C não há verificação de limites. Acessar fora do array é comportamento indefinido (UB): pode corromper outra variável silenciosamente, causar segfault ou parecer funcionar. Em Java, isso lançaria <code>ArrayIndexOutOfBoundsException</code>.",
+        q4: "Em C, ao usar uma lista de inicialização, elementos não especificados recebem zero. <code>{0}</code> especifica apenas o primeiro como 0 e os demais seguem a mesma regra. <code>int v[5] = 0;</code> é erro de sintaxe. <code>= {}</code> não é válido em C (é válido em C++)."
+    };
+
+    let acertos = 0;
+    const total = Object.keys(gabarito).length;
+    let html = '';
+
+    for (const [q, resp] of Object.entries(gabarito)) {
+        const num = q.replace('q', '');
+        const sel = document.querySelector(`input[name="${q}"]:checked`);
+        if (sel) {
+            if (sel.value === resp) {
+                acertos++;
+                html += `<p>Questão ${num}: <span style="color:green;font-weight:bold;">✅ Correto!</span> — ${explicacoes[q]}</p>`;
+            } else {
+                html += `<p>Questão ${num}: <span style="color:red;font-weight:bold;">❌ Incorreto.</span> Gabarito: <strong>${resp.toUpperCase()}</strong> — ${explicacoes[q]}</p>`;
+            }
+        } else {
+            html += `<p>Questão ${num}: <span style="color:orange;font-weight:bold;">⚠ Não respondida.</span></p>`;
+        }
+    }
+
+    const r = document.getElementById('quiz-results');
+    r.innerHTML = `<h3>Sua pontuação: ${acertos} de ${total}</h3>${html}`;
+    r.style.display = 'block';
+    r.scrollIntoView({ behavior: 'smooth' });
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 13 – Funções: declaração, definição e chamada</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Aula 13 — Funções</h1>
+    <p>Declaração, definição e chamada — o pilar da modularização em C</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo12.html">← Aula 12</a>
+    <a href="capitulo14.html">Aula 14 →</a>
+</nav>
+
+<!-- ═══════════════════════════════════════ 1. POR QUE FUNÇÕES -->
+<div class="content-section">
+    <h2>1. Por que Usar Funções?</h2>
+
+    <p>Até agora escrevemos todo o código dentro de <code>main()</code>. Isso funciona para programas pequenos,
+    mas rapidamente se torna um problema: o código fica longo, difícil de ler e repleto de trechos repetidos.
+    <strong>Funções</strong> são a solução.</p>
+
+    <div class="definicao">
+        Uma <strong>função</strong> é um bloco de código com nome próprio que realiza uma tarefa específica.
+        Ela pode receber dados de entrada (parâmetros), executar instruções e devolver um resultado (valor de retorno).
+        Uma vez definida, pode ser <strong>chamada</strong> quantas vezes for necessário em qualquer ponto do programa.
+    </div>
+
+    <h3>Os quatro benefícios principais</h3>
+    <table>
+        <tr><th>Benefício</th><th>O que significa na prática</th></tr>
+        <tr>
+            <td><strong>Reutilização</strong></td>
+            <td>Escreva uma vez, chame em qualquer lugar — sem copiar e colar código</td>
+        </tr>
+        <tr>
+            <td><strong>Legibilidade</strong></td>
+            <td>Um nome bem escolhido (<code>calcularMedia</code>) comunica a intenção melhor do que 10 linhas de código</td>
+        </tr>
+        <tr>
+            <td><strong>Manutenção</strong></td>
+            <td>Corrigir um bug em um único lugar corrige o comportamento em todo o programa</td>
+        </tr>
+        <tr>
+            <td><strong>Testabilidade</strong></td>
+            <td>Funções pequenas e focadas são muito mais fáceis de testar isoladamente</td>
+        </tr>
+    </table>
+
+    <div class="exemplo">
+        <strong>Analogia:</strong> Pense numa receita de bolo. "Fazer a cobertura" é uma etapa que
+        pode ser descrita em detalhes em um bloco separado e chamada toda vez que precisarmos dela —
+        sem reescrever os passos. Funções são exatamente isso para o código.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 2. AS TRÊS ETAPAS -->
+<div class="content-section">
+    <h2>2. As Três Etapas: Declaração, Definição e Chamada</h2>
+
+    <p>Em C, trabalhar com funções envolve três conceitos distintos que é importante não confundir:</p>
+
+    <table>
+        <tr><th>Etapa</th><th>O que é</th><th>Onde fica</th></tr>
+        <tr>
+            <td><strong>Declaração</strong> (protótipo)</td>
+            <td>Avisa o compilador que a função existe, qual é o seu tipo de retorno e quais parâmetros ela aceita — <em>sem</em> o corpo</td>
+            <td>Antes do <code>main()</code>, ou em um arquivo <code>.h</code></td>
+        </tr>
+        <tr>
+            <td><strong>Definição</strong></td>
+            <td>O código completo da função: cabeçalho + corpo com as instruções</td>
+            <td>Antes ou depois do <code>main()</code> (se antes, a declaração pode ser omitida)</td>
+        </tr>
+        <tr>
+            <td><strong>Chamada</strong></td>
+            <td>O ponto do programa onde a função é executada, passando os argumentos e (opcionalmente) capturando o retorno</td>
+            <td>Em qualquer lugar após a declaração ou definição</td>
+        </tr>
+    </table>
+
+    <div class="info-box">
+        <strong>Declaração vs Definição:</strong> A declaração é como um contrato — diz "existe uma função com essa assinatura".
+        A definição é o cumprimento do contrato — diz "e é assim que ela funciona".
+        Você pode declarar sem definir (erro de ligação) mas não pode usar sem declarar.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 3. SINTAXE COMPLETA -->
+<div class="content-section">
+    <h2>3. Sintaxe Completa</h2>
+
+    <h3>Declaração (protótipo)</h3>
+<pre>
+tipo_retorno nome_da_funcao(tipo1 param1, tipo2 param2);
+</pre>
+    <p>O ponto-e-vírgula no final é <strong>obrigatório</strong> no protótipo. Os nomes dos parâmetros são opcionais — apenas os tipos são exigidos pelo compilador:</p>
+<pre>
+float calcularMedia(int[], int);   <span class="code-comment">// válido — sem nomes de parâmetros</span>
+float calcularMedia(int v[], int n); <span class="code-comment">// mais legível — com nomes</span>
+</pre>
+
+    <h3>Definição</h3>
+<pre>
+tipo_retorno nome_da_funcao(tipo1 param1, tipo2 param2) {
+    <span class="code-comment">// corpo da função</span>
+    instrucao1;
+    instrucao2;
+    return valor;   <span class="code-comment">// obrigatório se tipo_retorno != void</span>
+}
+</pre>
+
+    <h3>Chamada</h3>
+<pre>
+<span class="code-comment">// sem capturar o retorno (quando não interessa)</span>
+nome_da_funcao(arg1, arg2);
+
+<span class="code-comment">// capturando o retorno em uma variável</span>
+tipo_retorno resultado = nome_da_funcao(arg1, arg2);
+
+<span class="code-comment">// usando o retorno diretamente numa expressão</span>
+printf("%.2f", nome_da_funcao(arg1, arg2));
+</pre>
+
+    <div class="dica">
+        <strong>Parâmetros vs Argumentos:</strong> <em>Parâmetros</em> são as variáveis listadas na
+        <em>definição</em> da função (<code>int n</code>). <em>Argumentos</em> são os valores reais passados
+        na <em>chamada</em> (<code>calcularMedia(notas, 5)</code>). A distinção é técnica mas importante
+        para entender mensagens de erro do compilador.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 4. PRIMEIRO EXEMPLO COMPLETO -->
+<div class="content-section">
+    <h2>4. Primeiro Exemplo Completo</h2>
+
+    <p>Vamos transformar o cálculo de média da Aula 10 numa função reutilizável:</p>
+
+<pre>
+#include &lt;stdio.h&gt;
+
+<span class="code-comment">/* ── Declaração (protótipo) ─────────────────────────────── */</span>
+float calcularMedia(float v[], int n);
+
+<span class="code-comment">/* ── Definição ──────────────────────────────────────────── */</span>
+float calcularMedia(float v[], int n) {
+    float soma = 0;
+    for (int i = 0; i &lt; n; i++)
+        soma += v[i];
+    return soma / n;              <span class="code-comment">// retorna o resultado calculado</span>
+}
+
+<span class="code-comment">/* ── main: apenas chama a função ────────────────────────── */</span>
+int main() {
+    float turmaA[] = {7, 5, 6, 8, 9};
+    float turmaB[] = {4, 6, 7, 5};
+
+    <span class="code-comment">// Chamada — mesma função, argumentos diferentes</span>
+    printf("Média turma A: %.1f\n", calcularMedia(turmaA, 5));
+    printf("Média turma B: %.1f\n", calcularMedia(turmaB, 4));
+
+    return 0;
+}
+</pre>
+
+    <div class="terminal-output">
+Média turma A: 7.0<br>
+Média turma B: 5.5
+    </div>
+
+    <div class="exemplo">
+        Observe que a função <code>calcularMedia</code> foi chamada <strong>duas vezes</strong> com vetores e
+        tamanhos diferentes — sem reescrever nenhuma linha de lógica. Isso é reutilização de código em ação.
+        Se amanhã precisarmos corrigir a fórmula da média, alteramos em <strong>um único lugar</strong>.
+    </div>
+
+    <h3>Anatomia linha a linha</h3>
+    <table>
+        <tr><th>Trecho</th><th>Significado</th></tr>
+        <tr><td><code>float</code> (antes do nome)</td><td>Tipo do valor que a função <strong>retorna</strong></td></tr>
+        <tr><td><code>calcularMedia</code></td><td>Nome da função — deve descrever o que ela faz</td></tr>
+        <tr><td><code>float v[]</code></td><td>Parâmetro: vetor de floats (recebe o endereço do primeiro elemento)</td></tr>
+        <tr><td><code>int n</code></td><td>Parâmetro: número de elementos do vetor</td></tr>
+        <tr><td><code>return soma / n;</code></td><td>Encerra a função e devolve o valor calculado ao chamador</td></tr>
+    </table>
+</div>
+
+<!-- ═══════════════════════════════════════ 5. TIPO void -->
+<div class="content-section">
+    <h2>5. Funções <code>void</code> — Sem Valor de Retorno</h2>
+
+    <div class="definicao">
+        Quando uma função não precisa devolver nenhum valor ao chamador — por exemplo, apenas imprime
+        algo na tela — usamos o tipo <code>void</code> como tipo de retorno. Nesse caso, o <code>return;</code>
+        é opcional (pode ser omitido ou usado sem valor para sair antecipadamente).
+    </div>
+
+<pre>
+#include &lt;stdio.h&gt;
+
+<span class="code-comment">// Função void: executa uma ação, não retorna valor</span>
+void imprimirLinha(int n, char c) {
+    for (int i = 0; i &lt; n; i++)
+        printf("%c", c);
+    printf("\n");
+    <span class="code-comment">// return; — opcional em void</span>
+}
+
+void imprimirCaixaTexto(char *titulo) {
+    imprimirLinha(30, '=');          <span class="code-comment">// chamada de função dentro de função</span>
+    printf("  %s\n", titulo);
+    imprimirLinha(30, '=');
+}
+
+int main() {
+    imprimirCaixaTexto("Relatório de Notas");
+    imprimirLinha(10, '-');
+    return 0;
+}
+</pre>
+
+    <div class="terminal-output">
+==============================<br>
+&nbsp;&nbsp;Relatório de Notas<br>
+==============================<br>
+----------
+    </div>
+
+    <div class="tip-box">
+        <strong>Funções chamando outras funções:</strong> <code>imprimirCaixaTexto</code> chama <code>imprimirLinha</code>
+        internamente. Em C, qualquer função pode chamar qualquer outra — desde que a função chamada tenha sido
+        declarada ou definida antes. Essa composição de funções é o coração da programação modular.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 6. POSIÇÃO DA DEFINIÇÃO -->
+<div class="content-section">
+    <h2>6. 🔍 Posição da Definição — Antes ou Depois do main?</h2>
+
+    <p>Esta é uma dúvida frequente. Em C há duas abordagens válidas:</p>
+
+    <div class="grid-container">
+        <div class="grid-item">
+            <strong>Opção A — Definição ANTES do main (sem protótipo):</strong>
+<pre>
+#include &lt;stdio.h&gt;
+
+int dobro(int x) {     <span class="code-comment">// definida antes</span>
+    return x * 2;
+}
+
+int main() {
+    printf("%d", dobro(5)); <span class="code-comment">// pode chamar</span>
+    return 0;
+}
+</pre>
+            <p style="color:#28a745">✅ Funciona — o compilador já conhece <code>dobro</code> quando chega ao <code>main</code>.</p>
+        </div>
+        <div class="grid-item">
+            <strong>Opção B — Definição DEPOIS do main (com protótipo):</strong>
+<pre>
+#include &lt;stdio.h&gt;
+
+int dobro(int x);      <span class="code-comment">// protótipo — avisa o compilador</span>
+
+int main() {
+    printf("%d", dobro(5));
+    return 0;
+}
+
+int dobro(int x) {     <span class="code-comment">// definida depois</span>
+    return x * 2;
+}
+</pre>
+            <p style="color:#28a745">✅ Funciona — o protótipo garante que o compilador saiba da assinatura.</p>
+        </div>
+    </div>
+
+    <div class="warning-box">
+        <strong>O que acontece sem protótipo e com definição depois do main?</strong>
+        O compilador encontra a chamada <code>dobro(5)</code> antes de saber que <code>dobro</code> existe.
+        Em C89/C90 ele assume que a função retorna <code>int</code> (regra implícita — perigosa).
+        Em C99 e C11 isso é <strong>erro de compilação</strong>. Sempre prefira declarar os protótipos.
+    </div>
+
+    <div class="info-box">
+        <strong>Boas práticas do mercado:</strong> Em projetos reais, os protótipos ficam em arquivos
+        de cabeçalho (<code>.h</code>) e as definições em arquivos de implementação (<code>.c</code>).
+        Isso é o que veremos na Aula 17. Por ora, coloque os protótipos no topo do mesmo arquivo <code>.c</code>.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 7. FLUXO DE EXECUÇÃO -->
+<div class="content-section">
+    <h2>7. Fluxo de Execução — O que acontece quando uma função é chamada</h2>
+
+    <p>Entender o que o computador faz quando chama uma função ajuda a evitar vários bugs comuns.</p>
+
+    <div class="flow-diagram">
+        <div class="flow-block"><code>main()</code> executa normalmente</div>
+        <div class="flow-arrow">↓ encontra chamada <code>calcularMedia(turmaA, 5)</code></div>
+        <div class="flow-condition">Suspende main — empilha os argumentos</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-block">Executa o corpo de <code>calcularMedia</code></div>
+        <div class="flow-arrow">↓ encontra <code>return soma/n</code></div>
+        <div class="flow-condition">Desempilha — retorna 7.0 ao chamador</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-block"><code>main()</code> retoma de onde parou, com o valor 7.0 disponível</div>
+    </div>
+
+<pre>
+#include &lt;stdio.h&gt;
+
+int soma(int a, int b) {
+    printf("  [dentro de soma] a=%d, b=%d\n", a, b);
+    int resultado = a + b;
+    printf("  [dentro de soma] retornando %d\n", resultado);
+    return resultado;
+}
+
+int main() {
+    printf("[main] antes da chamada\n");
+    int s = soma(3, 4);
+    printf("[main] depois da chamada, s = %d\n", s);
+    return 0;
+}
+</pre>
+    <div class="terminal-output">
+[main] antes da chamada<br>
+&nbsp;&nbsp;[dentro de soma] a=3, b=4<br>
+&nbsp;&nbsp;[dentro de soma] retornando 7<br>
+[main] depois da chamada, s = 7
+    </div>
+
+    <div class="dica">
+        Os parâmetros <code>a</code> e <code>b</code> dentro de <code>soma</code> são
+        <strong>cópias</strong> dos valores 3 e 4 — não as variáveis originais do chamador.
+        Alterar <code>a</code> ou <code>b</code> dentro de <code>soma</code> não afeta nada
+        em <code>main</code>. Esse comportamento chama-se <strong>passagem por valor</strong>
+        e será aprofundado na Aula 14.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 8. EXEMPLO COMPLETO -->
+<div class="content-section">
+    <h2>8. Exemplo Completo — Programa com Múltiplas Funções</h2>
+
+    <p>Um programa que lê notas de uma turma e usa funções separadas para cada responsabilidade:</p>
+
+<pre>
+#include &lt;stdio.h&gt;
+#define MAX 50
+
+<span class="code-comment">/* ── Protótipos ─────────────────────────────────────────── */</span>
+void lerNotas(float v[], int n);
+float calcularMedia(float v[], int n);
+float calcularMaior(float v[], int n);
+float calcularMenor(float v[], int n);
+void imprimirRelatorio(float v[], int n);
+
+<span class="code-comment">/* ── Definições ─────────────────────────────────────────── */</span>
+
+void lerNotas(float v[], int n) {
+    for (int i = 0; i &lt; n; i++) {
+        printf("Nota %d: ", i + 1);
+        scanf("%f", &amp;v[i]);
+    }
+}
+
+float calcularMedia(float v[], int n) {
+    float soma = 0;
+    for (int i = 0; i &lt; n; i++) soma += v[i];
+    return soma / n;
+}
+
+float calcularMaior(float v[], int n) {
+    float maior = v[0];
+    for (int i = 1; i &lt; n; i++)
+        if (v[i] &gt; maior) maior = v[i];
+    return maior;
+}
+
+float calcularMenor(float v[], int n) {
+    float menor = v[0];
+    for (int i = 1; i &lt; n; i++)
+        if (v[i] &lt; menor) menor = v[i];
+    return menor;
+}
+
+void imprimirRelatorio(float v[], int n) {
+    printf("\n===== RELATÓRIO =====\n");
+    printf("Alunos:  %d\n", n);
+    printf("Média:   %.2f\n", calcularMedia(v, n));
+    printf("Maior:   %.2f\n", calcularMaior(v, n));
+    printf("Menor:   %.2f\n", calcularMenor(v, n));
+    printf("=====================\n");
+}
+
+<span class="code-comment">/* ── main: orquestração ─────────────────────────────────── */</span>
+int main() {
+    float notas[MAX];
+    int n;
+
+    do {
+        printf("Quantos alunos? (1 a %d): ", MAX);
+        scanf("%d", &amp;n);
+    } while (n &lt; 1 || n &gt; MAX);
+
+    lerNotas(notas, n);
+    imprimirRelatorio(notas, n);
+
+    return 0;
+}
+</pre>
+
+    <div class="terminal-output">
+Quantos alunos? (1 a 50): 4<br>
+Nota 1: 7.5<br>
+Nota 2: 8.0<br>
+Nota 3: 6.0<br>
+Nota 4: 9.5<br><br>
+===== RELATÓRIO =====<br>
+Alunos:  4<br>
+Média:   7.75<br>
+Maior:   9.50<br>
+Menor:   6.00<br>
+=====================
+    </div>
+
+    <div class="exemplo">
+        Note como o <code>main</code> ficou limpo e legível — ele apenas <strong>orquestra</strong>:
+        lê os dados e gera o relatório. Toda a lógica está encapsulada em funções com nomes
+        autoexplicativos. Se o cliente pedir para adicionar a mediana amanhã, basta escrever
+        <code>calcularMediana</code> e chamá-la em <code>imprimirRelatorio</code> — sem
+        tocar no restante do código.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 9. C vs JAVA -->
+<div class="content-section">
+    <h2>9. C vs Java — Funções vs Métodos</h2>
+
+    <table class="comparison-table">
+        <tr><th>Aspecto</th><th>C</th><th>Java</th></tr>
+        <tr>
+            <td>Nome</td>
+            <td><strong>Funções</strong> — existem independentemente de qualquer classe</td>
+            <td><strong>Métodos</strong> — sempre pertencem a uma classe</td>
+        </tr>
+        <tr>
+            <td>Onde ficam</td>
+            <td>No escopo global do arquivo <code>.c</code></td>
+            <td>Dentro de uma classe (<code>class</code>)</td>
+        </tr>
+        <tr>
+            <td>Protótipo obrigatório</td>
+            <td>Sim, se a definição vier depois do chamador</td>
+            <td>Não — o compilador Java resolve a ordem automaticamente</td>
+        </tr>
+        <tr>
+            <td>Sem retorno</td>
+            <td><code>void nomeFuncao(...)</code></td>
+            <td><code>void nomeMetodo(...)</code> — idêntico</td>
+        </tr>
+        <tr>
+            <td>Ponto de entrada</td>
+            <td><code>int main()</code> — função global</td>
+            <td><code>public static void main(String[] args)</code> — método estático</td>
+        </tr>
+        <tr>
+            <td>Sobrecarga (overload)</td>
+            <td class="bad">❌ Não existe em C — cada função precisa de nome único</td>
+            <td class="good">✅ Permitida — mesmo nome, parâmetros diferentes</td>
+        </tr>
+        <tr>
+            <td>Recursão</td>
+            <td>Suportada (Aula 16)</td>
+            <td>Suportada — mesmo comportamento</td>
+        </tr>
+        <tr>
+            <td>Passagem de arrays</td>
+            <td>Por ponteiro — o tamanho deve ser passado separado</td>
+            <td>Por referência — <code>.length</code> disponível na função</td>
+        </tr>
+    </table>
+
+    <div class="grid-container">
+        <div class="grid-item">
+            <strong>C — função global:</strong>
+<pre>
+float media(float v[], int n) {
+    float s = 0;
+    for (int i = 0; i &lt; n; i++) s += v[i];
+    return s / n;
+}
+
+int main() {
+    float notas[] = {7, 8, 9};
+    printf("%.1f", media(notas, 3));
+}
+</pre>
+        </div>
+        <div class="grid-item">
+            <strong>Java — método estático:</strong>
+<pre>
+public class Notas {
+    static float media(float[] v) {
+        float s = 0;
+        for (float x : v) s += x;
+        return s / v.length;  <span class="code-comment">// .length disponível!</span>
+    }
+
+    public static void main(String[] args) {
+        float[] notas = {7, 8, 9};
+        System.out.printf("%.1f", media(notas));
+    }
+}
+</pre>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 10. EXERCÍCIOS -->
+<div class="exercise-section">
+    <h2>10. Exercícios de Fixação</h2>
+    <p>Responda às questões abaixo e clique em <strong>Verificar Respostas</strong>.</p>
+
+    <form class="quiz-form" id="quiz">
+
+        <div class="quiz-question">
+            <p><strong>1.</strong> Qual é a diferença entre a <em>declaração</em> e a <em>definição</em> de uma função em C?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q1" value="a"> São sinônimos — ambas incluem o corpo da função.</label></li>
+                <li><label><input type="radio" name="q1" value="b"> A declaração (protótipo) informa ao compilador a assinatura sem o corpo; a definição inclui o corpo completo.</label></li>
+                <li><label><input type="radio" name="q1" value="c"> A declaração inclui o corpo; a definição é apenas o nome e o tipo de retorno.</label></li>
+                <li><label><input type="radio" name="q1" value="d"> A declaração é feita apenas em arquivos <code>.h</code>; a definição, apenas em <code>.c</code>.</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>2.</strong> O que o tipo de retorno <code>void</code> indica numa função?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q2" value="a"> A função não aceita parâmetros.</label></li>
+                <li><label><input type="radio" name="q2" value="b"> A função retorna o valor zero.</label></li>
+                <li><label><input type="radio" name="q2" value="c"> A função não retorna nenhum valor ao chamador.</label></li>
+                <li><label><input type="radio" name="q2" value="d"> A função é opcional e pode ser ignorada.</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>3.</strong> Qual é a saída do código abaixo?</p>
+<pre>
+int triplo(int x) { return x * 3; }
+
+int main() {
+    int a = 4;
+    printf("%d", triplo(a + 1));
+    return 0;
+}
+</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q3" value="a"> 12</label></li>
+                <li><label><input type="radio" name="q3" value="b"> 15</label></li>
+                <li><label><input type="radio" name="q3" value="c"> 13</label></li>
+                <li><label><input type="radio" name="q3" value="d"> Erro de compilação</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>4.</strong> Se uma função é <em>definida</em> depois do <code>main()</code> sem protótipo, o que ocorre em C99/C11?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q4" value="a"> Funciona normalmente — o compilador busca a definição automaticamente no arquivo.</label></li>
+                <li><label><input type="radio" name="q4" value="b"> O compilador assume que a função retorna <code>int</code> (regra implícita de C89).</label></li>
+                <li><label><input type="radio" name="q4" value="c"> Erro de compilação — a função precisa ser declarada antes de ser usada.</label></li>
+                <li><label><input type="radio" name="q4" value="d"> O programa compila, mas a função nunca é executada.</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>5.</strong> Nos parâmetros <code>float media(float v[], int n)</code>, o que é <code>n</code>?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q5" value="a"> Uma variável global acessível em todo o programa.</label></li>
+                <li><label><input type="radio" name="q5" value="b"> Um parâmetro local à função — uma cópia do argumento passado pelo chamador.</label></li>
+                <li><label><input type="radio" name="q5" value="c"> O número máximo de elementos que o vetor pode ter.</label></li>
+                <li><label><input type="radio" name="q5" value="d"> Uma constante — não pode ser modificada dentro da função.</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>6.</strong> Qual afirmação sobre funções em C vs métodos em Java é <strong>correta</strong>?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q6" value="a"> C suporta sobrecarga de funções (mesmo nome, parâmetros diferentes).</label></li>
+                <li><label><input type="radio" name="q6" value="b"> Funções em C existem no escopo global; métodos Java sempre pertencem a uma classe.</label></li>
+                <li><label><input type="radio" name="q6" value="c"> Em Java, o protótipo também é obrigatório antes do <code>main</code>.</label></li>
+                <li><label><input type="radio" name="q6" value="d"> Em C, ao passar um array para uma função, <code>.length</code> fica disponível automaticamente.</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>7.</strong> Qual é a saída do programa abaixo?</p>
+<pre>
+void dobrar(int x) { x = x * 2; }
+
+int main() {
+    int n = 5;
+    dobrar(n);
+    printf("%d", n);
+    return 0;
+}
+</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q7" value="a"> 10</label></li>
+                <li><label><input type="radio" name="q7" value="b"> 5</label></li>
+                <li><label><input type="radio" name="q7" value="c"> 0</label></li>
+                <li><label><input type="radio" name="q7" value="d"> Erro de compilação — função <code>void</code> não pode receber parâmetros.</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>8.</strong> Qual das opções é um protótipo de função válido em C?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q8" value="a"> <code>int soma(int a, int b) { return a+b; }</code></label></li>
+                <li><label><input type="radio" name="q8" value="b"> <code>soma(int, int);</code></label></li>
+                <li><label><input type="radio" name="q8" value="c"> <code>int soma(int, int);</code></label></li>
+                <li><label><input type="radio" name="q8" value="d"> <code>int soma int a int b;</code></label></li>
+            </ul>
+        </div>
+
+        <button type="button" class="submit-btn" onclick="verificarRespostas()">Verificar Respostas</button>
+    </form>
+
+    <div id="quiz-results" style="display:none; margin-top:20px;"></div>
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align:center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education"
+                 style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+<script>
+function verificarRespostas() {
+    const gabarito = { q1:'b', q2:'c', q3:'b', q4:'c', q5:'b', q6:'b', q7:'b', q8:'c' };
+
+    const explicacoes = {
+        q1: "A <strong>declaração</strong> (protótipo) informa ao compilador o nome, tipo de retorno e tipos dos parâmetros — sem o corpo. A <strong>definição</strong> inclui o corpo completo com as instruções. São etapas distintas: a declaração garante que o compilador aceite chamadas; a definição diz como a função funciona.",
+        q2: "<code>void</code> indica que a função não retorna nenhum valor. Ela executa ações (imprime, modifica variáveis via ponteiro, etc.) mas não produz um resultado que possa ser capturado pelo chamador. O <code>return;</code> é opcional nesse caso.",
+        q3: "A expressão <code>a + 1</code> é avaliada antes da chamada: 4+1=5. Esse valor 5 é passado como argumento para <code>triplo</code>, que calcula 5×3=15 e retorna 15.",
+        q4: "Em C99 e C11, usar uma função sem tê-la declarado ou definido antes é <strong>erro de compilação</strong>. Em C89/C90, o compilador assumia que a função retornava <code>int</code> (regra implícita), mas isso foi removido nas versões modernas por ser perigoso.",
+        q5: "<code>n</code> é um <strong>parâmetro</strong> — uma variável local criada quando a função é chamada, inicializada com uma cópia do argumento passado. Ela existe apenas durante a execução da função e desaparece quando a função retorna.",
+        q6: "Funções em C existem no escopo global do arquivo, fora de qualquer classe. Em Java, todo código está dentro de uma classe — não existem funções livres, apenas métodos. C não suporta sobrecarga (mesmo nome com parâmetros diferentes).",
+        q7: "Em C, argumentos são passados <strong>por valor</strong>: a função recebe uma <em>cópia</em> de <code>n</code>. Modificar <code>x</code> dentro de <code>dobrar</code> não afeta <code>n</code> em <code>main</code>. A variável <code>n</code> continua valendo 5. Para modificar a original, seria necessário passar por ponteiro (Aula 14).",
+        q8: "Um protótipo válido requer: tipo de retorno + nome + lista de tipos dos parâmetros entre parênteses + ponto-e-vírgula. <code>int soma(int, int);</code> atende todos esses requisitos. A opção A é uma definição (tem corpo). A B não tem tipo de retorno. A D tem sintaxe inválida."
+    };
+
+    let acertos = 0;
+    const total = Object.keys(gabarito).length;
+    let html = '';
+
+    for (const [q, resp] of Object.entries(gabarito)) {
+        const num = q.replace('q', '');
+        const sel = document.querySelector(`input[name="${q}"]:checked`);
+        if (sel) {
+            if (sel.value === resp) {
+                acertos++;
+                html += `<p>Questão ${num}: <span style="color:green;font-weight:bold;">✅ Correto!</span> — ${explicacoes[q]}</p>`;
+            } else {
+                html += `<p>Questão ${num}: <span style="color:red;font-weight:bold;">❌ Incorreto.</span> Gabarito: <strong>${resp.toUpperCase()}</strong> — ${explicacoes[q]}</p>`;
+            }
+        } else {
+            html += `<p>Questão ${num}: <span style="color:orange;font-weight:bold;">⚠ Não respondida.</span></p>`;
+        }
+    }
+
+    const r = document.getElementById('quiz-results');
+    r.innerHTML = `<h3>Sua pontuação: ${acertos} de ${total}</h3>${html}`;
+    r.style.display = 'block';
+    r.scrollIntoView({ behavior: 'smooth' });
+}
+</script>
+
+</body>
+</html>

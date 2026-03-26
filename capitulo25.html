@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 25 – Matrizes (Arrays 2D) em C</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Aula 25 — Matrizes (Arrays 2D) em C</h1>
+    <p>Tabelas de dados na memória — linhas, colunas e row-major order</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo24b.html">← Aula 24b</a>
+    <a href="capitulo26.html">Aula 26 →</a>
+</nav>
+
+<!-- ═══════════════════════════════════════ 1. O QUE É UMA MATRIZ -->
+<div class="content-section">
+    <h2>1. O que é uma Matriz?</h2>
+
+    <p>Um array unidimensional armazena uma sequência de valores — como uma fila. Uma <strong>matriz</strong> é um array de duas dimensões: linhas e colunas, como uma tabela ou planilha.</p>
+
+    <div class="definicao">
+        Uma <strong>matriz</strong> (ou array bidimensional) é uma coleção de elementos do mesmo tipo organizados em <strong>linhas</strong> e <strong>colunas</strong>. Em C, é declarada como <code>tipo nome[linhas][colunas]</code> e armazenada na memória de forma contígua em <strong>row-major order</strong> (linha por linha).
+    </div>
+
+    <h3>Visualização</h3>
+    <p>Uma matriz <code>int notas[3][4]</code> representa 3 alunos com 4 notas cada:</p>
+
+    <table>
+        <tr>
+            <th></th>
+            <th>Coluna 0 (Nota 1)</th>
+            <th>Coluna 1 (Nota 2)</th>
+            <th>Coluna 2 (Nota 3)</th>
+            <th>Coluna 3 (Nota 4)</th>
+        </tr>
+        <tr>
+            <td><strong>Linha 0 (Aluno A)</strong></td>
+            <td><code>notas[0][0]</code> = 7</td>
+            <td><code>notas[0][1]</code> = 8</td>
+            <td><code>notas[0][2]</code> = 6</td>
+            <td><code>notas[0][3]</code> = 9</td>
+        </tr>
+        <tr>
+            <td><strong>Linha 1 (Aluno B)</strong></td>
+            <td><code>notas[1][0]</code> = 5</td>
+            <td><code>notas[1][1]</code> = 7</td>
+            <td><code>notas[1][2]</code> = 8</td>
+            <td><code>notas[1][3]</code> = 6</td>
+        </tr>
+        <tr>
+            <td><strong>Linha 2 (Aluno C)</strong></td>
+            <td><code>notas[2][0]</code> = 9</td>
+            <td><code>notas[2][1]</code> = 10</td>
+            <td><code>notas[2][2]</code> = 8</td>
+            <td><code>notas[2][3]</code> = 7</td>
+        </tr>
+    </table>
+
+    <div class="info-box">
+        <strong>Row-major order:</strong> C armazena todos os elementos da linha 0 primeiro, depois os da linha 1, e assim por diante. Os 12 elementos acima ficam em 12 posições consecutivas na memória: <code>[7][8][6][9][5][7][8][6][9][10][8][7]</code>.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 2. DECLARAÇÃO E INICIALIZAÇÃO -->
+<div class="content-section">
+    <h2>2. Declaração e Inicialização</h2>
+
+    <h3>Forma 1 — Declarar e preencher depois</h3>
+<pre>
+int matriz[2][2];          <span class="code-comment">// declara sem inicializar (contém lixo de memória)</span>
+matriz[0][0] = 1;
+matriz[0][1] = 2;
+matriz[1][0] = 3;
+matriz[1][1] = 4;
+</pre>
+
+    <h3>Forma 2 — Inicialização por chaves aninhadas</h3>
+<pre>
+int matriz[2][3] = {
+    {1, 2, 3},             <span class="code-comment">// linha 0</span>
+    {4, 5, 6}              <span class="code-comment">// linha 1</span>
+};
+</pre>
+
+    <h3>Forma 3 — Inicialização linear (equivalente à 2)</h3>
+<pre>
+int matriz[2][3] = {1, 2, 3, 4, 5, 6};  <span class="code-comment">// C preenche linha por linha</span>
+</pre>
+
+    <h3>Forma 4 — Inicialização parcial (restante vira 0)</h3>
+<pre>
+int matriz[3][3] = { {1}, {4, 5} };
+<span class="code-comment">// Resultado:
+// 1  0  0
+// 4  5  0
+// 0  0  0</span>
+</pre>
+
+    <h3>Forma 5 — Array de caracteres (strings em tabela)</h3>
+<pre>
+char dias[7][12] = {
+    "Segunda", "Terça", "Quarta",
+    "Quinta",  "Sexta", "Sábado", "Domingo"
+};
+printf("%s\n", dias[0]);   <span class="code-comment">// imprime: Segunda</span>
+</pre>
+
+    <div class="warning-box">
+        <strong>⚠️ Atenção com o tamanho:</strong> Em C, o compilador <strong>precisa</strong> saber o número de colunas para calcular endereços. Você pode omitir as linhas (<code>int m[][3] = ...</code>), mas nunca as colunas.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 3. ACESSO COM LOOPS ANINHADOS -->
+<div class="content-section">
+    <h2>3. Acessando Matrizes com Loops Aninhados</h2>
+
+    <p>O padrão universal para percorrer uma matriz é usar <strong>dois loops <code>for</code> aninhados</strong>: o externo para as linhas e o interno para as colunas.</p>
+
+<pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int matriz[2][2];
+    int i, j;
+
+    <span class="code-comment">// Leitura: preenche com scanf</span>
+    for (i = 0; i &lt; 2; i++) {
+        for (j = 0; j &lt; 2; j++) {
+            printf("Digite matriz[%d][%d]: ", i, j);
+            scanf("%d", &matriz[i][j]);
+        }
+    }
+
+    <span class="code-comment">// Impressão</span>
+    printf("\nMatriz:\n");
+    for (i = 0; i &lt; 2; i++) {
+        for (j = 0; j &lt; 2; j++) {
+            printf("%4d", matriz[i][j]);  <span class="code-comment">// %4d: largura mínima 4 para alinhar</span>
+        }
+        printf("\n");                      <span class="code-comment">// quebra de linha ao final de cada linha</span>
+    }
+
+    return 0;
+}
+</pre>
+    <div class="terminal-output">
+Digite matriz[0][0]: 1<br>
+Digite matriz[0][1]: 2<br>
+Digite matriz[1][0]: 3<br>
+Digite matriz[1][1]: 4<br>
+<br>
+Matriz:<br>
+&nbsp;&nbsp;&nbsp;1&nbsp;&nbsp;&nbsp;2<br>
+&nbsp;&nbsp;&nbsp;3&nbsp;&nbsp;&nbsp;4
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 4. OPERAÇÕES CLÁSSICAS -->
+<div class="content-section">
+    <h2>4. Operações Clássicas com Matrizes</h2>
+
+    <h3>4.1 — Troca de linhas</h3>
+    <p>Para trocar duas linhas de uma matriz, usamos variáveis temporárias — o mesmo padrão do swap de variáveis, mas dentro de um loop de colunas:</p>
+
+<pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int m[2][2], temp, i;
+
+    <span class="code-comment">// Leitura da matriz</span>
+    printf("Digite [0][0]: "); scanf("%d", &m[0][0]);
+    printf("Digite [0][1]: "); scanf("%d", &m[0][1]);
+    printf("Digite [1][0]: "); scanf("%d", &m[1][0]);
+    printf("Digite [1][1]: "); scanf("%d", &m[1][1]);
+
+    <span class="code-comment">// Troca das linhas 0 e 1</span>
+    for (i = 0; i &lt; 2; i++) {
+        temp   = m[0][i];    <span class="code-comment">// guarda elemento da linha 0</span>
+        m[0][i] = m[1][i];   <span class="code-comment">// sobrescreve com linha 1</span>
+        m[1][i] = temp;      <span class="code-comment">// restaura na linha 1</span>
+    }
+
+    <span class="code-comment">// Impressão</span>
+    printf("\nMatriz após troca:\n");
+    printf("%d %d\n", m[0][0], m[0][1]);
+    printf("%d %d\n", m[1][0], m[1][1]);
+    return 0;
+}
+</pre>
+
+    <table>
+        <tr><th>Antes</th><th>Depois</th></tr>
+        <tr><td>1 2 / 3 4</td><td>3 4 / 1 2</td></tr>
+    </table>
+
+    <h3>4.2 — Soma de matrizes</h3>
+<pre>
+#include &lt;stdio.h&gt;
+#define L 2
+#define C 3
+
+int main() {
+    int a[L][C] = {{1,2,3},{4,5,6}};
+    int b[L][C] = {{7,8,9},{1,2,3}};
+    int soma[L][C];
+    int i, j;
+
+    for (i = 0; i &lt; L; i++)
+        for (j = 0; j &lt; C; j++)
+            soma[i][j] = a[i][j] + b[i][j];
+
+    printf("Resultado da soma:\n");
+    for (i = 0; i &lt; L; i++) {
+        for (j = 0; j &lt; C; j++)
+            printf("%4d", soma[i][j]);
+        printf("\n");
+    }
+    return 0;
+}
+</pre>
+    <div class="terminal-output">Resultado da soma:<br>&nbsp;&nbsp;&nbsp;8&nbsp;&nbsp;10&nbsp;&nbsp;12<br>&nbsp;&nbsp;&nbsp;5&nbsp;&nbsp;&nbsp;7&nbsp;&nbsp;&nbsp;9</div>
+
+    <h3>4.3 — Transposta de uma matriz</h3>
+    <p>A transposta troca linhas por colunas: o elemento <code>[i][j]</code> vai para <code>[j][i]</code>.</p>
+<pre>
+#include &lt;stdio.h&gt;
+#define N 3
+
+int main() {
+    int m[N][N] = {{1,2,3},{4,5,6},{7,8,9}};
+    int t[N][N];   <span class="code-comment">// matriz transposta</span>
+    int i, j;
+
+    for (i = 0; i &lt; N; i++)
+        for (j = 0; j &lt; N; j++)
+            t[j][i] = m[i][j];   <span class="code-comment">// troca índices</span>
+
+    printf("Transposta:\n");
+    for (i = 0; i &lt; N; i++) {
+        for (j = 0; j &lt; N; j++)
+            printf("%3d", t[i][j]);
+        printf("\n");
+    }
+    return 0;
+}
+</pre>
+    <div class="terminal-output">Transposta:<br>&nbsp;1&nbsp;4&nbsp;7<br>&nbsp;2&nbsp;5&nbsp;8<br>&nbsp;3&nbsp;6&nbsp;9</div>
+</div>
+
+<!-- ═══════════════════════════════════════ 5. MATRIZES EM FUNÇÕES -->
+<div class="content-section">
+    <h2>5. Passando Matrizes para Funções</h2>
+
+    <p>Matrizes, assim como arrays 1D, são passadas automaticamente por ponteiro — a função recebe o endereço do primeiro elemento e pode modificar os dados originais.</p>
+
+    <div class="warning-box">
+        <strong>⚠️ Diferença crucial para funções:</strong> Ao declarar um parâmetro de função com array 2D, você <strong>pode omitir o número de linhas</strong>, mas o número de colunas é <strong>obrigatório</strong> — o compilador precisa dele para calcular o offset de cada linha.
+    </div>
+
+<pre>
+#include &lt;stdio.h&gt;
+#define COLS 3
+
+<span class="code-comment">// ✅ Correto: número de colunas especificado</span>
+void imprimirMatriz(int m[][COLS], int linhas) {
+    int i, j;
+    for (i = 0; i &lt; linhas; i++) {
+        for (j = 0; j &lt; COLS; j++)
+            printf("%4d", m[i][j]);
+        printf("\n");
+    }
+}
+
+<span class="code-comment">// Equivalente com ponteiro explícito (C99+)</span>
+void dobrarElementos(int m[][COLS], int linhas) {
+    int i, j;
+    for (i = 0; i &lt; linhas; i++)
+        for (j = 0; j &lt; COLS; j++)
+            m[i][j] *= 2;   <span class="code-comment">// modifica o original (passagem por ponteiro)</span>
+}
+
+int main() {
+    int tabela[2][COLS] = {{1,2,3},{4,5,6}};
+    printf("Original:\n");
+    imprimirMatriz(tabela, 2);
+
+    dobrarElementos(tabela, 2);
+    printf("Após dobrar:\n");
+    imprimirMatriz(tabela, 2);
+    return 0;
+}
+</pre>
+    <div class="terminal-output">
+Original:<br>
+&nbsp;&nbsp;&nbsp;1&nbsp;&nbsp;&nbsp;2&nbsp;&nbsp;&nbsp;3<br>
+&nbsp;&nbsp;&nbsp;4&nbsp;&nbsp;&nbsp;5&nbsp;&nbsp;&nbsp;6<br>
+Após dobrar:<br>
+&nbsp;&nbsp;&nbsp;2&nbsp;&nbsp;&nbsp;4&nbsp;&nbsp;&nbsp;6<br>
+&nbsp;&nbsp;&nbsp;8&nbsp;&nbsp;10&nbsp;&nbsp;12
+    </div>
+
+    <div class="info-box">
+        <strong>Por que a função modifica o original?</strong> Pela mesma razão dos arrays 1D: em C, arrays decaem para ponteiro quando passados para funções. A função não recebe uma cópia — recebe o <em>endereço</em> do primeiro elemento. Use <code>const int m[][COLS]</code> se quiser garantir que a função não modifique os dados.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ 6. C VS JAVA -->
+<div class="content-section">
+    <h2>6. C vs. Java — Matrizes</h2>
+
+    <table>
+        <tr>
+            <th>Aspecto</th>
+            <th>C</th>
+            <th>Java</th>
+        </tr>
+        <tr>
+            <td>Declaração</td>
+            <td><code>int m[3][4];</code></td>
+            <td><code>int[][] m = new int[3][4];</code></td>
+        </tr>
+        <tr>
+            <td>Armazenamento</td>
+            <td>Bloco contíguo (row-major)</td>
+            <td>Array de arrays (referências)</td>
+        </tr>
+        <tr>
+            <td>Linhas de tamanhos diferentes (jagged)</td>
+            <td>❌ Não suportado nativamente</td>
+            <td>✅ Cada linha pode ter tamanho diferente</td>
+        </tr>
+        <tr>
+            <td>Verificação de limites</td>
+            <td>❌ Nenhuma — comportamento indefinido</td>
+            <td>✅ Lança <code>ArrayIndexOutOfBoundsException</code></td>
+        </tr>
+        <tr>
+            <td>Tamanho em tempo de execução</td>
+            <td><code>sizeof(m) / sizeof(m[0])</code> (apenas local)</td>
+            <td><code>m.length</code> e <code>m[0].length</code></td>
+        </tr>
+        <tr>
+            <td>Passagem para função</td>
+            <td>Por ponteiro (obriga informar colunas)</td>
+            <td>Por referência automática</td>
+        </tr>
+    </table>
+
+    <h3>Side-by-side: soma de matriz 2×2</h3>
+    <div class="grid-container">
+        <div class="grid-item">
+            <strong>C</strong>
+<pre>
+int a[2][2] = {{1,2},{3,4}};
+int b[2][2] = {{5,6},{7,8}};
+int s[2][2];
+for (int i=0; i&lt;2; i++)
+  for (int j=0; j&lt;2; j++)
+    s[i][j] = a[i][j]+b[i][j];
+</pre>
+        </div>
+        <div class="grid-item">
+            <strong>Java</strong>
+<pre>
+int[][] a = {{1,2},{3,4}};
+int[][] b = {{5,6},{7,8}};
+int[][] s = new int[2][2];
+for (int i=0; i&lt;2; i++)
+  for (int j=0; j&lt;2; j++)
+    s[i][j] = a[i][j]+b[i][j];
+</pre>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ QUIZ -->
+<div class="content-section exercise-section">
+    <h2>Quiz — Aula 25</h2>
+    <form class="quiz-form" onsubmit="return false;">
+
+        <div class="content-section quiz-question" id="q1-block">
+            <p><strong>1.</strong> Qual é a saída do trecho abaixo?</p>
+<pre>
+int m[2][3] = {{1,2,3},{4,5,6}};
+printf("%d", m[1][2]);
+</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q1" value="a"> 3</label></li>
+                <li><label><input type="radio" name="q1" value="b"> 5</label></li>
+                <li><label><input type="radio" name="q1" value="c"> 6</label></li>
+                <li><label><input type="radio" name="q1" value="d"> Comportamento indefinido</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question" id="q2-block">
+            <p><strong>2.</strong> Qual declaração de parâmetro está <strong>incorreta</strong> para uma função que recebe a matriz <code>int m[3][4]</code>?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q2" value="a"> <code>void f(int m[][4], int linhas)</code></label></li>
+                <li><label><input type="radio" name="q2" value="b"> <code>void f(int m[3][4])</code></label></li>
+                <li><label><input type="radio" name="q2" value="c"> <code>void f(int m[][], int l, int c)</code></label></li>
+                <li><label><input type="radio" name="q2" value="d"> <code>void f(int (*m)[4], int linhas)</code></label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question" id="q3-block">
+            <p><strong>3.</strong> Após a inicialização parcial <code>int m[3][3] = {{1},{2,3}};</code>, qual é o valor de <code>m[2][0]</code>?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q3" value="a"> Lixo de memória (indefinido)</label></li>
+                <li><label><input type="radio" name="q3" value="b"> 1</label></li>
+                <li><label><input type="radio" name="q3" value="c"> 0</label></li>
+                <li><label><input type="radio" name="q3" value="d"> 2</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question" id="q4-block">
+            <p><strong>4.</strong> O que a linha <code>t[j][i] = m[i][j];</code> dentro de loops aninhados calcula?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q4" value="a"> Cópia exata da matriz</label></li>
+                <li><label><input type="radio" name="q4" value="b"> Transposta da matriz</label></li>
+                <li><label><input type="radio" name="q4" value="c"> Inversa da matriz</label></li>
+                <li><label><input type="radio" name="q4" value="d"> Produto elemento a elemento</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question" id="q5-block">
+            <p><strong>5.</strong> Em C, ao passar <code>int m[3][4]</code> para uma função, o que a função recebe?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q5" value="a"> Uma cópia completa dos 12 elementos</label></li>
+                <li><label><input type="radio" name="q5" value="b"> O ponteiro para o primeiro elemento da primeira linha</label></li>
+                <li><label><input type="radio" name="q5" value="c"> Um array Java-like com .length disponível</label></li>
+                <li><label><input type="radio" name="q5" value="d"> O número total de elementos (12)</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question" id="q6-block">
+            <p><strong>6.</strong> Qual é o tamanho em bytes de <code>int m[4][5]</code> numa máquina onde <code>sizeof(int) == 4</code>?</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q6" value="a"> 9 bytes</label></li>
+                <li><label><input type="radio" name="q6" value="b"> 20 bytes</label></li>
+                <li><label><input type="radio" name="q6" value="c"> 80 bytes</label></li>
+                <li><label><input type="radio" name="q6" value="d"> 40 bytes</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question" id="q7-block">
+            <p><strong>7.</strong> Em Java, é possível criar um array 2D onde cada linha tem um tamanho diferente. Em C isso:</p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q7" value="a"> Também é possível com a mesma sintaxe</label></li>
+                <li><label><input type="radio" name="q7" value="b"> Não é possível com arrays estáticos — requer ponteiros e alocação dinâmica</label></li>
+                <li><label><input type="radio" name="q7" value="c"> É possível omitindo o número de colunas</label></li>
+                <li><label><input type="radio" name="q7" value="d"> Causa um erro de compilação sempre</label></li>
+            </ul>
+        </div>
+
+        <div class="content-section quiz-question" id="q8-block">
+            <p><strong>8.</strong> Qual é a saída do código abaixo?</p>
+<pre>
+int m[2][2] = {1, 2, 3, 4};
+printf("%d %d", m[0][1], m[1][0]);
+</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q8" value="a"> 1 4</label></li>
+                <li><label><input type="radio" name="q8" value="b"> 2 3</label></li>
+                <li><label><input type="radio" name="q8" value="c"> 2 4</label></li>
+                <li><label><input type="radio" name="q8" value="d"> Comportamento indefinido</label></li>
+            </ul>
+        </div>
+
+        <button type="button" class="submit-btn" onclick="verificarRespostas()">Verificar Respostas</button>
+    </form>
+    <div id="quiz-results" style="display:none; margin-top:20px; padding:15px; background:#dff0d8; border-radius:5px;"></div>
+</div>
+
+<div class="navigation-buttons">
+    <a href="capitulo24b.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">← Aula 24b</a>
+    <a href="index.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">Índice</a>
+    <a href="capitulo26.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">Aula 26 →</a>
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align:center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education" style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+<script>
+function verificarRespostas() {
+    const gabarito = { q1:"c", q2:"c", q3:"c", q4:"b", q5:"b", q6:"c", q7:"b", q8:"b" };
+    const explicacoes = {
+        q1: "m[1][2] acessa linha 1, coluna 2. A linha 1 é {4,5,6}, portanto m[1][2] = 6.",
+        q2: "Omitir as colunas ('int m[][]') é inválido em C. O compilador precisa do número de colunas para calcular o deslocamento de memória de cada linha. Apenas o número de linhas pode ser omitido.",
+        q3: "Em C, ao inicializar parcialmente, os elementos não especificados são zerados automaticamente. Toda a linha 2 (não mencionada) fica com 0.",
+        q4: "Trocar i e j nos índices é exatamente a definição de transposição: a linha i, coluna j original vai para a linha j, coluna i da transposta.",
+        q5: "Arrays em C decaem para ponteiro ao serem passados para funções. A função recebe o endereço do primeiro elemento — não uma cópia, não metadados.",
+        q6: "4 linhas × 5 colunas = 20 elementos × 4 bytes cada = 80 bytes.",
+        q7: "Arrays estáticos 2D em C exigem todas as dimensões fixas em tempo de compilação. Para linhas de tamanhos variáveis é preciso usar ponteiros e malloc().",
+        q8: "A inicialização linear {1,2,3,4} preenche linha por linha: m[0][0]=1, m[0][1]=2, m[1][0]=3, m[1][1]=4. Portanto m[0][1]=2 e m[1][0]=3."
+    };
+
+    let acertos = 0, html = "";
+    const total = Object.keys(gabarito).length;
+    for (const q in gabarito) {
+        const sel = document.querySelector(`input[name="${q}"]:checked`);
+        const num = q.replace("q","");
+        if (sel) {
+            if (sel.value === gabarito[q]) {
+                acertos++;
+                html += `<p>Questão ${num}: <span style="color:green;font-weight:bold;">✅ Correto!</span> — ${explicacoes[q]}</p>`;
+            } else {
+                html += `<p>Questão ${num}: <span style="color:red;font-weight:bold;">❌ Incorreto.</span> Gabarito: <strong>${gabarito[q].toUpperCase()}</strong> — ${explicacoes[q]}</p>`;
+            }
+        } else {
+            html += `<p>Questão ${num}: <span style="color:orange;font-weight:bold;">⚠ Não respondida.</span></p>`;
+        }
+    }
+    const r = document.getElementById("quiz-results");
+    r.innerHTML = `<h3>Sua pontuação: ${acertos} de ${total}</h3>${html}`;
+    r.style.display = "block";
+    r.scrollIntoView({ behavior: "smooth" });
+}
+</script>
+
+</body>
+</html>

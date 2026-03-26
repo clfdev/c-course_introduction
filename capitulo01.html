@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 01 – Estrutura Geral de um Programa C</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Aula 01 – Estrutura Geral de um Programa C</h1>
+    <p>Anatomia de um programa C, o primeiro "Hello, World!" e como compilar no Code::Blocks</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo00.html">← Aula 00</a>
+    <a href="capitulo02.html">Aula 02 →</a>
+</nav>
+
+<!-- ═══════════════════════════════════════ VISÃO GERAL -->
+<div class="content-section">
+    <h2>Visão Geral de um Programa C</h2>
+    <p>Todo programa em C é formado por três elementos fundamentais que aparecem sempre juntos e sempre na mesma ordem:</p>
+
+    <div class="info-box">
+        <strong>Os três pilares de um programa C:</strong>
+        <ol>
+            <li><strong>Diretivas de pré-processador</strong> — instruções que começam com <code>#</code> e são processadas antes da compilação (ex: <code>#include</code>, <code>#define</code>).</li>
+            <li><strong>Definições de funções</strong> — blocos de código nomeados que realizam tarefas. A função <code>main()</code> é obrigatória e é o ponto de entrada de todo programa.</li>
+            <li><strong>Instruções (statements)</strong> — as ações executadas dentro das funções, sempre terminadas com ponto e vírgula <code>;</code>.</li>
+        </ol>
+    </div>
+
+    <p>Diferentemente do Java, que organiza o código em <strong>classes e objetos</strong>, o C é uma linguagem <strong>procedural</strong>: o código é organizado em funções independentes, sem o conceito de classe. Isso o torna mais próximo do hardware e mais simples em sua estrutura base.</p>
+
+    <div class="tip-box">
+        <strong>DICA:</strong> Assim como no Java, o C usa chaves <code>{ }</code> para delimitar blocos de código e ponto e vírgula <code>;</code> para encerrar cada instrução. Quem já conhece Java sentirá essa familiaridade imediatamente.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ HELLO WORLD -->
+<div class="content-section">
+    <h2>O Primeiro Programa: "Olá, Mundo!"</h2>
+    <p>Por convenção histórica, o primeiro programa aprendido em qualquer linguagem imprime "Hello, World!" na tela. Em C, ele tem a seguinte forma:</p>
+
+    <pre>
+<span class="code-comment">/* hello.c — Meu primeiro programa em C */</span>
+#include &lt;stdio.h&gt;
+
+int main() {
+    printf("Olá, Mundo!\n");
+    return 0;
+}</pre>
+
+    <div class="terminal-output">Olá, Mundo!</div>
+
+    <p>Cada linha desse programa tem um papel bem definido. Veja a anatomia completa:</p>
+
+    <table>
+        <tr>
+            <th>Linha</th>
+            <th>O que é</th>
+            <th>O que faz</th>
+        </tr>
+        <tr>
+            <td><code>/* ... */</code></td>
+            <td>Comentário de bloco</td>
+            <td>Texto ignorado pelo compilador; serve para documentar o código.</td>
+        </tr>
+        <tr>
+            <td><code>#include &lt;stdio.h&gt;</code></td>
+            <td>Diretiva de pré-processador</td>
+            <td>Importa a biblioteca padrão de entrada e saída (<em>Standard Input/Output</em>), que fornece as funções <code>printf</code> e <code>scanf</code>.</td>
+        </tr>
+        <tr>
+            <td><code>int main()</code></td>
+            <td>Declaração da função principal</td>
+            <td>Define o ponto de entrada obrigatório do programa. O <code>int</code> indica que a função retorna um número inteiro ao sistema operacional.</td>
+        </tr>
+        <tr>
+            <td><code>{ }</code></td>
+            <td>Chaves de bloco</td>
+            <td>Delimitam o corpo da função <code>main</code>. Todo o código do programa fica entre essas chaves.</td>
+        </tr>
+        <tr>
+            <td><code>printf("Olá, Mundo!\n");</code></td>
+            <td>Chamada de função</td>
+            <td>Imprime o texto na tela. O <code>\n</code> é um caractere especial de nova linha (equivalente ao <em>Enter</em>).</td>
+        </tr>
+        <tr>
+            <td><code>return 0;</code></td>
+            <td>Instrução de retorno</td>
+            <td>Encerra a função <code>main</code> e retorna o valor <code>0</code> ao sistema operacional, sinalizando que o programa terminou com <strong>sucesso</strong>.</td>
+        </tr>
+    </table>
+
+    <div class="warning-box">
+        <strong>Atenção — extensão dos arquivos:</strong> Todo arquivo de código em C deve ser salvo com a extensão <code>.c</code> (exemplo: <code>hello.c</code>). Crie sempre uma pasta dedicada para seus projetos C e evite espaços ou caracteres especiais nos nomes de pastas e arquivos.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ CARACTERES ESPECIAIS -->
+<div class="content-section">
+    <h2>Sequências de Escape no printf</h2>
+    <p>Dentro das aspas do <code>printf</code>, certos pares de caracteres têm significado especial. Eles são chamados de <strong>sequências de escape</strong> e permitem inserir formatação no texto de saída:</p>
+
+    <table>
+        <tr>
+            <th>Sequência</th>
+            <th>Nome</th>
+            <th>Efeito</th>
+        </tr>
+        <tr>
+            <td><code>\n</code></td>
+            <td>Nova linha (<em>newline</em>)</td>
+            <td>Move o cursor para a próxima linha</td>
+        </tr>
+        <tr>
+            <td><code>\t</code></td>
+            <td>Tabulação horizontal (<em>tab</em>)</td>
+            <td>Insere um recuo de tabulação</td>
+        </tr>
+        <tr>
+            <td><code>\\</code></td>
+            <td>Barra invertida literal</td>
+            <td>Imprime o caractere <code>\</code></td>
+        </tr>
+        <tr>
+            <td><code>\"</code></td>
+            <td>Aspas duplas literais</td>
+            <td>Imprime o caractere <code>"</code> dentro da string</td>
+        </tr>
+        <tr>
+            <td><code>\0</code></td>
+            <td>Caractere nulo</td>
+            <td>Marca o fim de uma string (veremos mais adiante)</td>
+        </tr>
+    </table>
+
+    <pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    printf("Linha 1\nLinha 2\n");          <span class="code-comment">// quebra de linha</span>
+    printf("Nome:\tCarlos\n");             <span class="code-comment">// tabulação</span>
+    printf("Ele disse: \"Olá!\"\n");       <span class="code-comment">// aspas dentro do texto</span>
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>Linha 1</p>
+        <p>Linha 2</p>
+        <p>Nome:&nbsp;&nbsp;&nbsp;Carlos</p>
+        <p>Ele disse: "Olá!"</p>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ LEITURA DO USUÁRIO -->
+<div class="content-section">
+    <h2>Lendo Dados do Usuário: scanf</h2>
+    <p>Para receber dados digitados pelo usuário, o C usa a função <code>scanf</code>. Ela é o equivalente da classe <code>Scanner</code> do Java. Veja um exemplo completo:</p>
+
+    <pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int numero;
+
+    printf("Digite um número: ");
+    scanf("%d", &amp;numero);               <span class="code-comment">// lê um inteiro e armazena em 'numero'</span>
+    printf("Você digitou: %d\n", numero);
+
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>Digite um número: 42</p>
+        <p>Você digitou: 42</p>
+    </div>
+
+    <div class="definicao">
+        O operador <strong>&amp;</strong> (lê-se "endereço de") diz ao <code>scanf</code> <em>onde</em> na memória ele deve gravar o valor digitado. Sem o <code>&amp;</code>, o programa compila, mas se comporta de forma imprevisível, pois o <code>scanf</code> não saberia o endereço de destino do dado.
+    </div>
+
+    <p>O símbolo <code>%d</code> dentro do <code>scanf</code> e do <code>printf</code> é chamado de <strong>especificador de formato</strong>. Ele indica o tipo do dado que será lido ou impresso:</p>
+
+    <table>
+        <tr>
+            <th>Especificador</th>
+            <th>Tipo de dado</th>
+            <th>Exemplo</th>
+        </tr>
+        <tr>
+            <td><code>%d</code></td>
+            <td>Inteiro (<code>int</code>)</td>
+            <td><code>printf("%d", 42);</code></td>
+        </tr>
+        <tr>
+            <td><code>%f</code></td>
+            <td>Ponto flutuante (<code>float</code>)</td>
+            <td><code>printf("%f", 3.14);</code></td>
+        </tr>
+        <tr>
+            <td><code>%lf</code></td>
+            <td>Ponto flutuante duplo (<code>double</code>)</td>
+            <td><code>scanf("%lf", &amp;x);</code></td>
+        </tr>
+        <tr>
+            <td><code>%c</code></td>
+            <td>Caractere (<code>char</code>)</td>
+            <td><code>printf("%c", 'A');</code></td>
+        </tr>
+        <tr>
+            <td><code>%s</code></td>
+            <td>String (texto)</td>
+            <td><code>printf("%s", "Olá");</code></td>
+        </tr>
+        <tr>
+            <td><code>%p</code></td>
+            <td>Endereço de memória (ponteiro)</td>
+            <td><code>printf("%p", &amp;x);</code></td>
+        </tr>
+    </table>
+
+    <div class="tip-box">
+        <strong>DICA — Lendo um <code>char</code> com scanf:</strong> Sempre coloque um espaço antes de <code>%c</code> ao usar <code>scanf</code>:
+        <pre>scanf(" %c", &amp;letra);  <span class="code-comment">// o espaço descarta o '\n' que ficou no buffer</span></pre>
+        Sem o espaço, o <code>scanf</code> pode capturar a tecla Enter da leitura anterior em vez do caractere desejado.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ COMPARAÇÃO COM JAVA -->
+<div class="content-section">
+    <h2>C versus Java: Estrutura Comparada</h2>
+    <p>Se você conhece Java, as diferenças de estrutura ficam muito claras quando colocamos os dois programas equivalentes lado a lado:</p>
+
+    <table>
+        <tr>
+            <th style="width:50%">C</th>
+            <th style="width:50%">Java</th>
+        </tr>
+        <tr>
+            <td>
+<pre style="margin:0; font-size:0.85em;">
+#include &lt;stdio.h&gt;
+
+int main() {
+    int numero;
+    printf("Digite: ");
+    scanf("%d", &amp;numero);
+    printf("Valor: %d\n", numero);
+    return 0;
+}
+</pre>
+            </td>
+            <td>
+<pre style="margin:0; font-size:0.85em;">
+import java.util.Scanner;
+
+public class Main {
+  public static void main(String[] args) {
+    Scanner sc = new Scanner(System.in);
+    System.out.print("Digite: ");
+    int numero = sc.nextInt();
+    System.out.println("Valor: " + numero);
+  }
+}
+</pre>
+            </td>
+        </tr>
+    </table>
+
+    <div class="info-box">
+        <strong>Principais diferenças estruturais:</strong>
+        <ul>
+            <li>Em C, não existe o conceito de classe — o código começa direto na função <code>main()</code>.</li>
+            <li>Em C, <code>#include</code> é uma diretiva de pré-processador; em Java, <code>import</code> é uma instrução da linguagem.</li>
+            <li>Em C, a impressão usa <code>printf</code> com especificadores de formato (<code>%d</code>, <code>%f</code>); em Java, usa-se <code>System.out.println</code> com concatenação de strings.</li>
+            <li>Em C, a leitura usa <code>scanf</code> com o operador <code>&amp;</code>; em Java, usa-se o objeto <code>Scanner</code>.</li>
+            <li>Em C, <code>main</code> retorna um <code>int</code> ao sistema; em Java, <code>main</code> é <code>void</code>.</li>
+        </ul>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ COMPILANDO NO CODE::BLOCKS -->
+<div class="content-section">
+    <h2>Compilando e Executando no Code::Blocks</h2>
+    <p>O Code::Blocks com MinGW é o ambiente recomendado para este curso. Para criar, compilar e executar seu primeiro programa C, siga estes passos:</p>
+
+    <div class="step-container">
+        <div class="step">
+            <h3>Crie um novo projeto</h3>
+            <p>No menu, vá em <strong>File &gt; New &gt; Project</strong>. Escolha o template <strong>Console Application</strong>, clique em <em>Go</em> e selecione a linguagem <strong>C</strong> (não C++).</p>
+        </div>
+
+        <div class="step">
+            <h3>Nomeie o projeto e escolha o diretório</h3>
+            <p>Dê um nome ao projeto (ex: <code>hello</code>) e escolha uma pasta para salvá-lo. <strong>Evite espaços e acentos</strong> no caminho do diretório — isso pode causar erros de compilação no Windows.</p>
+        </div>
+
+        <div class="step">
+            <h3>Escreva o código em main.c</h3>
+            <p>O Code::Blocks cria automaticamente um arquivo <code>main.c</code> com um esqueleto básico. Substitua o conteúdo pelo seu código.</p>
+            <div class="tip-box">
+                <strong>DICA:</strong> Salve o arquivo com <strong>Ctrl + S</strong> sempre antes de compilar.
+            </div>
+        </div>
+
+        <div class="step">
+            <h3>Compile o projeto</h3>
+            <p>Pressione <strong>F9</strong> (ou clique no botão <em>Build and Run</em>). O Code::Blocks compila o código e já executa se não houver erros. O log de compilação aparece no painel inferior — verifique se aparece a mensagem <code>0 error(s)</code>.</p>
+            <div class="warning-box">
+                <strong>Se aparecerem erros:</strong> Leia a mensagem no painel de log. Erros comuns em iniciantes são: esquecer o ponto e vírgula <code>;</code>, esquecer o <code>&amp;</code> no <code>scanf</code>, ou escrever <code>Printf</code> com P maiúsculo (C é <em>case-sensitive</em>).
+            </div>
+        </div>
+
+        <div class="step">
+            <h3>Execute separadamente (opcional)</h3>
+            <p>Para executar sem recompilar, use <strong>Ctrl + F10</strong>. Uma janela de console exibirá a saída do programa ou aguardará a entrada do usuário, conforme o código.</p>
+        </div>
+    </div>
+
+    <div class="info-box">
+        <strong>Compilando pela linha de comando (alternativa):</strong> Se preferir usar o terminal, o comando básico com GCC é:
+        <pre>gcc main.c -o hello
+./hello          <span class="code-comment">// Linux / macOS</span>
+hello.exe        <span class="code-comment">// Windows</span></pre>
+        O flag <code>-o hello</code> define o nome do arquivo executável gerado.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ EXEMPLO COMPLETO -->
+<div class="content-section">
+    <h2>Exemplo Completo: Lendo e Exibindo Dados</h2>
+    <p>Vamos juntar tudo o que vimos nesta aula em um programa que lê o nome e a idade do usuário e exibe uma mensagem formatada:</p>
+
+    <pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+    int idade;
+    char nome[50];               <span class="code-comment">// vetor de 50 caracteres (veremos mais adiante)</span>
+
+    printf("Qual é o seu nome? ");
+    scanf("%s", nome);           <span class="code-comment">// lê uma palavra (sem espaços)</span>
+
+    printf("Qual é a sua idade? ");
+    scanf("%d", &amp;idade);
+
+    printf("\nOlá, %s! Você tem %d anos.\n", nome, idade);
+
+    return 0;
+}</pre>
+
+    <div class="terminal-output">
+        <p>Qual é o seu nome? Ana</p>
+        <p>Qual é a sua idade? 22</p>
+        <p>&nbsp;</p>
+        <p>Olá, Ana! Você tem 22 anos.</p>
+    </div>
+
+    <div class="tip-box">
+        <strong>Observe:</strong> Note que o <code>scanf("%s", nome)</code> <strong>não usa o operador <code>&amp;</code></strong> neste caso — porque <code>nome</code> é um array e o nome de um array já é, por si só, o endereço do seu primeiro elemento. Esse comportamento será explicado em detalhes na Aula de Arrays.
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ EXERCÍCIOS -->
+<div class="exercise-section">
+    <h2>Exercícios — Aula 01</h2>
+    <p>Responda às questões abaixo para fixar os conceitos da aula:</p>
+
+    <form class="quiz-form" id="quiz-form">
+
+        <div class="quiz-question">
+            <p><strong>1. Qual é a função obrigatória em todo programa C e por quê?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q1" value="a"> A função <code>printf()</code>, pois todo programa precisa exibir algo na tela</label></li>
+                <li><label><input type="radio" name="q1" value="b"> A função <code>main()</code>, pois é o ponto de entrada onde a execução do programa começa</label></li>
+                <li><label><input type="radio" name="q1" value="c"> A função <code>scanf()</code>, pois todo programa precisa receber dados do usuário</label></li>
+                <li><label><input type="radio" name="q1" value="d"> A função <code>include()</code>, pois sem ela nenhuma biblioteca pode ser usada</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>2. O que a diretiva <code>#include &lt;stdio.h&gt;</code> faz em um programa C?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q2" value="a"> Define uma constante chamada <code>stdio</code> com valor <code>h</code></label></li>
+                <li><label><input type="radio" name="q2" value="b"> Inicia o bloco principal do programa</label></li>
+                <li><label><input type="radio" name="q2" value="c"> Importa a biblioteca padrão de entrada e saída, tornando disponíveis funções como <code>printf</code> e <code>scanf</code></label></li>
+                <li><label><input type="radio" name="q2" value="d"> Declara que o programa usará a linguagem C versão padrão</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>3. Analise o código abaixo. Qual será a saída?</strong></p>
+            <pre>printf("A\nB\tC\n");</pre>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q3" value="a"> A\nB\tC\n (os símbolos são impressos literalmente)</label></li>
+                <li><label><input type="radio" name="q3" value="b"> A na primeira linha, e B seguido de uma tabulação e C na segunda linha</label></li>
+                <li><label><input type="radio" name="q3" value="c"> ABC em uma única linha</label></li>
+                <li><label><input type="radio" name="q3" value="d"> Erro de compilação, pois \n e \t não são válidos dentro de printf</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>4. Por que o <code>scanf</code> precisa do operador <code>&amp;</code> antes do nome da variável?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q4" value="a"> Para realizar a operação lógica AND entre a variável e o valor digitado</label></li>
+                <li><label><input type="radio" name="q4" value="b"> Porque é a sintaxe obrigatória do C, sem significado especial</label></li>
+                <li><label><input type="radio" name="q4" value="c"> Para passar o endereço de memória da variável ao <code>scanf</code>, permitindo que ele grave o valor diretamente naquela posição</label></li>
+                <li><label><input type="radio" name="q4" value="d"> Para criar uma cópia temporária da variável durante a leitura</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>5. Qual dos códigos abaixo está <u>correto</u> para ler um número inteiro e imprimi-lo?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q5" value="a"><pre style="display:inline; font-size:0.9em;">int x; scanf("%d", x); printf("%d", x);</pre></label></li>
+                <li><label><input type="radio" name="q5" value="b"><pre style="display:inline; font-size:0.9em;">int x; scanf("%d", &amp;x); printf("%d\n", x);</pre></label></li>
+                <li><label><input type="radio" name="q5" value="c"><pre style="display:inline; font-size:0.9em;">int x; scanf(x); printf(x);</pre></label></li>
+                <li><label><input type="radio" name="q5" value="d"><pre style="display:inline; font-size:0.9em;">int x; read("%d", &amp;x); print("%d\n", x);</pre></label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>6. No Code::Blocks, qual tecla compila E executa o programa em um único passo?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q6" value="a"> Ctrl + F10</label></li>
+                <li><label><input type="radio" name="q6" value="b"> Ctrl + S</label></li>
+                <li><label><input type="radio" name="q6" value="c"> F9</label></li>
+                <li><label><input type="radio" name="q6" value="d"> F5</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>7. O que significa o <code>return 0;</code> no final da função <code>main()</code>?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q7" value="a"> Reinicia o programa desde o início</label></li>
+                <li><label><input type="radio" name="q7" value="b"> Retorna o valor zero ao sistema operacional, indicando que o programa terminou sem erros</label></li>
+                <li><label><input type="radio" name="q7" value="c"> Define o código de saída da função <code>printf</code></label></li>
+                <li><label><input type="radio" name="q7" value="d"> Encerra apenas o bloco interno da função, sem fechar o programa</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>8. Qual especificador de formato deve ser usado no <code>printf</code> para imprimir uma variável do tipo <code>float</code>?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q8" value="a"> <code>%d</code></label></li>
+                <li><label><input type="radio" name="q8" value="b"> <code>%c</code></label></li>
+                <li><label><input type="radio" name="q8" value="c"> <code>%s</code></label></li>
+                <li><label><input type="radio" name="q8" value="d"> <code>%f</code></label></li>
+            </ul>
+        </div>
+
+        <button type="button" class="submit-btn" onclick="verificarRespostas()">Verificar Respostas</button>
+    </form>
+
+    <div id="quiz-results" style="display:none; margin-top:20px; padding:15px; background-color:#dff0d8; border-radius:5px;"></div>
+</div>
+
+<div class="navigation-buttons">
+    <a href="capitulo00.html">← Aula 00</a>
+    <a href="index.html">Índice</a>
+    <a href="capitulo02.html">Aula 02 →</a>
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align: center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education" style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+<script>
+    function verificarRespostas() {
+        const gabarito = {
+            q1: "b",
+            q2: "c",
+            q3: "b",
+            q4: "c",
+            q5: "b",
+            q6: "c",
+            q7: "b",
+            q8: "d"
+        };
+
+        const explicacoes = {
+            q1: "A função main() é o ponto de entrada obrigatório de todo programa C. A execução sempre começa por ela.",
+            q2: "#include <stdio.h> importa a biblioteca padrão de entrada/saída, que contém as funções printf (saída) e scanf (entrada).",
+            q3: "\\n quebra a linha e \\t insere uma tabulação. A saída é: A (linha 1), B [tab] C (linha 2).",
+            q4: "O operador & retorna o endereço de memória da variável. O scanf precisa saber onde gravar o valor digitado pelo usuário.",
+            q5: "A forma correta é: int x; scanf(\"%d\", &x); printf(\"%d\\n\", x); — o & é obrigatório no scanf para tipos simples como int.",
+            q6: "F9 compila e executa em um único passo (Build and Run). Ctrl+F10 executa sem recompilar.",
+            q7: "return 0 na main() retorna o código de saída 0 ao sistema operacional, que por convenção significa 'programa encerrado com sucesso'.",
+            q8: "%f é o especificador correto para float. %lf é usado para double no scanf (mas %f funciona para ambos no printf)."
+        };
+
+        let acertos = 0;
+        let html = "";
+        const total = Object.keys(gabarito).length;
+
+        for (const q in gabarito) {
+            const selecionada = document.querySelector(`input[name="${q}"]:checked`);
+            const num = q.substring(1);
+            if (selecionada) {
+                if (selecionada.value === gabarito[q]) {
+                    acertos++;
+                    html += `<p>Questão ${num}: <span style="color:green; font-weight:bold;">✓ Correto!</span> — ${explicacoes[q]}</p>`;
+                } else {
+                    html += `<p>Questão ${num}: <span style="color:red; font-weight:bold;">✗ Incorreto.</span> — ${explicacoes[q]}</p>`;
+                }
+            } else {
+                html += `<p>Questão ${num}: <span style="color:orange; font-weight:bold;">⚠ Não respondida.</span></p>`;
+            }
+        }
+
+        const resultado = document.getElementById("quiz-results");
+        resultado.innerHTML = `<h3>Sua pontuação: ${acertos} de ${total}</h3>${html}`;
+        resultado.style.display = "block";
+        resultado.scrollIntoView({ behavior: "smooth" });
+    }
+</script>
+
+</body>
+</html>

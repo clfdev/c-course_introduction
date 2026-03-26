@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz 3 – Funções e Modularização (Aulas 13 a 17)</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <style>
+        /* ── Estilos extras do quiz ─────────────────────────── */
+        .quiz-header-info {
+            background: linear-gradient(135deg, #1a237e, #3949ab);
+            color: white;
+            padding: 18px 22px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .quiz-header-info .stat { text-align: center; }
+        .quiz-header-info .stat-val { font-size: 1.8em; font-weight: bold; }
+        .quiz-header-info .stat-lbl { font-size: 0.75em; opacity: 0.85; }
+
+        .aula-tag {
+            display: inline-block;
+            background-color: #3f51b5;
+            color: white;
+            font-size: 0.7em;
+            font-weight: bold;
+            padding: 2px 10px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .section-divider {
+            background: linear-gradient(135deg, #1a237e, #283593);
+            color: white;
+            padding: 14px 20px;
+            border-radius: 8px;
+            margin: 30px 0 16px 0;
+        }
+        .section-divider h2 { color: white; border: none; margin: 0 0 4px 0; font-size: 1.1em; }
+        .section-divider p  { margin: 0; opacity: 0.85; font-size: 0.85em; }
+
+        /* ── Resultados ─────────────────────────────────────── */
+        #results-area { display: none; }
+
+        #score-box {
+            background: linear-gradient(135deg, #1a237e, #3949ab);
+            color: white;
+            text-align: center;
+            padding: 32px 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .score-number  { font-size: 3.5em; font-weight: bold; letter-spacing: 2px; }
+        .score-label   { font-size: 1em; opacity: 0.85; margin-bottom: 12px; }
+        .score-msg     { font-size: 1.1em; background: rgba(255,255,255,0.15);
+                         display: inline-block; padding: 8px 22px; border-radius: 20px; margin-top: 6px; }
+
+        .aula-breakdown { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
+        .aula-stat      { background: #f8f9fa; border-radius: 8px; padding: 12px 14px;
+                          box-shadow: 0 2px 4px rgba(0,0,0,0.08); }
+        .stat-title     { font-weight: bold; color: #1a237e; font-size: 0.95em; margin-bottom: 4px; }
+        .stat-score     { font-size: 1.5em; font-weight: bold; color: #333; }
+        .stat-bar       { background: #ddd; border-radius: 4px; height: 8px; margin-top: 6px; overflow: hidden; }
+        .stat-fill      { background: linear-gradient(90deg, #3949ab, #5c6bc0); height: 100%;
+                          border-radius: 4px; transition: width 0.6s ease; }
+
+        .result-item    { padding: 14px 16px; border-radius: 8px; margin-bottom: 10px; border-left: 5px solid; }
+        .result-item.correct   { background: #e8f5e9; border-color: #43a047; }
+        .result-item.incorrect { background: #fce4ec; border-color: #e53935; }
+        .result-item.unanswered{ background: #fff8e1; border-color: #ffb300; }
+        .result-header  { font-weight: bold; margin-bottom: 4px; }
+        .result-explain { font-size: 0.9em; color: #444; margin-top: 6px; line-height: 1.6; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Quiz 3 — Funções e Modularização</h1>
+    <p>Avaliação das Aulas 13 a 17</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo17.html">← Aula 17</a>
+    <a href="capitulo18.html">Aula 18 →</a>
+</nav>
+
+<!-- Cabeçalho informativo -->
+<div class="quiz-header-info">
+    <div class="stat"><div class="stat-val">20</div><div class="stat-lbl">Questões</div></div>
+    <div class="stat"><div class="stat-val">5</div><div class="stat-lbl">Aulas cobertas</div></div>
+    <div class="stat"><div class="stat-val">14/20</div><div class="stat-lbl">Aprovação (70%)</div></div>
+    <div style="flex:1; min-width:200px; font-size:0.9em; opacity:0.9;">
+        Cobre: Funções (declaração, definição, chamada) · Categorias de função ·
+        Call by Value e Call by Reference · Escopo de variáveis ·
+        Recursão · Protótipos e arquivos <code>.h</code>
+    </div>
+</div>
+
+<form id="quiz-form" onsubmit="return false;">
+
+<!-- ═══════════ AULA 13 — Funções: declaração, definição, chamada ══════════ -->
+<div class="section-divider">
+    <h2>Aula 13 — Funções: Declaração, Definição e Chamada</h2>
+    <p>Questões 1 a 4</p>
+</div>
+
+<!-- Q1 -->
+<div class="content-section quiz-question" id="q1-block">
+    <span class="aula-tag">Aula 13</span>
+    <p><strong>1.</strong> Qual é a diferença entre <strong>declaração</strong> e <strong>definição</strong> de uma função em C?</p>
+    <ul class="options-list">
+        <li><label><input type="radio" name="q1" value="a"> A declaração contém o corpo; a definição contém apenas a assinatura</label></li>
+        <li><label><input type="radio" name="q1" value="b"> A declaração (protótipo) contém apenas a assinatura com <code>;</code>; a definição contém o corpo completo com o código executável</label></li>
+        <li><label><input type="radio" name="q1" value="c"> São termos intercambiáveis para o mesmo conceito</label></li>
+        <li><label><input type="radio" name="q1" value="d"> A declaração fica no <code>.c</code>; a definição fica no <code>.h</code></label></li>
+    </ul>
+</div>
+
+<!-- Q2 -->
+<div class="content-section quiz-question" id="q2-block">
+    <span class="aula-tag">Aula 13</span>
+    <p><strong>2.</strong> Qual é a saída do programa abaixo?</p>
+<pre>
+#include &lt;stdio.h&gt;
+void saudar() { printf("Ola!"); }
+int main() {
+    saudar();
+    saudar();
+    return 0;
+}
+</pre>
+    <ul class="options-list">
+        <li><label><input type="radio" name="q2" value="a"> <code>Ola!</code></label></li>
+        <li><label><input type="radio" name="q2" value="b"> <code>Ola!Ola!</code></label></li>
+        <li><label><input type="radio" name="q2" value="c"> <code>Ola! Ola!</code></label></li>
+        <li><label><input type="radio" name="q2" value="d"> Erro de compilação — <code>saudar</code> é chamada antes de ser definida</label></li>
+    </ul>
+</div>
+
+<!-- Q3 -->
+<div class="content-section quiz-question" id="q3-block">
+    <span class="aula-tag">Aula 13</span>
+    <p><strong>3.</strong> Uma função declarada como <code>int calcular(int a, int b)</code> deve obrigatoriamente:</p>
+    <ul class="options-list">
+        <li><label><input type="radio" name="q3" value="a"> Devolver um valor <code>int</code> ao chamador com <code>return</code></label></li>
+        <li><label><input type="radio" name="q3" value="b"> Ter exatamente duas chamadas em <code>main</code></label></li>
+        <li><label><input type="radio" name="q3" value="c"> Ser declarada antes de <code>main</code> no arquivo</label></li>
+        <li><label><input type="radio" name="q3" value="d"> Usar <code>printf</code> para exibir o resultado internamente</label></li>
+    </ul>
+</div>
+
+<!-- Q4 -->
+<div class="content-section quiz-question" id="q4-block">
+    <span class="aula-tag">Aula 13</span>
+    <p><strong>4.</strong> O que faz a instrução <code>return;</code> (sem valor) dentro de uma função <code>void</code>?</p>
+    <ul class="options-list">
+        <li><label><input type="radio" name="q4" value="a"> Retorna 0 ao sistema operacional</label></li>
+        <li><label><input type="radio" name="q4" value="b"> Gera erro de compilação — <code>return</code> é proibido em funções <code>void</code></label></li>
+        <li><label><input type="radio" name="q4" value="c"> Encerra a execução da função antecipadamente, sem devolver nenhum valor</label></li>
+        <li><label><input type="radio" name="q4" value="d"> É obrigatório ao final de toda função <code>void</code></label></li>
+    </ul>
+</div>
+
+<!-- ═══════════ AULA 14 — Categorias / Call by Value / Call by Reference ═══════════ -->
+<div class="section-divider">
+    <h2>Aula 14 — Categorias de Função · Call by Value · Call by Reference</h2>
+    <p>Questões 5 a 8</p>
+</div>
+
+<!-- Q5 -->
+<div class="content-section quiz-question" id="q5-block">
+    <span class="aula-tag">Aula 14</span>
+    <p><strong>5.</strong> Qual é a saída?</p>
+<pre>
+#include &lt;stdio.h&gt;
+void f(int x) { x = 99; }
+int main() {
+    int a = 5;
+    f(a);
+    printf("%d", a);
+}
+</pre>
+    <ul class="options-list">
+        <li><label><input type="radio" name="q5" value="a"> 99</label></li>
+        <li><label><input type="radio" name="q5" value="b"> 5</label></li>
+        <li><label><input type="radio" name="q5" value="c"> 0</label></li>
+        <li><label><input type="radio" name="q5" value="d"> Comportamento indefinido</label></li>
+    </ul>
+</div>
+
+<!-- Q6 -->
+<div class="content-section quiz-question" id="q6-block">
+    <span class="aula-tag">Aula 14</span>
+    <p><strong>6.</strong> Qual é a saída?</p>
+<pre>
+#include &lt;stdio.h&gt;
+void dobrar(int *p) { *p = *p * 2; }
+int main() {
+    int x = 5;
+    dobrar(&amp;x);
+    printf("%d", x);
+}
+</pre>
+    <ul class="options-list">
+        <li><label><input type="radio" name="q6" value="a"> 5</label></li>
+        <li><label><input type="radio" name="q6" value="b"> 10</label></li>
+        <li><label><input type="radio" name="q6" value="c"> 0</label></li>
+        <li><label><input type="radio" name="q6" value="d"> Endereço de memória de <code>x</code></label></li>
+    </ul>
+</div>
+
+<!-- Q7 -->
+<div class="content-section quiz-question" id="q7-block">
+    <span class="aula-tag">Aula 14</span>
+    <p><strong>7.</strong> Por que a função <code>minMax</code> abaixo usa ponteiros em vez de retornar os valores?</p>
+<pre>
+void minMax(int v[], int tam, int *minimo, int *maximo);
+</pre>
+    <ul class="options-list">
+        <li><label><input type="radio" name="q7" value="a"> Porque <code>return</code> não funciona com <code>int</code></label></li>
+        <li><label><input type="radio" name="q7" value="b"> Porque uma função só pode retornar um único valor com <code>return</code>; ponteiros permitem escrever múltiplos resultados diretamente nos endereços do chamador</label></li>
+        <li><label><input type="radio" name="q7" value="c"> Porque é obrigatório usar ponteiros ao trabalhar com arrays</label></li>
+        <li><label><input type="radio" name="q7" value="d"> Para evitar que o compilador otimize a função</label></li>
+    </ul>
+</div>
+
+<!-- Q8 -->
+<div class="content-section quiz-question" id="q8-block">
+    <span class="aula-tag">Aula 14</span>
+    <p><strong>8.</strong> Ao passar um array <code>int notas[]</code> para uma função sem usar <code>&amp;</code>, o que é efetivamente passado?</p>
+    <ul class="options-list">
+        <li><label><input type="radio" name="q8" value="a"> Uma cópia completa de todos os elementos do array</label></li>
+        <li><label><input type="radio" name="q8" value="b"> O endereço do primeiro elemento — a função acessa e pode modificar o array original</label></li>
+        <li><label><input type="radio" name="q8" value="c"> O tamanho do array em bytes</label></li>
+        <li><label><input type="radio" name="q8" value="d"> <code>NULL</code>, pois arrays não podem ser parâmetros em C</label></li>
+    </ul>
+</div>
+
+<!-- ═══════════ AULA 15 — Escopo de Variáveis ══════════ -->
+<div class="section-divider">
+    <h2>Aula 15 — Escopo de Variáveis</h2>
+    <p>Questões 9 a 12</p>
+</div>
+
+<!-- Q9 -->
+<div class="content-section quiz-question" id="q9-block">
+    <span class="aula-tag">Aula 15</span>
+    <p><strong>9.</strong> Qual é a saída?</p>
+<pre>
+#include &lt;stdio.h&gt;
+int x = 5;
+void f() { int x = 10; printf("%d ", x); }
+int main() { f(); printf("%d\n", x); }
+</pre>
+    <ul class="options-list">
+        <li><label><input type="radio" name="q9" value="a"> 5 5</label></li>
+        <li><label><input type="radio" name="q9" value="b"> 10 10</label></li>
+        <li><label><input type="radio" name="q9" value="c"> 10 5</label></li>
+        <li><label><input type="radio" name="q9" value="d"> Erro de compilação — redeclaração de <code>x</code></label></li>
+    </ul>
+</div>
+
+<!-- Q10 -->
+<div class="content-section quiz-question" id="q10-block">
+    <span class="aula-tag">Aula 15</span>
+    <p><strong>10.</strong> Qual é a saída?</p>
+<pre>
+#include &lt;stdio.h&gt;
+void contar() {
+    static int n = 0;
+    n++;
+    printf("%d ", n);
+}
+int main() { contar(); contar(); contar(); }
+</pre>
+    <ul class="options-list">
+        <li><label><input type="radio" name="q10" value="a"> 0 0 0</label></li>
+        <li><label><input type="radio" name="q10" value="b"> 1 1 1</label></li>
+        <li><label><input type="radio" name="q10" value="c"> 1 2 3</label></li>
+        <li><label><input type="radio" name="q10" value="d"> 0 1 2</label></li>
+    </ul>
+</div>
+
+<!-- Q11 -->
+<div class="content-section quiz-question" id="q11-block">
+    <span class="aula-tag">Aula 15</span>
+    <p><strong>11.</strong> Qual é o valor inicial de uma variável <code>float</code> global que <strong>não</strong> foi inicializada explicitamente?</p>
+    <ul class="options-list">
+        <li><label><input type="radio" name="q11" value="a"> Valor aleatório (lixo de memória)</label></li>
+        <li><label><input type="radio" name="q11" value="b"> <code>0.0</code></label></li>
+        <li><label><input type="radio" name="q11" value="c"> <code>-1.0</code></label></li>
+        <li><label><input type="radio" name="q11" value="d"> <code>NULL</code></label></li>
+    </ul>
+</div>
+
+<!-- Q12 -->
+<div class="content-section quiz-question" id="q12-block">
+    <span class="aula-tag">Aula 15</span>
+    <p><strong>12.</strong> Qual é a principal diferença entre uma variável local <code>static</code> e uma variável global?</p>
+    <ul class="options-list">
+        <li><label><input type="radio" name="q12" value="a"> A <code>static</code> é inicializada com <code>-1</code>; a global com <code>0</code></label></li>
+        <li><label><input type="radio" name="q12" value="b"> Ambas têm exatamente as mesmas características — <code>static</code> é apenas um alias para global</label></li>
+        <li><label><input type="radio" name="q12" value="c"> A local <code>static</code> persiste entre chamadas mas só é visível dentro da função; a global é visível em todo o arquivo</label></li>
+        <li><label><input type="radio" name="q12" value="d"> A global é destruída ao final de cada chamada de função; a <code>static</code> não</label></li>
+    </ul>
+</div>
+
+<!-- ═══════════ AULA 16 — Recursão ══════════ -->
+<div class="section-divider">
+    <h2>Aula 16 — Recursão</h2>
+    <p>Questões 13 a 16</p>
+</div>
+
+<!-- Q13 -->
+<div class="content-section quiz-question" id="q13-block">
+    <span class="aula-tag">Aula 16</span>
+    <p><strong>13.</strong> Qual é a saída?</p>
+<pre>
+#include &lt;stdio.h&gt;
+int f(int n) {
+    if (n == 0) return 0;
+    return n + f(n - 1);
+}
+int main() { printf("%d", f(5)); }
+</pre>
+    <ul class="options-list">
+        <li><label><input type="radio" name="q13" value="a"> 5</label></li>
+        <li><label><input type="radio" name="q13" value="b"> 15</label></li>
+        <li><label><input type="radio" name="q13" value="c"> 120</label></li>
+        <li><label><input type="radio" name="q13" value="d"> 0</label></li>
+    </ul>
+</div>
+
+<!-- Q14 -->
+<div class="content-section quiz-question" id="q14-block">
+    <span class="aula-tag">Aula 16</span>
+    <p><strong>14.</strong> Qual é a saída?</p>
+<pre>
+#include &lt;stdio.h&gt;
+void f(int n) {
+    if (n == 0) return;
+    f(n - 1);
+    printf("%d ", n);
+}
+int main() { f(4); }
+</pre>
+    <ul class="options-list">
+        <li><label><input type="radio" name="q14" value="a"> 4 3 2 1</label></li>
+        <li><label><input type="radio" name="q14" value="b"> 0 1 2 3 4</label></li>
+        <li><label><input type="radio" name="q14" value="c"> 1 2 3 4</label></li>
+        <li><label><input type="radio" name="q14" value="d"> Nenhuma saída — o caso base bloqueia o <code>printf</code></label></li>
+    </ul>
+</div>
+
+<!-- Q15 -->
+<div class="content-section quiz-question" id="q15-block">
+    <span class="aula-tag">Aula 16</span>
+    <p><strong>15.</strong> Por que a implementação recursiva de Fibonacci é considerada ineficiente para valores grandes de <code>n</code>?</p>
+    <ul class="options-list">
+        <li><label><input type="radio" name="q15" value="a"> Porque usa dois casos base em vez de um</label></li>
+        <li><label><input type="radio" name="q15" value="b"> Porque o mesmo subproblema é recalculado múltiplas vezes — o número de chamadas cresce exponencialmente</label></li>
+        <li><label><input type="radio" name="q15" value="c"> Porque a função usa <code>long</code> em vez de <code>int</code></label></li>
+        <li><label><input type="radio" name="q15" value="d"> Porque não usa variáveis locais para guardar resultados parciais</label></li>
+    </ul>
+</div>
+
+<!-- Q16 -->
+<div class="content-section quiz-question" id="q16-block">
+    <span class="aula-tag">Aula 16</span>
+    <p><strong>16.</strong> Em qual situação a recursão é claramente preferível à iteração?</p>
+    <ul class="options-list">
+        <li><label><input type="radio" name="q16" value="a"> Somar todos os inteiros de 1 a 1000</label></li>
+        <li><label><input type="radio" name="q16" value="b"> Percorrer uma estrutura em árvore onde cada nó pode ter filhos em número variável</label></li>
+        <li><label><input type="radio" name="q16" value="c"> Calcular a média de um vetor de floats</label></li>
+        <li><label><input type="radio" name="q16" value="d"> Ler um arquivo linha por linha</label></li>
+    </ul>
+</div>
+
+<!-- ═══════════ AULA 17 — Protótipos e Header Files ══════════ -->
+<div class="section-divider">
+    <h2>Aula 17 — Protótipos de Funções e Arquivos de Cabeçalho (.h)</h2>
+    <p>Questões 17 a 20</p>
+</div>
+
+<!-- Q17 -->
+<div class="content-section quiz-question" id="q17-block">
+    <span class="aula-tag">Aula 17</span>
+    <p><strong>17.</strong> Qual das opções abaixo é um <strong>protótipo</strong> válido em C?</p>
+    <ul class="options-list">
+        <li><label><input type="radio" name="q17" value="a"> <code>float media(float a, float b) { return (a+b)/2; }</code></label></li>
+        <li><label><input type="radio" name="q17" value="b"> <code>float media(float a, float b);</code></label></li>
+        <li><label><input type="radio" name="q17" value="c"> <code>float media;</code></label></li>
+        <li><label><input type="radio" name="q17" value="d"> <code>#define media(a,b) ((a+b)/2)</code></label></li>
+    </ul>
+</div>
+
+<!-- Q18 -->
+<div class="content-section quiz-question" id="q18-block">
+    <span class="aula-tag">Aula 17</span>
+    <p><strong>18.</strong> Por que o inclusion guard (<code>#ifndef / #define / #endif</code>) é necessário num arquivo <code>.h</code>?</p>
+    <ul class="options-list">
+        <li><label><input type="radio" name="q18" value="a"> Para proteger o arquivo contra acesso não autorizado em tempo de compilação</label></li>
+        <li><label><input type="radio" name="q18" value="b"> Para evitar que o conteúdo do <code>.h</code> seja inserido mais de uma vez na mesma unidade de compilação, causando erros de redeclaração</label></li>
+        <li><label><input type="radio" name="q18" value="c"> Para definir constantes globais visíveis em todo o projeto</label></li>
+        <li><label><input type="radio" name="q18" value="d"> Para impedir que o arquivo <code>.h</code> seja modificado durante a compilação</label></li>
+    </ul>
+</div>
+
+<!-- Q19 -->
+<div class="content-section quiz-question" id="q19-block">
+    <span class="aula-tag">Aula 17</span>
+    <p><strong>19.</strong> Qual é a diferença entre <code>#include "meuarquivo.h"</code> e <code>#include &lt;stdio.h&gt;</code>?</p>
+    <ul class="options-list">
+        <li><label><input type="radio" name="q19" value="a"> Aspas são para arquivos do sistema; ângulos para arquivos locais do projeto</label></li>
+        <li><label><input type="radio" name="q19" value="b"> Aspas buscam primeiro no diretório do projeto; ângulos buscam apenas nos diretórios padrão do sistema</label></li>
+        <li><label><input type="radio" name="q19" value="c"> Não há diferença funcional — é apenas uma convenção estilística</label></li>
+        <li><label><input type="radio" name="q19" value="d"> Aspas incluem o arquivo uma única vez; ângulos podem incluir múltiplas vezes</label></li>
+    </ul>
+</div>
+
+<!-- Q20 -->
+<div class="content-section quiz-question" id="q20-block">
+    <span class="aula-tag">Aula 17</span>
+    <p><strong>20.</strong> Por que a recursão mútua (função A chama B, B chama A) exige protótipos em C?</p>
+    <ul class="options-list">
+        <li><label><input type="radio" name="q20" value="a"> Porque funções recursivas sempre precisam de protótipos por questão de desempenho</label></li>
+        <li><label><input type="radio" name="q20" value="b"> Porque qualquer uma das funções que vier primeiro no arquivo irá referenciar a outra antes de ela ser definida — impossível resolver apenas com a ordem de escrita</label></li>
+        <li><label><input type="radio" name="q20" value="c"> Porque o compilador C não suporta funções que se chamam mutuamente sem protótipos declarados</label></li>
+        <li><label><input type="radio" name="q20" value="d"> Para que o linker conheça a ordem de execução das funções em tempo de linking</label></li>
+    </ul>
+</div>
+
+<!-- Botão enviar -->
+<div class="content-section" style="text-align:center;">
+    <button type="button" class="submit-btn" onclick="enviarQuiz()" style="font-size:1.1em; padding:14px 36px;">
+        📩 Enviar Respostas e Ver Gabarito
+    </button>
+</div>
+
+</form>
+
+<!-- ════════════════════ ÁREA DE RESULTADOS ════════════════════ -->
+<div id="results-area">
+
+    <div id="score-box">
+        <div class="score-number" id="score-number">—</div>
+        <div class="score-label">de 20 questões corretas</div>
+        <div class="score-msg" id="score-msg">—</div>
+    </div>
+
+    <div class="content-section">
+        <h2>Desempenho por Aula</h2>
+        <div class="aula-breakdown" id="aula-breakdown"></div>
+    </div>
+
+    <div class="content-section">
+        <h2>Gabarito Detalhado</h2>
+        <div id="gabarito-detalhado"></div>
+    </div>
+
+    <div style="text-align:center; margin:20px 0;">
+        <a href="capitulo18.html" style="display:inline-block; padding:12px 30px;
+           background-color:#3047bb; color:white; text-decoration:none;
+           border-radius:6px; font-weight:bold; font-size:1.05em;">
+            Continuar para a Aula 18 →
+        </a>
+    </div>
+
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align:center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education"
+                 style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+<script>
+// ── Gabarito e dados ──────────────────────────────────────────────────────
+const GABARITO = {
+
+    // ── Aula 13 ──────────────────────────────────────────────────────────
+    q1: {
+        resp: 'b', aula: 'Aula 13',
+        enunciado: 'Diferença entre declaração e definição de função',
+        explicacao: 'A <strong>declaração</strong> (protótipo) informa ao compilador a assinatura da função — nome, tipo de retorno e tipos dos parâmetros — e termina com <code>;</code>. Não contém código. A <strong>definição</strong> é o corpo completo da função com as instruções executáveis entre <code>{ }</code>.'
+    },
+    q2: {
+        resp: 'b', aula: 'Aula 13',
+        enunciado: 'Saída de duas chamadas à mesma função void',
+        explicacao: 'A função <code>saudar()</code> imprime <code>Ola!</code> sem espaço ou quebra de linha. Chamada duas vezes, as saídas se concatenam diretamente: <code>Ola!Ola!</code>. Não há separador automático entre chamadas de função.'
+    },
+    q3: {
+        resp: 'a', aula: 'Aula 13',
+        enunciado: 'Obrigação de uma função declarada como int',
+        explicacao: 'Uma função declarada com tipo de retorno <code>int</code> deve devolver um valor inteiro ao chamador com a instrução <code>return valor;</code>. Omitir o <code>return</code> é comportamento indefinido em C99/C11. As outras opções descrevem restrições inexistentes na linguagem.'
+    },
+    q4: {
+        resp: 'c', aula: 'Aula 13',
+        enunciado: 'Efeito do return vazio em função void',
+        explicacao: '<code>return;</code> em uma função <code>void</code> encerra a execução da função antecipadamente, retornando o controle ao ponto de chamada sem devolver nenhum valor. É equivalente a deixar a execução chegar ao <code>}</code> final. Não é obrigatório, mas útil para saída antecipada em condicionais.'
+    },
+
+    // ── Aula 14 ──────────────────────────────────────────────────────────
+    q5: {
+        resp: 'b', aula: 'Aula 14',
+        enunciado: 'Call by value: função não modifica variável original',
+        explicacao: 'A função <code>f</code> recebe uma <em>cópia</em> de <code>a</code>. A atribuição <code>x = 99</code> modifica apenas essa cópia local — a variável <code>a</code> em <code>main</code> permanece 5. Esse comportamento é chamado de <strong>Call by Value</strong>.'
+    },
+    q6: {
+        resp: 'b', aula: 'Aula 14',
+        enunciado: 'Call by reference via ponteiro: dobrar modifica o original',
+        explicacao: '<code>dobrar(&x)</code> passa o endereço de <code>x</code>. Dentro da função, <code>*p = *p * 2</code> acessa o valor no endereço apontado (5), multiplica por 2 e escreve 10 de volta em <code>x</code>. Após a chamada, <code>x</code> vale 10.'
+    },
+    q7: {
+        resp: 'b', aula: 'Aula 14',
+        enunciado: 'Motivo do uso de ponteiros para múltiplos resultados',
+        explicacao: 'Em C, uma função só pode retornar <strong>um único valor</strong> com <code>return</code>. Para fornecer dois resultados (mínimo e máximo) simultaneamente, a função recebe ponteiros e escreve diretamente nos endereços de memória fornecidos pelo chamador — sem precisar de <code>return</code>.'
+    },
+    q8: {
+        resp: 'b', aula: 'Aula 14',
+        enunciado: 'Pointer decay: o que é passado ao enviar array para função',
+        explicacao: 'Arrays em C sofrem <em>pointer decay</em> ao ser passados para funções: o nome do array se converte automaticamente no endereço do seu primeiro elemento. Por isso a função recebe o array original — não uma cópia — e pode modificar todos os seus elementos.'
+    },
+
+    // ── Aula 15 ──────────────────────────────────────────────────────────
+    q9: {
+        resp: 'c', aula: 'Aula 15',
+        enunciado: 'Sombreamento: local x esconde global x',
+        explicacao: 'A função <code>f()</code> declara um <code>x</code> local com valor 10, que sombreia o <code>x</code> global (valor 5). Dentro de <code>f()</code>, o <code>printf</code> imprime a local: <strong>10</strong>. De volta em <code>main()</code>, a global permanece intacta: <strong>5</strong>. Saída: <code>10 5</code>.'
+    },
+    q10: {
+        resp: 'c', aula: 'Aula 15',
+        enunciado: 'Variável local static: persiste entre chamadas',
+        explicacao: 'A variável <code>n</code> é <code>static</code>: inicializada uma única vez com 0 e preservada entre chamadas. Na 1ª chamada é incrementada para 1 e imprime <strong>1</strong>; na 2ª vira <strong>2</strong>; na 3ª vira <strong>3</strong>. Resultado: <code>1 2 3</code>.'
+    },
+    q11: {
+        resp: 'b', aula: 'Aula 15',
+        enunciado: 'Inicialização automática de variáveis globais',
+        explicacao: 'Variáveis globais (e <code>static</code> locais) são armazenadas no segmento de dados do programa e <strong>inicializadas com zero</strong> antes do início da execução. Um <code>float</code> global não inicializado explicitamente recebe <code>0.0</code>. Apenas variáveis locais não estáticas contêm lixo de memória.'
+    },
+    q12: {
+        resp: 'c', aula: 'Aula 15',
+        enunciado: 'Diferença entre local static e global',
+        explicacao: 'Ambas persistem durante toda a execução do programa e são inicializadas com zero. A diferença está na <strong>visibilidade</strong>: a local <code>static</code> só é acessível dentro da função onde foi declarada; a global é visível em todo o arquivo a partir do ponto de declaração.'
+    },
+
+    // ── Aula 16 ──────────────────────────────────────────────────────────
+    q13: {
+        resp: 'b', aula: 'Aula 16',
+        enunciado: 'Saída da função recursiva de soma f(5)',
+        explicacao: 'A função calcula a soma de 0 a n: <code>f(5) = 5 + f(4) = 5 + 4 + f(3) = 5+4+3+2+1+f(0) = 5+4+3+2+1+0 = <strong>15</strong></code>. O caso base retorna 0 quando n = 0, e os valores somam-se na subida da pilha.'
+    },
+    q14: {
+        resp: 'c', aula: 'Aula 16',
+        enunciado: 'Saída quando printf está após a chamada recursiva',
+        explicacao: 'O <code>printf</code> vem <em>depois</em> da chamada recursiva. A função desce até o caso base (n=0) sem imprimir nada, depois imprime ao retornar de cada nível: <code>f(1)</code> imprime 1, <code>f(2)</code> imprime 2, <code>f(3)</code> imprime 3, <code>f(4)</code> imprime 4. Saída: <code>1 2 3 4</code>.'
+    },
+    q15: {
+        resp: 'b', aula: 'Aula 16',
+        enunciado: 'Por que Fibonacci recursivo é ineficiente',
+        explicacao: 'A função <code>fib(n)</code> faz duas chamadas recursivas: <code>fib(n-1)</code> e <code>fib(n-2)</code>. O subproblema <code>fib(n-2)</code> é recalculado do zero tanto pela chamada direta quanto indiretamente por <code>fib(n-1)</code>. Esse retrabalho cresce exponencialmente — <code>fib(40)</code> exige mais de 300 milhões de chamadas.'
+    },
+    q16: {
+        resp: 'b', aula: 'Aula 16',
+        enunciado: 'Quando a recursão é preferível à iteração',
+        explicacao: 'Estruturas em árvore são o caso clássico: cada nó tem filhos que são também nós (mesma estrutura), e a recursão percorre cada subárvore naturalmente. Implementar isso iterativamente exigiria uma pilha manual explícita — muito mais complexo. Para sequências simples (somar, calcular média), a iteração é igualmente clara e mais eficiente.'
+    },
+
+    // ── Aula 17 ──────────────────────────────────────────────────────────
+    q17: {
+        resp: 'b', aula: 'Aula 17',
+        enunciado: 'Identificar um protótipo válido em C',
+        explicacao: 'Um protótipo é apenas a assinatura da função seguida de <code>;</code>: <code>float media(float a, float b);</code>. A opção A é uma definição completa (tem corpo). A opção C é uma declaração de variável. A opção D é uma macro do preprocessador (<code>#define</code>), não um protótipo de função.'
+    },
+    q18: {
+        resp: 'b', aula: 'Aula 17',
+        enunciado: 'Propósito do inclusion guard no .h',
+        explicacao: 'Se dois arquivos <code>.c</code> incluem o mesmo <code>.h</code>, ou se um arquivo o inclui indiretamente por múltiplos caminhos, o preprocessador inseriria o conteúdo duas vezes, causando erros como <em>"redefinition of struct"</em> ou <em>"redeclaration of typedef"</em>. O inclusion guard usa um símbolo para rastrear se o arquivo já foi processado e pula o conteúdo na segunda vez.'
+    },
+    q19: {
+        resp: 'b', aula: 'Aula 17',
+        enunciado: 'Diferença entre #include com aspas e com ângulos',
+        explicacao: 'Aspas (<code>""</code>) fazem o compilador buscar primeiro no <strong>diretório do projeto</strong>, depois nos caminhos do sistema — use para seus próprios arquivos <code>.h</code>. Ângulos (<code>&lt;&gt;</code>) buscam <strong>apenas</strong> nos diretórios padrão do sistema — use para bibliotecas como <code>stdio.h</code> e <code>math.h</code>.'
+    },
+    q20: {
+        resp: 'b', aula: 'Aula 17',
+        enunciado: 'Por que recursão mútua exige protótipos obrigatoriamente',
+        explicacao: 'Em recursão mútua, se A vem antes de B no arquivo, A referencia B que ainda não foi declarada. Se B vem antes, B referencia A que ainda não foi declarada. <strong>Não existe ordem de escrita que resolva isso sem protótipos</strong> — os dois protótipos precisam ser declarados antes de qualquer definição. Em Java, o compilador multi-passagem resolve isso automaticamente.'
+    }
+};
+
+const AULAS = {
+    'Aula 13': ['q1','q2','q3','q4'],
+    'Aula 14': ['q5','q6','q7','q8'],
+    'Aula 15': ['q9','q10','q11','q12'],
+    'Aula 16': ['q13','q14','q15','q16'],
+    'Aula 17': ['q17','q18','q19','q20']
+};
+
+// ── Lógica de envio ───────────────────────────────────────────────────────
+function enviarQuiz() {
+    let acertos = 0;
+    const aulaAcertos = {};
+    Object.keys(AULAS).forEach(a => aulaAcertos[a] = 0);
+
+    let htmlGabarito = '';
+
+    for (const [q, dados] of Object.entries(GABARITO)) {
+        const sel   = document.querySelector(`input[name="${q}"]:checked`);
+        const num   = q.replace('q', '');
+        const acertou = sel && sel.value === dados.resp;
+        const naoRes  = !sel;
+
+        if (acertou) {
+            acertos++;
+            aulaAcertos[dados.aula]++;
+        }
+
+        const cls    = acertou ? 'correct' : (naoRes ? 'unanswered' : 'incorrect');
+        const icon   = acertou ? '✅' : (naoRes ? '⚠️' : '❌');
+        const header = acertou
+            ? `${icon} Questão ${num} — Correta`
+            : naoRes
+                ? `${icon} Questão ${num} — Não respondida`
+                : `${icon} Questão ${num} — Incorreta · Gabarito: <strong>${dados.resp.toUpperCase()}</strong>`;
+
+        htmlGabarito += `
+        <div class="result-item ${cls}">
+            <div class="result-header">${header} <span style="font-size:0.8em;color:#888;">[${dados.aula}]</span></div>
+            <div style="font-size:0.9em;color:#555;margin-bottom:4px;">${dados.enunciado}</div>
+            <div class="result-explain">${dados.explicacao}</div>
+        </div>`;
+    }
+
+    // Placar
+    document.getElementById('score-number').textContent = `${acertos}/20`;
+
+    let msg;
+    if      (acertos >= 18) msg = '🏆 Excelente! Domínio completo das aulas 13 a 17.';
+    else if (acertos >= 14) msg = '✅ Aprovado! Bom desempenho.';
+    else if (acertos >= 10) msg = '📖 Revise as aulas com maior número de erros e tente novamente.';
+    else                    msg = '🔄 Recomendado rever as aulas 13 a 17 antes de continuar.';
+    document.getElementById('score-msg').textContent = msg;
+
+    // Breakdown por aula
+    let htmlBreakdown = '';
+    for (const [aula, qs] of Object.entries(AULAS)) {
+        const tot = qs.length;
+        const ac  = aulaAcertos[aula];
+        const pct = Math.round(ac / tot * 100);
+        htmlBreakdown += `
+        <div class="aula-stat">
+            <div class="stat-title">${aula}</div>
+            <div class="stat-score">${ac}/${tot}</div>
+            <div class="stat-bar"><div class="stat-fill" style="width:${pct}%"></div></div>
+        </div>`;
+    }
+    document.getElementById('aula-breakdown').innerHTML = htmlBreakdown;
+    document.getElementById('gabarito-detalhado').innerHTML = htmlGabarito;
+
+    // Exibir resultados
+    document.getElementById('results-area').style.display = 'block';
+    document.getElementById('quiz-form').querySelectorAll('input').forEach(i => i.disabled = true);
+    document.getElementById('quiz-form').querySelector('.submit-btn').style.display = 'none';
+    document.getElementById('results-area').scrollIntoView({ behavior: 'smooth' });
+}
+</script>
+
+</body>
+</html>
