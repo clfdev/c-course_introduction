@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 41b - Wokwi: seu laboratório virtual</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Aula 41b — Wokwi: seu laboratório virtual</h1>
+    <p style="color:#cce0ff; margin:0;">Robótica com C — Bloco 1</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo41a.html">Aula Anterior</a>
+    <a href="capitulo42.html">Próxima Aula</a>
+</nav>
+
+<!-- SEÇÃO 1: O que é o Wokwi -->
+<div class="content-section">
+    <h2>O que é o Wokwi?</h2>
+    <p>Wokwi (<a href="https://wokwi.com" target="_blank">wokwi.com</a>) é um <strong>simulador de Arduino online e gratuito</strong>. Você escreve o código, monta o circuito e vê tudo funcionando — sem precisar de placa, LED, resistor ou fio físico nenhum.</p>
+
+    <div class="info-box">
+        <p><strong>Por que usar o Wokwi antes do hardware físico?</strong></p>
+        <ul>
+            <li>Você não queima componentes ao errar a fiação</li>
+            <li>Testa o código instantaneamente, sem compilar e enviar para a placa</li>
+            <li>Os projetos ficam salvos na nuvem — acessíveis de qualquer computador</li>
+            <li>Permite pausar a simulação e inspecionar o estado dos pinos em tempo real</li>
+            <li>Tem Monitor Serial integrado — igual ao da IDE do Arduino</li>
+        </ul>
+    </div>
+
+    <p>A estratégia deste curso é: <strong>simule no Wokwi primeiro</strong>, entenda o comportamento, e só depois monte no hardware físico. Você vai errar menos, aprender mais e não vai desperdiçar componentes.</p>
+</div>
+
+<!-- SEÇÃO 2: Primeiros passos no Wokwi -->
+<div class="content-section">
+    <h2>Primeiros passos: criando um projeto</h2>
+    <p>O fluxo para criar um projeto no Wokwi é direto:</p>
+
+    <table class="comparison-table">
+        <tr>
+            <th>Passo</th>
+            <th>O que fazer</th>
+            <th>Analogia com C</th>
+        </tr>
+        <tr>
+            <td>1</td>
+            <td>Acesse <strong>wokwi.com</strong> e clique em <em>New Project → Arduino Uno</em></td>
+            <td>Criar um novo arquivo <code>programa.c</code></td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td>Na aba <strong>diagram.json</strong> você vê a placa Arduino. Clique no <strong>"+"</strong> para adicionar componentes (LED, resistor, sensor…)</td>
+            <td>Declarar as variáveis e structs que seu programa usará</td>
+        </tr>
+        <tr>
+            <td>3</td>
+            <td>Clique em um componente e arraste os fios até os pinos da placa</td>
+            <td>Conectar as partes — como encadear nodos em uma lista</td>
+        </tr>
+        <tr>
+            <td>4</td>
+            <td>Na aba <strong>sketch.ino</strong> escreva o código</td>
+            <td>Escrever o código dentro do <code>.c</code></td>
+        </tr>
+        <tr>
+            <td>5</td>
+            <td>Clique em <strong>▶ Play</strong> para iniciar a simulação</td>
+            <td>Compilar e executar com <code>gcc programa.c && ./a.out</code></td>
+        </tr>
+        <tr>
+            <td>6</td>
+            <td>Abra o <strong>Monitor Serial</strong> (ícone de terminal) para ver as mensagens do <code>Serial.println()</code></td>
+            <td>Ver a saída do <code>printf()</code> no terminal</td>
+        </tr>
+    </table>
+</div>
+
+<!-- SEÇÃO 3: Componentes do primeiro projeto -->
+<div class="content-section">
+    <h2>O circuito do Blink com LED externo</h2>
+    <p>O LED soldado na placa (pino 13) é ótimo para testar, mas na prática você vai sempre usar LEDs externos conectados por fios. Isso exige entender dois componentes novos:</p>
+
+    <table class="comparison-table">
+        <tr>
+            <th>Componente</th>
+            <th>O que é</th>
+            <th>Por que é necessário</th>
+        </tr>
+        <tr>
+            <td><strong>LED</strong></td>
+            <td>Diodo Emissor de Luz — acende quando corrente elétrica passa no sentido correto</td>
+            <td>É o componente que vai acender. Tem polaridade: a perna longa é o ânodo (+) e a curta é o cátodo (−)</td>
+        </tr>
+        <tr>
+            <td><strong>Resistor 220Ω</strong></td>
+            <td>Limita a corrente elétrica que passa pelo LED</td>
+            <td>Sem ele, o LED recebe corrente demais e queima em segundos. O Arduino fornece 5V; o LED aguenta ~2V com ~20mA — o resistor absorve a diferença</td>
+        </tr>
+        <tr>
+            <td><strong>GND (Terra)</strong></td>
+            <td>O pino de referência 0V da placa</td>
+            <td>Todo circuito precisa de um caminho de retorno para a corrente. Sem conectar o GND, nada funciona</td>
+        </tr>
+    </table>
+
+    <div class="tip-box">
+        <p><strong>Regra do resistor:</strong> Sempre que conectar um LED a um pino do Arduino, use um resistor de 220Ω a 470Ω em série. Isso vale no Wokwi (simulação mais realista) e, especialmente, no hardware físico (proteção real).</p>
+    </div>
+
+    <p>A ligação segue esta ordem:</p>
+    <pre>
+Pino 13 do Arduino
+    │
+    ├─── Resistor 220Ω ─── ânodo LED (+, perna longa) ─── cátodo LED (−, perna curta)
+                                                                    │
+                                                                   GND</pre>
+</div>
+
+<!-- SEÇÃO 4: Código completo com análise linha a linha -->
+<div class="content-section">
+    <h2>Código completo: Blink com LED externo e Serial</h2>
+    <p>Este é o primeiro sketch completo do curso. Cada linha está comentada com o raciocínio que você já usa em C:</p>
+
+    <pre>
+<span class="code-comment">/*
+ * Projeto 01 — Blink com LED externo
+ * Pino 8: LED + resistor 220Ω → GND
+ * Monitor Serial: exibe o estado atual do LED
+ */</span>
+
+#define PINO_LED  8     <span class="code-comment">// define o pino — como #define MAX 50 em C</span>
+#define TEMPO_ON  1000  <span class="code-comment">// tempo ligado em ms</span>
+#define TEMPO_OFF  500  <span class="code-comment">// tempo desligado em ms (pisca assimétrico)</span>
+
+<span class="code-comment">// Variável global que conta quantas vezes o LED acendeu</span>
+int contadorPiscadas = 0;
+
+<span class="code-comment">// setup() — executada UMA VEZ ao ligar/resetar</span>
+void setup() {
+    pinMode(PINO_LED, OUTPUT);   <span class="code-comment">// pino 8 vai enviar sinal</span>
+    Serial.begin(9600);          <span class="code-comment">// abre porta serial a 9600 bps</span>
+    Serial.println("=== Blink iniciado ===");
+}
+
+<span class="code-comment">// loop() — executada REPETIDAMENTE para sempre</span>
+void loop() {
+    <span class="code-comment">// Acende o LED</span>
+    digitalWrite(PINO_LED, HIGH);
+    contadorPiscadas++;
+    Serial.print("Piscada #");
+    Serial.print(contadorPiscadas);
+    Serial.println(" — LED ligado");
+    delay(TEMPO_ON);
+
+    <span class="code-comment">// Apaga o LED</span>
+    digitalWrite(PINO_LED, LOW);
+    Serial.println("             LED desligado");
+    delay(TEMPO_OFF);
+}</pre>
+
+    <div class="terminal-output">
+        <p>=== Blink iniciado ===</p>
+        <p>Piscada #1 — LED ligado</p>
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LED desligado</p>
+        <p>Piscada #2 — LED ligado</p>
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LED desligado</p>
+        <p>Piscada #3 — LED ligado</p>
+        <p>...</p>
+    </div>
+
+    <p>Agora a dissecação linha a linha das funções novas:</p>
+
+    <table class="comparison-table">
+        <tr>
+            <th>Linha</th>
+            <th>O que faz</th>
+            <th>Equivalente em C puro</th>
+        </tr>
+        <tr>
+            <td><code>pinMode(8, OUTPUT)</code></td>
+            <td>Configura o registrador de direção do pino 8 para saída</td>
+            <td><code>DDRB |= (1 &lt;&lt; PB0)</code></td>
+        </tr>
+        <tr>
+            <td><code>Serial.begin(9600)</code></td>
+            <td>Inicializa a UART do chip a 9600 bits por segundo</td>
+            <td>Configurar os registradores UBRR0H/L e UCSR0B manualmente</td>
+        </tr>
+        <tr>
+            <td><code>digitalWrite(8, HIGH)</code></td>
+            <td>Coloca 5V no pino 8 — acende o LED</td>
+            <td><code>PORTB |= (1 &lt;&lt; PB0)</code></td>
+        </tr>
+        <tr>
+            <td><code>digitalWrite(8, LOW)</code></td>
+            <td>Coloca 0V no pino 8 — apaga o LED</td>
+            <td><code>PORTB &amp;= ~(1 &lt;&lt; PB0)</code></td>
+        </tr>
+        <tr>
+            <td><code>delay(1000)</code></td>
+            <td>Bloqueia o programa por 1000 ms usando o timer do chip</td>
+            <td><code>_delay_ms(1000)</code> do avr-libc</td>
+        </tr>
+        <tr>
+            <td><code>Serial.print("texto")</code></td>
+            <td>Envia string pela UART (USB → Monitor Serial)</td>
+            <td><code>printf("texto")</code></td>
+        </tr>
+    </table>
+</div>
+
+<!-- SEÇÃO 5: millis() — o delay sem bloquear -->
+<div class="content-section">
+    <h2>O problema do <code>delay()</code> e a solução com <code>millis()</code></h2>
+    <p><code>delay()</code> é simples e funciona bem para exemplos básicos, mas tem um problema sério: ele <strong>bloqueia tudo</strong>. Enquanto o programa espera no <code>delay(1000)</code>, ele não faz mais nada — não lê sensores, não verifica botões, não responde a nada.</p>
+
+    <p>A solução é <code>millis()</code>, que retorna o número de milissegundos desde que a placa ligou — como um relógio. Com ele você verifica se já passou tempo suficiente <em>sem parar o programa</em>:</p>
+
+    <pre>
+<span class="code-comment">// Blink SEM delay() — usando millis()</span>
+<span class="code-comment">// O programa continua livre para fazer outras coisas</span>
+
+#define PINO_LED    8
+#define INTERVALO   1000  <span class="code-comment">// ms entre mudanças de estado</span>
+
+int estadoLED = LOW;
+unsigned long ultimoTempo = 0;  <span class="code-comment">// guarda o momento da última mudança</span>
+
+void setup() {
+    pinMode(PINO_LED, OUTPUT);
+    Serial.begin(9600);
+}
+
+void loop() {
+    unsigned long agora = millis();  <span class="code-comment">// que horas são agora?</span>
+
+    <span class="code-comment">// Passou tempo suficiente desde a última mudança?</span>
+    if (agora - ultimoTempo >= INTERVALO) {
+        ultimoTempo = agora;  <span class="code-comment">// atualiza o "relógio"</span>
+
+        <span class="code-comment">// Inverte o estado do LED</span>
+        estadoLED = (estadoLED == LOW) ? HIGH : LOW;
+        digitalWrite(PINO_LED, estadoLED);
+
+        Serial.print("millis=");
+        Serial.print(agora);
+        Serial.println(estadoLED == HIGH ? "  LED ON" : "  LED OFF");
+    }
+
+    <span class="code-comment">// Aqui você pode fazer OUTRAS COISAS enquanto espera</span>
+    <span class="code-comment">// ler sensores, verificar botões, atualizar display…</span>
+}</pre>
+
+    <div class="warning-box">
+        <p><strong>Regra de ouro:</strong> <code>delay()</code> serve para exemplos simples e testes rápidos. Em projetos reais com mais de um componente, use sempre <code>millis()</code>. Você vai entender o motivo na prática quando chegar nos projetos com sensores e motores simultâneos.</p>
+    </div>
+
+    <table class="comparison-table">
+        <tr>
+            <th>Aspecto</th>
+            <th><code>delay(ms)</code></th>
+            <th><code>millis()</code></th>
+        </tr>
+        <tr>
+            <td>Bloqueia o programa?</td>
+            <td class="bad">Sim — programa congela pelo tempo inteiro</td>
+            <td class="good">Não — programa continua rodando normalmente</td>
+        </tr>
+        <tr>
+            <td>Facilidade de uso</td>
+            <td class="good">Muito simples</td>
+            <td>Requer variável de controle de tempo</td>
+        </tr>
+        <tr>
+            <td>Quando usar</td>
+            <td>Exemplos simples, um único componente</td>
+            <td class="good">Sempre que o projeto tiver 2+ componentes simultâneos</td>
+        </tr>
+        <tr>
+            <td>Analogia em C</td>
+            <td><code>sleep()</code></td>
+            <td>Verificar <code>time(NULL)</code> num loop sem bloquear</td>
+        </tr>
+    </table>
+</div>
+
+<!-- SEÇÃO 6: Simulando no Wokwi -->
+<div class="content-section">
+    <h2>Montando o projeto no Wokwi passo a passo</h2>
+    <p>Use este roteiro para montar o circuito do Blink no Wokwi agora mesmo:</p>
+
+    <ol>
+        <li>Acesse <strong>wokwi.com</strong> → <em>New Project</em> → <em>Arduino Uno</em></li>
+        <li>Clique no <strong>"+"</strong> e adicione um <strong>LED</strong> (vermelho, verde ou azul — sua escolha)</li>
+        <li>Clique no <strong>"+"</strong> e adicione um <strong>Resistor</strong>. Na propriedade <em>value</em>, coloque <code>220</code> (ohms)</li>
+        <li>Conecte os fios:
+            <ul>
+                <li>Pino <strong>8</strong> do Arduino → terminal esquerdo do Resistor</li>
+                <li>Terminal direito do Resistor → ânodo do LED (perna longa, lado +)</li>
+                <li>Cátodo do LED (perna curta, lado −) → <strong>GND</strong> do Arduino</li>
+            </ul>
+        </li>
+        <li>Cole o código da seção anterior na aba <strong>sketch.ino</strong></li>
+        <li>Clique em <strong>▶ Play</strong> e veja o LED piscar</li>
+        <li>Abra o <strong>Monitor Serial</strong> e acompanhe as mensagens</li>
+    </ol>
+
+    <div class="tip-box">
+        <p><strong>Atalho útil no Wokwi:</strong> Clique no LED durante a simulação para ver sua tensão e corrente em tempo real. Isso ajuda a entender o que está acontecendo no circuito mesmo sem um multímetro.</p>
+    </div>
+
+    <div class="good-practice">
+        <p><strong>Salve o link do projeto!</strong> O Wokwi gera uma URL única para cada projeto. Copie e guarde — você vai retornar a estes projetos nas aulas seguintes para adicionar novos componentes. Pense no projeto como um repositório que cresce junto com o curso.</p>
+    </div>
+</div>
+
+<!-- SEÇÃO 7: Quiz -->
+<div class="exercise-section">
+    <h2>Quiz — Aula 41b</h2>
+    <p>Teste o que você aprendeu sobre o Wokwi e o circuito de LED:</p>
+
+    <form class="quiz-form" id="quiz-form">
+
+        <div class="quiz-question">
+            <p><strong>1. Qual é a principal vantagem de usar o Wokwi antes do hardware físico?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q1" value="a"> O código gerado pelo Wokwi é mais eficiente</label></li>
+                <li><label><input type="radio" name="q1" value="b"> É possível testar e errar sem risco de queimar componentes</label></li>
+                <li><label><input type="radio" name="q1" value="c"> O Wokwi gera o código automaticamente</label></li>
+                <li><label><input type="radio" name="q1" value="d"> O Arduino do Wokwi é mais rápido que o físico</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>2. Por que um resistor é necessário em série com o LED?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q2" value="a"> Para aumentar o brilho do LED</label></li>
+                <li><label><input type="radio" name="q2" value="b"> Para inverter a polaridade do LED</label></li>
+                <li><label><input type="radio" name="q2" value="c"> Para limitar a corrente e evitar que o LED queime</label></li>
+                <li><label><input type="radio" name="q2" value="d"> Para que o pino do Arduino reconheça o componente</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>3. Qual perna do LED deve ser conectada ao pino do Arduino (lado positivo)?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q3" value="a"> A perna curta (cátodo)</label></li>
+                <li><label><input type="radio" name="q3" value="b"> Qualquer uma — LEDs não têm polaridade</label></li>
+                <li><label><input type="radio" name="q3" value="c"> A perna longa (ânodo)</label></li>
+                <li><label><input type="radio" name="q3" value="d"> A perna do meio</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>4. Qual é o problema principal de usar <code>delay(1000)</code> em projetos com múltiplos componentes?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q4" value="a"> delay() não funciona com LEDs externos</label></li>
+                <li><label><input type="radio" name="q4" value="b"> O programa congela por 1 segundo, impossibilitando leitura de sensores ou botões nesse período</label></li>
+                <li><label><input type="radio" name="q4" value="c"> delay() consome muita memória RAM</label></li>
+                <li><label><input type="radio" name="q4" value="d"> delay() só funciona dentro do setup()</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>5. O que a função <code>millis()</code> retorna?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q5" value="a"> O número de vezes que o loop() foi executado</label></li>
+                <li><label><input type="radio" name="q5" value="b"> A tensão atual no pino analógico</label></li>
+                <li><label><input type="radio" name="q5" value="c"> O número de milissegundos desde que a placa foi ligada</label></li>
+                <li><label><input type="radio" name="q5" value="d"> O tempo restante até o próximo delay()</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>6. Para ver as mensagens do <code>Serial.println()</code> no Wokwi, o que você deve abrir?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q6" value="a"> A aba diagram.json</label></li>
+                <li><label><input type="radio" name="q6" value="b"> O Monitor Serial</label></li>
+                <li><label><input type="radio" name="q6" value="c"> O painel de propriedades do LED</label></li>
+                <li><label><input type="radio" name="q6" value="d"> A aba de erros de compilação</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>7. Qual é a ordem correta da ligação elétrica do LED com resistor no pino 8?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q7" value="a"> Pino 8 → cátodo LED → resistor → GND</label></li>
+                <li><label><input type="radio" name="q7" value="b"> GND → ânodo LED → resistor → Pino 8</label></li>
+                <li><label><input type="radio" name="q7" value="c"> Pino 8 → resistor → ânodo LED → cátodo LED → GND</label></li>
+                <li><label><input type="radio" name="q7" value="d"> Pino 8 → ânodo LED → cátodo LED → GND (sem resistor)</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>8. Qual expressão inverte o estado do LED no código com <code>millis()</code>?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q8" value="a"> <code>estadoLED++</code></label></li>
+                <li><label><input type="radio" name="q8" value="b"> <code>estadoLED = !estadoLED</code></label></li>
+                <li><label><input type="radio" name="q8" value="c"> <code>estadoLED = (estadoLED == LOW) ? HIGH : LOW</code></label></li>
+                <li><label><input type="radio" name="q8" value="d"> <code>reverse(estadoLED)</code></label></li>
+            </ul>
+        </div>
+
+        <button type="button" class="submit-btn" onclick="verificarRespostas()">Verificar Respostas</button>
+    </form>
+
+    <div id="quiz-results" style="display:none; margin-top:20px; padding:15px; background-color:#dff0d8; border-radius:5px;"></div>
+</div>
+
+<div class="navigation-buttons">
+    <a href="capitulo41a.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">← Aula 41a</a>
+    <a href="index.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">Índice</a>
+    <a href="capitulo42.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">Aula 42 →</a>
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align:center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education" style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+<script>
+function verificarRespostas() {
+    const gabarito = { q1:'b', q2:'c', q3:'c', q4:'b', q5:'c', q6:'b', q7:'c', q8:'c' };
+    const explicacoes = {
+        q1: 'No Wokwi você testa livremente sem gastar nem queimar componentes físicos — errar não tem custo.',
+        q2: 'O resistor limita a corrente. Sem ele, os 5V do Arduino forçam corrente demais pelo LED, queimando-o em segundos.',
+        q3: 'O ânodo (perna longa) é o lado positivo (+) e deve receber o sinal do pino. O cátodo (perna curta) vai ao GND.',
+        q4: 'delay() bloqueia completamente o programa. Durante a espera, botões, sensores e outros componentes são ignorados.',
+        q5: 'millis() retorna o total de milissegundos desde que a placa foi ligada. É o relógio do Arduino.',
+        q6: 'O Monitor Serial exibe tudo que o Serial.print() e Serial.println() enviam pela porta USB.',
+        q7: 'A ordem correta é: Pino → resistor → ânodo LED → cátodo LED → GND. O resistor pode vir antes ou depois do LED.',
+        q8: 'O operador ternário (cond) ? A : B inverte o estado: se é LOW vira HIGH, se é HIGH vira LOW.'
+    };
+
+    let acertos = 0;
+    let html = '';
+    const total = Object.keys(gabarito).length;
+
+    for (let i = 1; i <= total; i++) {
+        const q = 'q' + i;
+        const sel = document.querySelector(`input[name="${q}"]:checked`);
+        const num = i;
+        if (sel) {
+            if (sel.value === gabarito[q]) {
+                acertos++;
+                html += `<p>Questão ${num}: <span style="color:green;font-weight:bold;">✓ Correto!</span> — ${explicacoes[q]}</p>`;
+            } else {
+                html += `<p>Questão ${num}: <span style="color:red;font-weight:bold;">✗ Incorreto.</span> — ${explicacoes[q]}</p>`;
+            }
+        } else {
+            html += `<p>Questão ${num}: <span style="color:orange;font-weight:bold;">⚠ Não respondida.</span></p>`;
+        }
+    }
+
+    const r = document.getElementById('quiz-results');
+    r.innerHTML = `<h3>Sua pontuação: ${acertos} de ${total}</h3>${html}`;
+    r.style.display = 'block';
+    r.scrollIntoView({ behavior: 'smooth' });
+}
+</script>
+
+</body>
+</html>

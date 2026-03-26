@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula 41a - De C para Arduino: a transição</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Aula 41a — De C para Arduino: a transição</h1>
+    <p style="color:#cce0ff; margin:0;">Robótica com C — Bloco 1</p>
+</header>
+
+<nav>
+    <a href="index.html">Voltar ao Índice</a>
+    <a href="capitulo40.html">Aula Anterior</a>
+    <a href="capitulo41b.html">Próxima Aula</a>
+</nav>
+
+<!-- SEÇÃO 1: Por que Arduino depois de C -->
+<div class="content-section">
+    <h2>Por que estudar Arduino depois de C?</h2>
+    <p>Você chegou até aqui sabendo declarar structs, alocar memória com <code>malloc</code>, montar listas encadeadas e persistir dados em arquivos. Isso não é pouca coisa — a maioria dos cursos de Arduino começa do zero com <em>"o que é uma variável"</em>. Você não precisa disso.</p>
+
+    <p>O que muda agora é o <strong>destino do código</strong>: em vez de rodar num computador e imprimir no terminal, seu programa vai rodar num microcontrolador e <em>controlar o mundo físico</em> — acender LEDs, mover motores, ler sensores de temperatura, detectar movimento.</p>
+
+    <div class="info-box">
+        <p><strong>A grande revelação:</strong> Arduino é C com alguns nomes diferentes. O chip do Arduino Uno (ATmega328P) executa código C compilado. A IDE do Arduino simplesmente esconde o processo de compilação e usa uma biblioteca de funções prontas para facilitar o acesso ao hardware. Tudo que você aprendeu — ponteiros, structs, funções, arrays — funciona dentro de um sketch Arduino.</p>
+    </div>
+</div>
+
+<!-- SEÇÃO 2: O que é Arduino -->
+<div class="content-section">
+    <h2>O que é Arduino?</h2>
+    <p>Arduino é uma <strong>plataforma de hardware + software open-source</strong> criada em 2005 na Itália para facilitar a prototipagem eletrônica. Ela tem duas partes que você precisa conhecer:</p>
+
+    <table class="comparison-table">
+        <tr>
+            <th>Parte</th>
+            <th>O que é</th>
+            <th>Analogia com o que você já conhece</th>
+        </tr>
+        <tr>
+            <td><strong>Placa Arduino</strong></td>
+            <td>Um pequeno computador com microcontrolador, pinos de entrada/saída, porta USB e regulador de tensão</td>
+            <td>Seu PC, porém sem tela, sem teclado e com pinos elétricos expostos</td>
+        </tr>
+        <tr>
+            <td><strong>IDE Arduino</strong></td>
+            <td>Ambiente de programação onde você escreve, compila e envia o código para a placa</td>
+            <td>O GCC + terminal que você usava para compilar e executar seus programas em C</td>
+        </tr>
+        <tr>
+            <td><strong>Sketch</strong></td>
+            <td>Nome que o Arduino dá para um programa — é um arquivo <code>.ino</code></td>
+            <td>Seu arquivo <code>.c</code></td>
+        </tr>
+        <tr>
+            <td><strong>Biblioteca</strong></td>
+            <td>Conjunto de funções prontas para controlar um componente (servo, LCD, sensor)</td>
+            <td><code>#include &lt;stdio.h&gt;</code>, <code>#include &lt;string.h&gt;</code> etc.</td>
+        </tr>
+    </table>
+
+    <div class="tip-box">
+        <p><strong>Modelo mais popular:</strong> O <strong>Arduino Uno</strong> é o modelo de referência deste curso. Ele tem 14 pinos digitais, 6 pinos analógicos, 32 KB de memória flash para o programa, 2 KB de RAM e roda a 16 MHz. Para comparar: seu smartphone tem milhares de vezes mais memória e velocidade — mas para acender um LED ou ler um sensor, o Uno é mais do que suficiente.</p>
+    </div>
+</div>
+
+<!-- SEÇÃO 3: Estrutura de um sketch -->
+<div class="content-section">
+    <h2>A estrutura de um sketch: <code>setup()</code> e <code>loop()</code></h2>
+    <p>Todo sketch Arduino tem exatamente duas funções obrigatórias. Se você já trabalhou com <code>main()</code> em C, vai reconhecer o padrão imediatamente:</p>
+
+    <pre>
+<span class="code-comment">// Sketch Arduino mínimo — equivalente ao main() em C</span>
+
+void setup() {
+    <span class="code-comment">// Executada UMA VEZ quando a placa liga ou é resetada</span>
+    <span class="code-comment">// Aqui você configura pinos, inicializa variáveis, abre comunicação serial</span>
+}
+
+void loop() {
+    <span class="code-comment">// Executada REPETIDAMENTE para sempre, enquanto houver energia</span>
+    <span class="code-comment">// Aqui fica a lógica principal do seu programa</span>
+}</pre>
+
+    <p>Compare diretamente com o que você já conhece:</p>
+
+    <table class="comparison-table">
+        <tr>
+            <th>C puro</th>
+            <th>Arduino</th>
+            <th>O que acontece</th>
+        </tr>
+        <tr>
+            <td><pre style="margin:0">int main() {
+    /* inicialização */
+
+    while(1) {
+        /* lógica */
+    }
+    return 0;
+}</pre></td>
+            <td><pre style="margin:0">void setup() {
+    /* inicialização */
+}
+
+void loop() {
+    /* lógica */
+}</pre></td>
+            <td>São equivalentes. O Arduino só divide o <code>main()</code> em duas funções nomeadas para deixar mais claro o que é inicialização e o que é o laço principal.</td>
+        </tr>
+    </table>
+
+    <div class="info-box">
+        <p><strong>O que o Arduino faz por baixo dos panos:</strong> A IDE gera automaticamente um <code>main()</code> em C que chama <code>setup()</code> uma vez e depois fica chamando <code>loop()</code> dentro de um <code>while(1)</code>. Você não vê esse código, mas ele existe. Quando compilamos um sketch, o compilador usado é literalmente o <strong>avr-gcc</strong> — um GCC para o chip AVR do Arduino.</p>
+    </div>
+</div>
+
+<!-- SEÇÃO 4: Tabela C vs Arduino -->
+<div class="content-section">
+    <h2>C vs Arduino — mapa completo das diferenças</h2>
+    <p>A tabela abaixo cobre tudo que você vai encontrar de diferente nas próximas aulas. Nada aqui é uma ruptura — é sempre uma adaptação do que você já sabe:</p>
+
+    <table class="comparison-table">
+        <tr>
+            <th>Conceito</th>
+            <th>C puro</th>
+            <th>Arduino</th>
+            <th>Observação</th>
+        </tr>
+        <tr>
+            <td>Entrada/saída de texto</td>
+            <td><code>printf()</code> / <code>scanf()</code></td>
+            <td><code>Serial.print()</code> / <code>Serial.read()</code></td>
+            <td>A saída vai para o <em>Monitor Serial</em> da IDE, não para um terminal</td>
+        </tr>
+        <tr>
+            <td>Pino digital (ligar/desligar)</td>
+            <td>— (acesso direto a registradores)</td>
+            <td><code>digitalWrite(pino, HIGH/LOW)</code></td>
+            <td>HIGH = 5V, LOW = 0V</td>
+        </tr>
+        <tr>
+            <td>Leitura de pino digital</td>
+            <td>— (acesso a registradores)</td>
+            <td><code>digitalRead(pino)</code></td>
+            <td>Retorna <code>HIGH</code> ou <code>LOW</code></td>
+        </tr>
+        <tr>
+            <td>Leitura analógica</td>
+            <td>— (requer ADC manual)</td>
+            <td><code>analogRead(pino)</code></td>
+            <td>Retorna 0–1023 (10 bits)</td>
+        </tr>
+        <tr>
+            <td>Espera/pausa</td>
+            <td><code>sleep()</code> / loops vazios</td>
+            <td><code>delay(ms)</code> / <code>millis()</code></td>
+            <td><code>delay(1000)</code> = 1 segundo</td>
+        </tr>
+        <tr>
+            <td>Configurar pino</td>
+            <td>— (registradores)</td>
+            <td><code>pinMode(pino, OUTPUT/INPUT)</code></td>
+            <td>Define se o pino envia ou recebe sinal</td>
+        </tr>
+        <tr>
+            <td>Tipo de arquivo</td>
+            <td><code>programa.c</code></td>
+            <td><code>programa.ino</code></td>
+            <td>Internamente continua sendo C/C++</td>
+        </tr>
+        <tr>
+            <td>Tipos de dados</td>
+            <td><code>int</code>, <code>float</code>, <code>char</code>…</td>
+            <td>Mesmos tipos + <code>byte</code>, <code>word</code>, <code>boolean</code></td>
+            <td>Os tipos C todos funcionam normalmente</td>
+        </tr>
+        <tr>
+            <td>Constantes booleanas</td>
+            <td><code>true</code> / <code>false</code> (C99)</td>
+            <td><code>true</code> / <code>false</code> + <code>HIGH</code> / <code>LOW</code></td>
+            <td><code>HIGH</code> = 1, <code>LOW</code> = 0</td>
+        </tr>
+        <tr>
+            <td>Structs, ponteiros, arrays</td>
+            <td>✅</td>
+            <td>✅ — exatamente iguais</td>
+            <td>Tudo que você aprendeu funciona aqui</td>
+        </tr>
+        <tr>
+            <td>Funções</td>
+            <td>✅</td>
+            <td>✅ — exatamente iguais</td>
+            <td>Você pode criar quantas funções quiser além de <code>setup()</code> e <code>loop()</code></td>
+        </tr>
+    </table>
+
+    <div class="warning-box">
+        <p><strong>Atenção ao tamanho dos tipos:</strong> No Arduino Uno (chip de 8 bits), <code>int</code> tem <strong>2 bytes</strong> (não 4!), então vai de -32768 a 32767. Se precisar de números maiores, use <code>long</code> (4 bytes). Isso não acontecia no seu PC onde <code>int</code> é 4 bytes.</p>
+    </div>
+</div>
+
+<!-- SEÇÃO 5: Primeiro sketch -->
+<div class="content-section">
+    <h2>O primeiro sketch: Blink</h2>
+    <p>O "Hello, World!" do Arduino é fazer um LED piscar. O pino 13 do Arduino Uno já tem um LED soldado na própria placa — você não precisa de nenhum componente extra para rodar este exemplo:</p>
+
+    <pre>
+<span class="code-comment">// Blink — o "Hello, World!" do Arduino</span>
+<span class="code-comment">// Faz o LED do pino 13 piscar a cada 1 segundo</span>
+
+<span class="code-comment">// setup() é chamada UMA VEZ ao ligar a placa</span>
+void setup() {
+    pinMode(13, OUTPUT);  <span class="code-comment">// configura pino 13 como saída</span>
+}
+
+<span class="code-comment">// loop() é chamada REPETIDAMENTE para sempre</span>
+void loop() {
+    digitalWrite(13, HIGH);  <span class="code-comment">// liga o LED (5V no pino 13)</span>
+    delay(1000);              <span class="code-comment">// espera 1000 ms = 1 segundo</span>
+    digitalWrite(13, LOW);   <span class="code-comment">// desliga o LED (0V no pino 13)</span>
+    delay(1000);              <span class="code-comment">// espera mais 1 segundo</span>
+}</pre>
+
+    <p>Agora veja o equivalente exato em C puro, para sentir o quanto são parecidos:</p>
+
+    <pre>
+<span class="code-comment">// Equivalente conceitual em C puro (pseudocódigo de hardware)</span>
+<span class="code-comment">// Isso é O QUE O ARDUINO FAZ por baixo dos panos</span>
+
+#include &lt;avr/io.h&gt;
+#include &lt;util/delay.h&gt;
+
+int main() {
+    DDRB |= (1 &lt;&lt; PB5);   <span class="code-comment">// configura pino 13 (PB5) como saída</span>
+
+    while (1) {
+        PORTB |= (1 &lt;&lt; PB5);   <span class="code-comment">// liga o LED</span>
+        _delay_ms(1000);
+        PORTB &amp;= ~(1 &lt;&lt; PB5);  <span class="code-comment">// desliga o LED</span>
+        _delay_ms(1000);
+    }
+    return 0;
+}</pre>
+
+    <div class="tip-box">
+        <p><strong>Conclusão visual:</strong> O Arduino esconde a manipulação de bits nos registradores (<code>DDRB</code>, <code>PORTB</code>) e oferece funções com nomes legíveis (<code>pinMode</code>, <code>digitalWrite</code>). A lógica é idêntica — o que muda é o vocabulário.</p>
+    </div>
+</div>
+
+<!-- SEÇÃO 6: Usando a constante LED_BUILTIN -->
+<div class="content-section">
+    <h2>Boas práticas desde o início: constantes e nomes</h2>
+    <p>Assim como em C você evitava números mágicos e usava <code>#define</code>, no Arduino a mesma prática se aplica. A plataforma já define a constante <code>LED_BUILTIN</code> para o LED da placa:</p>
+
+    <pre>
+<span class="code-comment">// Versão com boas práticas</span>
+
+#define INTERVALO 500  <span class="code-comment">// ms — fácil de mudar</span>
+
+void setup() {
+    pinMode(LED_BUILTIN, OUTPUT);  <span class="code-comment">// LED_BUILTIN = 13 no Uno</span>
+    Serial.begin(9600);            <span class="code-comment">// abre comunicação serial a 9600 bps</span>
+    Serial.println("Arduino iniciado!");
+}
+
+void loop() {
+    digitalWrite(LED_BUILTIN, HIGH);
+    Serial.println("LED ligado");
+    delay(INTERVALO);
+
+    digitalWrite(LED_BUILTIN, LOW);
+    Serial.println("LED desligado");
+    delay(INTERVALO);
+}</pre>
+
+    <div class="terminal-output">
+        <p>Arduino iniciado!</p>
+        <p>LED ligado</p>
+        <p>LED desligado</p>
+        <p>LED ligado</p>
+        <p>LED desligado</p>
+        <p>...</p>
+    </div>
+
+    <div class="good-practice">
+        <p><strong>Boa prática:</strong> Sempre use <code>Serial.begin(9600)</code> no <code>setup()</code> quando quiser depurar seu código. É o equivalente ao <code>printf()</code> que você usava para acompanhar o estado das variáveis — indispensável para entender o que está acontecendo no hardware.</p>
+    </div>
+</div>
+
+<!-- SEÇÃO 7: Quiz -->
+<div class="exercise-section">
+    <h2>Quiz — Aula 41a</h2>
+    <p>Teste o que você aprendeu sobre a transição de C para Arduino:</p>
+
+    <form class="quiz-form" id="quiz-form">
+
+        <div class="quiz-question">
+            <p><strong>1. Qual é a função do Arduino equivalente ao laço <code>while(1)</code> do C?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q1" value="a"> <code>setup()</code></label></li>
+                <li><label><input type="radio" name="q1" value="b"> <code>loop()</code></label></li>
+                <li><label><input type="radio" name="q1" value="c"> <code>main()</code></label></li>
+                <li><label><input type="radio" name="q1" value="d"> <code>run()</code></label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>2. Quantas vezes a função <code>setup()</code> é executada durante o funcionamento normal de uma placa Arduino?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q2" value="a"> Nenhuma — é opcional</label></li>
+                <li><label><input type="radio" name="q2" value="b"> Uma vez, ao ligar ou resetar a placa</label></li>
+                <li><label><input type="radio" name="q2" value="c"> Repetidamente, como o <code>loop()</code></label></li>
+                <li><label><input type="radio" name="q2" value="d"> Duas vezes — uma ao ligar e outra ao resetar</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>3. Qual função do Arduino equivale ao <code>printf()</code> do C para exibir mensagens?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q3" value="a"> <code>print()</code></label></li>
+                <li><label><input type="radio" name="q3" value="b"> <code>output()</code></label></li>
+                <li><label><input type="radio" name="q3" value="c"> <code>Serial.print()</code> ou <code>Serial.println()</code></label></li>
+                <li><label><input type="radio" name="q3" value="d"> <code>Console.write()</code></label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>4. O que faz <code>pinMode(13, OUTPUT)</code>?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q4" value="a"> Liga o LED no pino 13</label></li>
+                <li><label><input type="radio" name="q4" value="b"> Configura o pino 13 para enviar sinais elétricos</label></li>
+                <li><label><input type="radio" name="q4" value="c"> Lê o valor atual do pino 13</label></li>
+                <li><label><input type="radio" name="q4" value="d"> Define o pino 13 para receber sinais elétricos</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>5. No Arduino Uno, quantos bytes ocupa o tipo <code>int</code>?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q5" value="a"> 4 bytes, igual ao PC</label></li>
+                <li><label><input type="radio" name="q5" value="b"> 1 byte</label></li>
+                <li><label><input type="radio" name="q5" value="c"> 2 bytes</label></li>
+                <li><label><input type="radio" name="q5" value="d"> 8 bytes</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>6. Qual das afirmações sobre structs e ponteiros no Arduino é correta?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q6" value="a"> Structs não são suportadas no Arduino</label></li>
+                <li><label><input type="radio" name="q6" value="b"> Ponteiros funcionam no Arduino da mesma forma que em C</label></li>
+                <li><label><input type="radio" name="q6" value="c"> É preciso usar uma sintaxe especial para ponteiros no Arduino</label></li>
+                <li><label><input type="radio" name="q6" value="d"> Malloc não existe no Arduino</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>7. O que o compilador do Arduino usa internamente para transformar o sketch em código de máquina?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q7" value="a"> Um compilador Java (JVM)</label></li>
+                <li><label><input type="radio" name="q7" value="b"> Um compilador Python</label></li>
+                <li><label><input type="radio" name="q7" value="c"> O avr-gcc, uma versão do GCC para o chip AVR</label></li>
+                <li><label><input type="radio" name="q7" value="d"> Um compilador proprietário da empresa Arduino</label></li>
+            </ul>
+        </div>
+
+        <div class="quiz-question">
+            <p><strong>8. Qual é o comportamento de <code>delay(500)</code> dentro do <code>loop()</code>?</strong></p>
+            <ul class="options-list">
+                <li><label><input type="radio" name="q8" value="a"> Executa o loop 500 vezes</label></li>
+                <li><label><input type="radio" name="q8" value="b"> Pausa a execução por 500 segundos</label></li>
+                <li><label><input type="radio" name="q8" value="c"> Pausa a execução por 500 milissegundos (meio segundo)</label></li>
+                <li><label><input type="radio" name="q8" value="d"> Aguarda até que o pino 500 seja ativado</label></li>
+            </ul>
+        </div>
+
+        <button type="button" class="submit-btn" onclick="verificarRespostas()">Verificar Respostas</button>
+    </form>
+
+    <div id="quiz-results" style="display:none; margin-top:20px; padding:15px; background-color:#dff0d8; border-radius:5px;"></div>
+</div>
+
+<div class="navigation-buttons">
+    <a href="capitulo40.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">← Aula 40</a>
+    <a href="index.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">Índice</a>
+    <a href="capitulo41b.html" style="padding:10px 20px; background:#4263ce; color:white; border-radius:4px; text-decoration:none;">Aula 41b →</a>
+</div>
+
+<footer>
+    <div class="container">
+        <div style="text-align:center;">
+            <img src="Logo-AFFEducation.jpg" alt="Logo AFF Education" style="width:100%; max-height:50px; display:inline-block;" />
+        </div>
+    </div>
+</footer>
+
+<script>
+function verificarRespostas() {
+    const gabarito = { q1:'b', q2:'b', q3:'c', q4:'b', q5:'c', q6:'b', q7:'c', q8:'c' };
+    const explicacoes = {
+        q1: 'loop() é chamada repetidamente para sempre — é exatamente o papel do while(1) em C puro.',
+        q2: 'setup() executa uma única vez quando a placa é ligada ou o botão de reset é pressionado.',
+        q3: 'Serial.print() e Serial.println() enviam texto pela porta USB para o Monitor Serial da IDE.',
+        q4: 'pinMode(pino, OUTPUT) configura o pino para operar como saída, podendo enviar HIGH (5V) ou LOW (0V).',
+        q5: 'No Arduino Uno (chip AVR de 8 bits), int ocupa 2 bytes, ao contrário do PC onde int tem 4 bytes.',
+        q6: 'Ponteiros, structs, arrays e todas as construções de C funcionam normalmente no Arduino.',
+        q7: 'O Arduino usa avr-gcc, que é o GCC adaptado para chips AVR — o mesmo compilador C que você já conhece.',
+        q8: 'delay(ms) pausa a execução pelo número de milissegundos indicado. delay(500) = meio segundo.'
+    };
+
+    let acertos = 0;
+    let html = '';
+    const total = Object.keys(gabarito).length;
+
+    for (let i = 1; i <= total; i++) {
+        const q = 'q' + i;
+        const sel = document.querySelector(`input[name="${q}"]:checked`);
+        const num = i;
+        if (sel) {
+            if (sel.value === gabarito[q]) {
+                acertos++;
+                html += `<p>Questão ${num}: <span style="color:green;font-weight:bold;">✓ Correto!</span> — ${explicacoes[q]}</p>`;
+            } else {
+                html += `<p>Questão ${num}: <span style="color:red;font-weight:bold;">✗ Incorreto.</span> — ${explicacoes[q]}</p>`;
+            }
+        } else {
+            html += `<p>Questão ${num}: <span style="color:orange;font-weight:bold;">⚠ Não respondida.</span></p>`;
+        }
+    }
+
+    const r = document.getElementById('quiz-results');
+    r.innerHTML = `<h3>Sua pontuação: ${acertos} de ${total}</h3>${html}`;
+    r.style.display = 'block';
+    r.scrollIntoView({ behavior: 'smooth' });
+}
+</script>
+
+</body>
+</html>
